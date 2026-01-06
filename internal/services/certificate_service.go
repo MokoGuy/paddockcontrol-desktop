@@ -41,7 +41,7 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	if err != nil {
 		return nil, fmt.Errorf("failed to check certificate existence: %w", err)
 	}
-	if exists && !req.IsRenewal {
+	if exists == 1 && !req.IsRenewal {
 		return nil, fmt.Errorf("certificate already exists for hostname: %s", req.Hostname)
 	}
 
@@ -198,7 +198,7 @@ func (s *CertificateService) ImportCertificate(ctx context.Context, req models.I
 	if err != nil {
 		return fmt.Errorf("failed to check certificate existence: %w", err)
 	}
-	if exists {
+	if exists == 1 {
 		return fmt.Errorf("certificate already exists for hostname: %s", hostname)
 	}
 
@@ -231,9 +231,9 @@ func (s *CertificateService) ListCertificates(ctx context.Context, filter models
 
 	// Convert to list items with computed fields
 	items := make([]*models.CertificateListItem, 0, len(certs))
-	for _, cert := range certs {
+	for i := range certs {
 		// Compute status
-		status := db.ComputeStatus(cert)
+		status := db.ComputeStatus(&certs[i])
 
 		// Filter by status if specified
 		if filter.Status != "" && filter.Status != "all" {
@@ -242,7 +242,7 @@ func (s *CertificateService) ListCertificates(ctx context.Context, filter models
 			}
 		}
 
-		item := s.toCertificateListItem(cert, status)
+		item := s.toCertificateListItem(&certs[i], status)
 		items = append(items, item)
 	}
 
@@ -260,7 +260,7 @@ func (s *CertificateService) GetCertificate(ctx context.Context, hostname string
 	}
 
 	// Compute status
-	status := db.ComputeStatus(dbCert)
+	status := db.ComputeStatus(&dbCert)
 
 	// Build expires_at pointer
 	var expiresAt *int64
@@ -324,7 +324,7 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname str
 		return fmt.Errorf("failed to get certificate: %w", err)
 	}
 
-	if cert.ReadOnly > 0 {
+	if cert.ReadOnly == 1 {
 		return fmt.Errorf("certificate is read-only and cannot be deleted")
 	}
 

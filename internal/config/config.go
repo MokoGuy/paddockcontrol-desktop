@@ -21,7 +21,11 @@ func NewService(database *db.Database) *Service {
 
 // GetConfig loads configuration from database
 func (s *Service) GetConfig(ctx context.Context) (*sqlc.Config, error) {
-	return s.db.Queries().GetConfig(ctx)
+	cfg, err := s.db.Queries().GetConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get config: %w", err)
+	}
+	return &cfg, nil
 }
 
 // SaveConfig updates configuration in database
@@ -37,7 +41,6 @@ func (s *Service) SaveConfig(ctx context.Context, cfg *sqlc.Config) error {
 		DefaultCountry:            cfg.DefaultCountry,
 		DefaultKeySize:            cfg.DefaultKeySize,
 		ValidityPeriodDays:        cfg.ValidityPeriodDays,
-		IsConfigured:              cfg.IsConfigured,
 	})
 }
 
@@ -45,6 +48,10 @@ func (s *Service) SaveConfig(ctx context.Context, cfg *sqlc.Config) error {
 func (s *Service) IsConfigured(ctx context.Context) (bool, error) {
 	configured, err := s.db.Queries().IsConfigured(ctx)
 	if err != nil {
+		// On first run, config table is empty - this is not an error
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
 		return false, fmt.Errorf("failed to check if configured: %w", err)
 	}
 	return configured == 1, nil

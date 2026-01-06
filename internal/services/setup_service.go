@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"paddockcontrol-desktop/internal/config"
@@ -40,27 +41,26 @@ func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupReq
 	}
 
 	// Create config record in database
-	err := s.db.Queries().CreateConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create configuration: %w", err)
-	}
-
-	// Update config with values from request
-	err = s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
+	err := s.db.Queries().CreateConfig(ctx, sqlc.CreateConfigParams{
 		OwnerEmail:                req.OwnerEmail,
 		CaName:                    req.CAName,
 		HostnameSuffix:            req.HostnameSuffix,
 		DefaultOrganization:       req.DefaultOrganization,
-		DefaultOrganizationalUnit: toNullString(req.DefaultOrganizationalUnit),
+		DefaultOrganizationalUnit: stringToNullString(req.DefaultOrganizationalUnit),
 		DefaultCity:               req.DefaultCity,
 		DefaultState:              req.DefaultState,
 		DefaultCountry:            req.DefaultCountry,
 		DefaultKeySize:            int64(req.DefaultKeySize),
 		ValidityPeriodDays:        int64(req.ValidityPeriodDays),
-		IsConfigured:              1,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to save configuration: %w", err)
+		return fmt.Errorf("failed to create configuration: %w", err)
+	}
+
+	// Mark as configured
+	err = s.config.SetConfigured(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to mark as configured: %w", err)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.Backu
 	}
 
 	// Import all certificates from backup with strict validation
-	importResult, err := s.backupService.ImportBackup(ctx, backup, encryptionKey)
+	_, err := s.backupService.ImportBackup(ctx, backup, encryptionKey)
 	if err != nil {
 		return fmt.Errorf("backup import failed: %w", err)
 	}
@@ -96,37 +96,45 @@ func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.Backu
 		return fmt.Errorf("failed to check configuration: %w", err)
 	}
 
-	if !configExists {
-		err = s.db.Queries().CreateConfig(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create configuration: %w", err)
-		}
-	}
-
-	// Update config with backup values, overwriting any existing config
-	if backup.Config != nil {
-		err = s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
+	if configExists == 0 {
+		err = s.db.Queries().CreateConfig(ctx, sqlc.CreateConfigParams{
 			OwnerEmail:                backup.Config.OwnerEmail,
 			CaName:                    backup.Config.CAName,
 			HostnameSuffix:            backup.Config.HostnameSuffix,
 			DefaultOrganization:       backup.Config.DefaultOrganization,
-			DefaultOrganizationalUnit: toNullString(backup.Config.DefaultOrganizationalUnit),
+			DefaultOrganizationalUnit: stringToNullString(backup.Config.DefaultOrganizationalUnit),
 			DefaultCity:               backup.Config.DefaultCity,
 			DefaultState:              backup.Config.DefaultState,
 			DefaultCountry:            backup.Config.DefaultCountry,
 			DefaultKeySize:            int64(backup.Config.DefaultKeySize),
 			ValidityPeriodDays:        int64(backup.Config.ValidityPeriodDays),
-			IsConfigured:              1,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create configuration: %w", err)
+		}
+	} else {
+		// Update existing config with backup values
+		err = s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
+			OwnerEmail:                backup.Config.OwnerEmail,
+			CaName:                    backup.Config.CAName,
+			HostnameSuffix:            backup.Config.HostnameSuffix,
+			DefaultOrganization:       backup.Config.DefaultOrganization,
+			DefaultOrganizationalUnit: stringToNullString(backup.Config.DefaultOrganizationalUnit),
+			DefaultCity:               backup.Config.DefaultCity,
+			DefaultState:              backup.Config.DefaultState,
+			DefaultCountry:            backup.Config.DefaultCountry,
+			DefaultKeySize:            int64(backup.Config.DefaultKeySize),
+			ValidityPeriodDays:        int64(backup.Config.ValidityPeriodDays),
 		})
 		if err != nil {
 			return fmt.Errorf("failed to update configuration: %w", err)
 		}
-	} else {
-		// Mark as configured even if backup has no config
-		err = s.config.SetConfigured(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to mark as configured: %w", err)
-		}
+	}
+
+	// Mark as configured
+	err = s.config.SetConfigured(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to mark as configured: %w", err)
 	}
 
 	return nil
@@ -216,9 +224,9 @@ func (s *SetupService) backupHasEncryptedKeys(backup *models.BackupData) bool {
 }
 
 // toNullString converts string to sql.NullString
-func toNullString(s string) interface{} {
-	if s == "" {
-		return nil
+func stringToNullString(s string) sql.NullString {
+	return sql.NullString{
+		String: s,
+		Valid:  s != "",
 	}
-	return s
 }

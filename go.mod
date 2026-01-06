@@ -7,6 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/wailsapp/wails/v2 v2.11.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	modernc.org/sqlite v1.40.0
 )
 

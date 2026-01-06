@@ -39,23 +39,21 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 
 	// Convert sqlc.Config to models.Config
 	var modelCfg *models.Config
-	if cfg != nil {
-		modelCfg = &models.Config{
-			ID:                        int(cfg.ID),
-			OwnerEmail:                cfg.OwnerEmail,
-			CAName:                    cfg.CaName,
-			HostnameSuffix:            cfg.HostnameSuffix,
-			ValidityPeriodDays:        int(cfg.ValidityPeriodDays),
-			DefaultOrganization:       cfg.DefaultOrganization,
-			DefaultOrganizationalUnit: cfg.DefaultOrganizationalUnit.String,
-			DefaultCity:               cfg.DefaultCity,
-			DefaultState:              cfg.DefaultState,
-			DefaultCountry:            cfg.DefaultCountry,
-			DefaultKeySize:            int(cfg.DefaultKeySize),
-			IsConfigured:              int(cfg.IsConfigured),
-			CreatedAt:                 cfg.CreatedAt,
-			LastModified:              cfg.LastModified,
-		}
+	modelCfg = &models.Config{
+		ID:                        int(cfg.ID),
+		OwnerEmail:                cfg.OwnerEmail,
+		CAName:                    cfg.CaName,
+		HostnameSuffix:            cfg.HostnameSuffix,
+		ValidityPeriodDays:        int(cfg.ValidityPeriodDays),
+		DefaultOrganization:       cfg.DefaultOrganization,
+		DefaultOrganizationalUnit: cfg.DefaultOrganizationalUnit.String,
+		DefaultCity:               cfg.DefaultCity,
+		DefaultState:              cfg.DefaultState,
+		DefaultCountry:            cfg.DefaultCountry,
+		DefaultKeySize:            int(cfg.DefaultKeySize),
+		IsConfigured:              int(cfg.IsConfigured),
+		CreatedAt:                 cfg.CreatedAt,
+		LastModified:              cfg.LastModified,
 	}
 
 	// Build backup data
@@ -68,21 +66,46 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 
 	// Convert certificates
 	for i, cert := range certs {
+		var expiresAt *int64
+		if cert.ExpiresAt.Valid {
+			expiresAt = &cert.ExpiresAt.Int64
+		}
+
+		var note string
+		if cert.Note.Valid {
+			note = cert.Note.String
+		}
+
+		var pendingNote string
+		if cert.PendingNote.Valid {
+			pendingNote = cert.PendingNote.String
+		}
+
+		var pendingCSR string
+		if cert.PendingCsrPem.Valid {
+			pendingCSR = cert.PendingCsrPem.String
+		}
+
+		var certificatePEM string
+		if cert.CertificatePem.Valid {
+			certificatePEM = cert.CertificatePem.String
+		}
+
 		backupCert := &models.BackupCertificate{
 			Hostname:       cert.Hostname,
-			PendingCSR:     cert.PendingCSR,
-			CertificatePEM: cert.CertificatePEM,
+			PendingCSR:     pendingCSR,
+			CertificatePEM: certificatePEM,
 			CreatedAt:      cert.CreatedAt,
-			ExpiresAt:      cert.ExpiresAt,
-			Note:           cert.Note,
-			PendingNote:    cert.PendingNote,
-			ReadOnly:       cert.ReadOnly,
+			ExpiresAt:      expiresAt,
+			Note:           note,
+			PendingNote:    pendingNote,
+			ReadOnly:       cert.ReadOnly == 1,
 		}
 
 		// Include encrypted keys if requested
 		if includeKeys {
-			backupCert.EncryptedKey = cert.EncryptedKey
-			backupCert.PendingEncryptedKey = cert.PendingEncryptedKey
+			backupCert.EncryptedKey = cert.EncryptedPrivateKey
+			backupCert.PendingEncryptedKey = cert.PendingEncryptedPrivateKey
 		}
 
 		backup.Certificates[i] = backupCert
@@ -116,7 +139,7 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 			return nil, fmt.Errorf("failed to check certificate existence for %s: %w", cert.Hostname, err)
 		}
 
-		if exists {
+		if exists == 1 {
 			return nil, fmt.Errorf("certificate already exists for hostname: %s. Restore aborted", cert.Hostname)
 		}
 

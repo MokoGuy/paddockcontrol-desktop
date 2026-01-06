@@ -90,10 +90,11 @@ type BackupCertificate struct {
 
 // BackupData represents the complete backup file structure
 type BackupData struct {
-	Version      string               `json:"version"`
-	ExportedAt   int64                `json:"exported_at"`
-	Config       *Config              `json:"config,omitempty"`
-	Certificates []*BackupCertificate `json:"certificates,omitempty"`
+	Version       string               `json:"version"`
+	ExportedAt    int64                `json:"exported_at"`
+	EncryptionKey string               `json:"encryption_key,omitempty"`
+	Config        *Config              `json:"config,omitempty"`
+	Certificates  []*BackupCertificate `json:"certificates,omitempty"`
 }
 
 // ImportResult represents the result of importing a backup
@@ -102,6 +103,17 @@ type ImportResult struct {
 	Skipped   int      `json:"skipped"`
 	Failed    int      `json:"failed"`
 	Conflicts []string `json:"conflicts,omitempty"`
+}
+
+// BackupValidationResult represents validation results from a backup file
+type BackupValidationResult struct {
+	Valid            bool   `json:"valid"`
+	Version          string `json:"version"`
+	CertificateCount int    `json:"certificate_count"`
+	HasEncryptedKeys bool   `json:"has_encrypted_keys"`
+	HasEncryptionKey bool   `json:"has_encryption_key"`
+	EncryptionKey    string `json:"encryption_key"`
+	ExportedAt       int64  `json:"exported_at"`
 }
 
 // ChainCertificateInfo represents metadata for a single certificate in the chain
