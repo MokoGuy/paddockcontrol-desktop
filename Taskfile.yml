@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+tasks:
+    dev:
+        desc: Start the development server (using WebKit2 for Ubuntu 24)
+        cmd: wails dev -tags webkit2_41
+
+    build:
+        desc: Build the application for production
+        cmd: wails build -platform windows -tags webkit2_41
