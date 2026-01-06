@@ -1,0 +1,53 @@
+-- Database schema for SQLC code generation (PaddockControl Desktop)
+-- This mirrors the latest migration file
+-- Key differences from webapp:
+-- - status column removed (computed dynamically)
+-- - is_configured flag added to config table
+
+-- Create certificates table
+-- Metadata fields (sans, org, city, state, country, key_size) are computed from certificate or CSR, not stored
+-- CSR is stored in pending_csr_pem (unified for both new CSRs and renewals)
+-- Status is computed dynamically based on certificate/CSR presence
+CREATE TABLE certificates (
+    hostname TEXT PRIMARY KEY NOT NULL,
+    encrypted_private_key BLOB,
+    pending_csr_pem TEXT,
+    certificate_pem TEXT,
+    pending_encrypted_private_key BLOB,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    expires_at INTEGER,
+    last_modified INTEGER NOT NULL DEFAULT (unixepoch()),
+    note TEXT,
+    pending_note TEXT,
+    read_only INTEGER NOT NULL DEFAULT 0
+);
+
+-- Create indexes for common queries
+CREATE INDEX idx_certificates_expires_at ON certificates(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX idx_certificates_created_at ON certificates(created_at);
+
+-- Create config table
+CREATE TABLE config (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    owner_email TEXT NOT NULL,
+    ca_name TEXT NOT NULL,
+    hostname_suffix TEXT NOT NULL,
+    validity_period_days INTEGER NOT NULL DEFAULT 365,
+    default_organization TEXT NOT NULL,
+    default_organizational_unit TEXT,
+    default_city TEXT NOT NULL,
+    default_state TEXT NOT NULL,
+    default_country TEXT NOT NULL CHECK(length(default_country) = 2),
+    default_key_size INTEGER NOT NULL DEFAULT 4096 CHECK(default_key_size >= 2048),
+    is_configured INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_modified INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+-- Enforce single config row
+CREATE TRIGGER enforce_single_config_row
+BEFORE INSERT ON config
+WHEN (SELECT COUNT(*) FROM config) >= 1
+BEGIN
+    SELECT RAISE(FAIL, 'Only one configuration row allowed');
+END;
