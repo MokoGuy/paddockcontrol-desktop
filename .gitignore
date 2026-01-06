@@ -24,3 +24,5 @@ frontend/package.json.md5
 *.njsproj
 *.sln
 *.sw?
+
+tracked_tasks/
