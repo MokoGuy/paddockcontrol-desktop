@@ -1,9 +1,16 @@
 -- name: CreateCertificate :exec
--- Create a new certificate entry
--- Metadata (sans, org, etc.) is computed from CSR/certificate, not stored
+-- Create a new certificate entry with all fields
 INSERT INTO certificates (
-    hostname, pending_encrypted_private_key, pending_csr_pem, note
-) VALUES (?, ?, ?, ?);
+    hostname,
+    encrypted_private_key,
+    pending_encrypted_private_key,
+    pending_csr_pem,
+    certificate_pem,
+    expires_at,
+    note,
+    pending_note,
+    read_only
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetCertificateByHostname :one
 -- Get a certificate by hostname
@@ -16,11 +23,10 @@ ORDER BY created_at DESC;
 
 -- name: UpdatePendingCSR :exec
 -- Store or update pending CSR and key (unified for initial generation or renewal)
--- pending_note is reset to NULL when CSR is regenerated
 UPDATE certificates
 SET pending_csr_pem = ?,
     pending_encrypted_private_key = ?,
-    pending_note = NULL,
+    pending_note = ?,
     last_modified = unixepoch('now')
 WHERE hostname = ?;
 

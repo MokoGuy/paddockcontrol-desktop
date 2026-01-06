@@ -129,6 +129,34 @@ func ValidateCSRMatch(csr *x509.CertificateRequest, cert *x509.Certificate) erro
 	return nil
 }
 
+// ValidateCertificateAndKey validates that a certificate and private key match
+func ValidateCertificateAndKey(certPEM, keyPEM string) error {
+	// Parse certificate
+	cert, err := ParseCertificate([]byte(certPEM))
+	if err != nil {
+		return fmt.Errorf("invalid certificate: %w", err)
+	}
+
+	// Parse private key
+	privateKey, err := ParsePrivateKeyFromPEM([]byte(keyPEM))
+	if err != nil {
+		return fmt.Errorf("invalid private key: %w", err)
+	}
+
+	// Extract certificate's public key
+	certPubKey, err := ExtractPublicKey(cert)
+	if err != nil {
+		return fmt.Errorf("failed to extract public key from certificate: %w", err)
+	}
+
+	// Compare public keys
+	if !ComparePublicKeys(certPubKey, &privateKey.PublicKey) {
+		return fmt.Errorf("private key does not match certificate")
+	}
+
+	return nil
+}
+
 // CertificateToPEM converts a certificate to PEM format
 func CertificateToPEM(cert *x509.Certificate) []byte {
 	return pem.EncodeToMemory(&pem.Block{

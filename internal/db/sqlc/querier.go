@@ -18,8 +18,7 @@ type Querier interface {
 	ClearPendingCSR(ctx context.Context, hostname string) error
 	// Check if configuration exists
 	ConfigExists(ctx context.Context) (int64, error)
-	// Create a new certificate entry
-	// Metadata (sans, org, etc.) is computed from CSR/certificate, not stored
+	// Create a new certificate entry with all fields
 	CreateCertificate(ctx context.Context, arg CreateCertificateParams) error
 	// Create the initial configuration
 	CreateConfig(ctx context.Context, arg CreateConfigParams) error
@@ -46,7 +45,6 @@ type Querier interface {
 	// Update configuration (preserves is_configured flag)
 	UpdateConfig(ctx context.Context, arg UpdateConfigParams) error
 	// Store or update pending CSR and key (unified for initial generation or renewal)
-	// pending_note is reset to NULL when CSR is regenerated
 	UpdatePendingCSR(ctx context.Context, arg UpdatePendingCSRParams) error
 	// Update the pending note field
 	UpdatePendingNote(ctx context.Context, arg UpdatePendingNoteParams) error

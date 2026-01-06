@@ -64,25 +64,42 @@ func (q *Queries) ClearPendingCSR(ctx context.Context, hostname string) error {
 
 const createCertificate = `-- name: CreateCertificate :exec
 INSERT INTO certificates (
-    hostname, pending_encrypted_private_key, pending_csr_pem, note
-) VALUES (?, ?, ?, ?)
+    hostname,
+    encrypted_private_key,
+    pending_encrypted_private_key,
+    pending_csr_pem,
+    certificate_pem,
+    expires_at,
+    note,
+    pending_note,
+    read_only
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateCertificateParams struct {
 	Hostname                   string         `json:"hostname"`
+	EncryptedPrivateKey        []byte         `json:"encrypted_private_key"`
 	PendingEncryptedPrivateKey []byte         `json:"pending_encrypted_private_key"`
 	PendingCsrPem              sql.NullString `json:"pending_csr_pem"`
+	CertificatePem             sql.NullString `json:"certificate_pem"`
+	ExpiresAt                  sql.NullInt64  `json:"expires_at"`
 	Note                       sql.NullString `json:"note"`
+	PendingNote                sql.NullString `json:"pending_note"`
+	ReadOnly                   int64          `json:"read_only"`
 }
 
-// Create a new certificate entry
-// Metadata (sans, org, etc.) is computed from CSR/certificate, not stored
+// Create a new certificate entry with all fields
 func (q *Queries) CreateCertificate(ctx context.Context, arg CreateCertificateParams) error {
 	_, err := q.exec(ctx, q.createCertificateStmt, createCertificate,
 		arg.Hostname,
+		arg.EncryptedPrivateKey,
 		arg.PendingEncryptedPrivateKey,
 		arg.PendingCsrPem,
+		arg.CertificatePem,
+		arg.ExpiresAt,
 		arg.Note,
+		arg.PendingNote,
+		arg.ReadOnly,
 	)
 	return err
 }
@@ -270,7 +287,7 @@ const updatePendingCSR = `-- name: UpdatePendingCSR :exec
 UPDATE certificates
 SET pending_csr_pem = ?,
     pending_encrypted_private_key = ?,
-    pending_note = NULL,
+    pending_note = ?,
     last_modified = unixepoch('now')
 WHERE hostname = ?
 `
@@ -278,13 +295,18 @@ WHERE hostname = ?
 type UpdatePendingCSRParams struct {
 	PendingCsrPem              sql.NullString `json:"pending_csr_pem"`
 	PendingEncryptedPrivateKey []byte         `json:"pending_encrypted_private_key"`
+	PendingNote                sql.NullString `json:"pending_note"`
 	Hostname                   string         `json:"hostname"`
 }
 
 // Store or update pending CSR and key (unified for initial generation or renewal)
-// pending_note is reset to NULL when CSR is regenerated
 func (q *Queries) UpdatePendingCSR(ctx context.Context, arg UpdatePendingCSRParams) error {
-	_, err := q.exec(ctx, q.updatePendingCSRStmt, updatePendingCSR, arg.PendingCsrPem, arg.PendingEncryptedPrivateKey, arg.Hostname)
+	_, err := q.exec(ctx, q.updatePendingCSRStmt, updatePendingCSR,
+		arg.PendingCsrPem,
+		arg.PendingEncryptedPrivateKey,
+		arg.PendingNote,
+		arg.Hostname,
+	)
 	return err
 }
 
