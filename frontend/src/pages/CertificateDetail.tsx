@@ -19,7 +19,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -547,8 +547,8 @@ export function CertificateDetail() {
                     <DialogHeader>
                         <DialogTitle>Upload Signed Certificate</DialogTitle>
                         <DialogDescription>
-                            Paste the signed certificate from your Certificate
-                            Authority in PEM format.
+                            Paste the signed certificate or drag and drop a file
+                            (.crt, .pem).
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -557,11 +557,14 @@ export function CertificateDetail() {
                                 {uploadError}
                             </div>
                         )}
-                        <Textarea
-                            placeholder={`-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----`}
+                        <FileDropTextarea
                             value={uploadCertPEM}
-                            onChange={(e) => setUploadCertPEM(e.target.value)}
+                            onChange={setUploadCertPEM}
+                            onError={setUploadError}
+                            placeholder={`-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----`}
                             className="font-mono text-xs h-64"
+                            acceptedExtensions={[".crt", ".pem", ".cer"]}
+                            dropLabel="Drop certificate file here"
                         />
                     </div>
                     <DialogFooter>
