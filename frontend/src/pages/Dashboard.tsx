@@ -130,7 +130,7 @@ export function Dashboard() {
                 {/* Error Message */}
                 {error && (
                     <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {error}
                             </p>
@@ -141,7 +141,7 @@ export function Dashboard() {
                 {/* Limited Mode Notice */}
                 {!isEncryptionKeyProvided && (
                     <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
-                        <CardContent className="pt-6 flex items-center justify-between">
+                        <CardContent className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                                     Limited mode - encryption key not provided
@@ -165,7 +165,7 @@ export function Dashboard() {
 
                 {/* Filters Card */}
                 <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <div className="space-y-4">
                             {/* Search */}
                             <div>
@@ -277,7 +277,7 @@ export function Dashboard() {
                     </div>
                 ) : filteredCerts.length === 0 ? (
                     <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <EmptyState
                                 icon="📜"
                                 title={
@@ -314,7 +314,7 @@ export function Dashboard() {
                                     navigate(`/certificates/${cert.hostname}`)
                                 }
                             >
-                                <CardContent className="pt-6">
+                                <CardContent>
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1 space-y-2">
                                             <div className="flex items-center gap-3">

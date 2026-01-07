@@ -127,7 +127,7 @@ export function ImportCertificate() {
 
                 {error && (
                     <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {error}
                             </p>

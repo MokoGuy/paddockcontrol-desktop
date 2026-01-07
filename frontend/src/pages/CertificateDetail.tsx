@@ -147,7 +147,7 @@ export function CertificateDetail() {
                 <Header />
                 <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {error || "Certificate not found"}
                             </p>
@@ -190,7 +190,7 @@ export function CertificateDetail() {
                 {/* Error Message */}
                 {certError && (
                     <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {certError}
                             </p>

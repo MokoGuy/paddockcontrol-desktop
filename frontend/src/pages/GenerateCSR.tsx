@@ -97,7 +97,7 @@ export function GenerateCSR() {
                     </div>
 
                     <Card className="mb-6 shadow-sm border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-green-800 dark:text-green-200">
                                 ✓ CSR generated successfully for{" "}
                                 {csrResult.hostname}
@@ -166,7 +166,7 @@ export function GenerateCSR() {
 
                 {error && (
                     <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {error}
                             </p>

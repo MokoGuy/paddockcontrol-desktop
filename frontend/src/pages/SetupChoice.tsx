@@ -121,7 +121,7 @@ export function SetupChoice() {
 
                 {/* Info Box */}
                 <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
-                    <CardContent className="pt-6">
+                    <CardContent>
                         <div className="flex gap-3">
                             <span className="text-xl">ℹ️</span>
                             <div className="text-sm text-blue-800 dark:text-blue-200">

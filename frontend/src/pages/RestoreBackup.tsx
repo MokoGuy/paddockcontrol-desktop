@@ -304,7 +304,7 @@ export function RestoreBackup() {
                         </div>
                     </div>
 
-                    <CardContent className="pt-6">
+                    <CardContent>
                         {/* Step 1: File Selection */}
                         {step === "file" && (
                             <div className="space-y-6">
