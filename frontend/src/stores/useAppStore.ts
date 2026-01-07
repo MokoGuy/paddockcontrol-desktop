@@ -27,8 +27,8 @@ export const useAppStore = create<AppState>((set) => ({
     isSetupComplete: false,
     setIsSetupComplete: (complete) => set({ isSetupComplete: complete }),
 
-  isLoading: false,
-  setIsLoading: (loading) => set({ isLoading: loading }),
+    isLoading: true,
+    setIsLoading: (loading) => set({ isLoading: loading }),
 
     error: null,
     setError: (error) => set({ error }),

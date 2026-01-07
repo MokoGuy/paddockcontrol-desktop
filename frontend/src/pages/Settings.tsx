@@ -318,31 +318,6 @@ export function Settings() {
 
                         <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                                Restore from Backup
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                Restore your CA from a previous backup. You will
-                                need the encryption key used when creating the
-                                backup.
-                            </p>
-                            <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 rounded-lg mb-4">
-                                <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                                    ⚠️ Restoring a backup will overwrite your
-                                    current configuration and certificates. Make
-                                    sure to export a backup first if you want to
-                                    keep your current data.
-                                </p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => navigate("/setup/restore")}
-                            >
-                                Restore from Backup
-                            </Button>
-                        </div>
-
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                                 About Backups
                             </h3>
                             <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">

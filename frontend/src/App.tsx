@@ -11,6 +11,35 @@ import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 
+// Wait for Wails bindings to be available
+const waitForWails = (timeout = 5000): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+
+        const check = () => {
+            // Check if Wails bindings are available
+            if (
+                typeof window !== "undefined" &&
+                (window as any).go?.main?.App
+            ) {
+                resolve();
+                return;
+            }
+
+            // Check timeout
+            if (Date.now() - startTime > timeout) {
+                reject(new Error("Wails bindings not available after timeout"));
+                return;
+            }
+
+            // Retry after a short delay
+            setTimeout(check, 50);
+        };
+
+        check();
+    });
+};
+
 // Pages
 import { EncryptionKeyPrompt } from "@/pages/EncryptionKeyPrompt";
 import { SetupChoice } from "@/pages/SetupChoice";
@@ -36,6 +65,9 @@ function AppContent() {
         // Check initial state on app load
         const checkInitialState = async () => {
             try {
+                // Wait for Wails bindings to be available
+                await waitForWails();
+
                 // First check if setup is complete
                 const setupComplete = await api.isSetupComplete();
                 setIsSetupComplete(setupComplete);
@@ -47,6 +79,15 @@ function AppContent() {
                 }
             } catch (error) {
                 console.error("Failed to check initial state:", error);
+                // If Wails bindings aren't available (e.g., deep URL navigation),
+                // redirect to root to let Wails properly initialize
+                if (
+                    error instanceof Error &&
+                    error.message.includes("Wails bindings not available")
+                ) {
+                    window.location.href = "/";
+                    return;
+                }
             } finally {
                 setIsLoading(false);
             }
