@@ -11,6 +11,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -24,6 +33,7 @@ export function CertificateDetail() {
     const {
         getCertificate,
         deleteCertificate,
+        uploadCertificate,
         isLoading: certLoading,
         error: certError,
     } = useCertificates();
@@ -34,6 +44,12 @@ export function CertificateDetail() {
     const [error, setError] = useState<string | null>(null);
     const [deleteConfirming, setDeleteConfirming] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    // Upload certificate dialog state
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [uploadCertPEM, setUploadCertPEM] = useState("");
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         loadCertificate();
@@ -82,6 +98,32 @@ export function CertificateDetail() {
             setTimeout(() => setCopiedField(null), 2000);
         } catch (err) {
             console.error("Copy error:", err);
+        }
+    };
+
+    const handleUploadCertificate = async () => {
+        if (!hostname || !uploadCertPEM.trim()) return;
+
+        // Basic PEM validation
+        if (!uploadCertPEM.includes("-----BEGIN CERTIFICATE-----")) {
+            setUploadError("Invalid certificate format. Must be PEM encoded.");
+            return;
+        }
+
+        setIsUploading(true);
+        setUploadError(null);
+
+        try {
+            await uploadCertificate(hostname, uploadCertPEM.trim());
+            setUploadDialogOpen(false);
+            setUploadCertPEM("");
+            await loadCertificate(); // Reload to show updated status
+        } catch (err) {
+            setUploadError(
+                err instanceof Error ? err.message : "Upload failed",
+            );
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -429,22 +471,30 @@ export function CertificateDetail() {
                                 </Button>
                             )}
                             {certificate.pending_csr && (
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        const link =
-                                            document.createElement("a");
-                                        link.href =
-                                            "data:text/plain;charset=utf-8," +
-                                            encodeURIComponent(
-                                                certificate.pending_csr!,
-                                            );
-                                        link.download = `${certificate.hostname}.csr`;
-                                        link.click();
-                                    }}
-                                >
-                                    Download CSR
-                                </Button>
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            const link =
+                                                document.createElement("a");
+                                            link.href =
+                                                "data:text/plain;charset=utf-8," +
+                                                encodeURIComponent(
+                                                    certificate.pending_csr!,
+                                                );
+                                            link.download = `${certificate.hostname}.csr`;
+                                            link.click();
+                                        }}
+                                    >
+                                        Download CSR
+                                    </Button>
+                                    <Button
+                                        variant="default"
+                                        onClick={() => setUploadDialogOpen(true)}
+                                    >
+                                        Upload Signed Certificate
+                                    </Button>
+                                </>
                             )}
                             {!certificate.read_only && (
                                 <>
@@ -490,6 +540,50 @@ export function CertificateDetail() {
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteConfirming(false)}
             />
+
+            {/* Upload Certificate Dialog */}
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Upload Signed Certificate</DialogTitle>
+                        <DialogDescription>
+                            Paste the signed certificate from your Certificate
+                            Authority in PEM format.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {uploadError && (
+                            <div className="p-3 text-sm text-red-800 bg-red-50 dark:bg-red-950 dark:text-red-200 rounded-md">
+                                {uploadError}
+                            </div>
+                        )}
+                        <Textarea
+                            placeholder={`-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----`}
+                            value={uploadCertPEM}
+                            onChange={(e) => setUploadCertPEM(e.target.value)}
+                            className="font-mono text-xs h-64"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setUploadDialogOpen(false);
+                                setUploadCertPEM("");
+                                setUploadError(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleUploadCertificate}
+                            disabled={isUploading || !uploadCertPEM.trim()}
+                        >
+                            {isUploading ? "Uploading..." : "Upload Certificate"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
