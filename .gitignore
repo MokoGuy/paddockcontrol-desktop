@@ -26,3 +26,4 @@ frontend/package.json.md5
 *.sw?
 
 tracked_tasks/
+.playwright-mcp/
