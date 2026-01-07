@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { BackupData } from "@/types";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { EyeIcon, ViewOffIcon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import logo from "@/assets/images/logo-universal.png";
 
 export function RestoreBackup() {
@@ -25,6 +27,8 @@ export function RestoreBackup() {
     const [hasEmbeddedKey, setHasEmbeddedKey] = useState(false);
     const [userProvidedKey, setUserProvidedKey] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [showKeyInConfirm, setShowKeyInConfirm] = useState(false);
+    const [keyCopied, setKeyCopied] = useState(false);
 
     const {
         register,
@@ -185,6 +189,22 @@ export function RestoreBackup() {
             }
         }
     };
+
+    const handleCopyEncryptionKey = async () => {
+        const keyToCopy = backupData?.encryption_key || userProvidedKey;
+        if (!keyToCopy) return;
+
+        try {
+            await api.copyToClipboard(keyToCopy);
+            setKeyCopied(true);
+            setTimeout(() => setKeyCopied(false), 2000);
+        } catch (err) {
+            console.error("Failed to copy encryption key:", err);
+        }
+    };
+
+    // Get the encryption key to display (either embedded or user-provided)
+    const encryptionKeyToDisplay = backupData?.encryption_key || userProvidedKey;
 
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-12 px-4">
@@ -360,23 +380,11 @@ export function RestoreBackup() {
                                             }
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400"
                                         >
-                                            {showPassword ? (
-                                                <svg
-                                                    className="w-4 h-4"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
-                                                </svg>
-                                            ) : (
-                                                <svg
-                                                    className="w-4 h-4"
-                                                    fill="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path d="M11.83 9L15 12.16c.5-.3.83-.84.83-1.46 0-1.66-1.34-3-3-3-.62 0-1.17.33-1.46.83L11.83 9zm7.29-2.21l2.15 2.15c.19-.31.36-.63.5-.97C20.55 4.26 17.03 1 12 1c-4.35 0-8.08 2.75-9.33 6.55c.25.6.56 1.18.91 1.71l1.46 1.46C4.56 8.5 4.28 8.21 4.04 7.88l-1.46-1.46c-.5.3-.84.82-.84 1.42 0 1.66 1.34 3 3 3 .6 0 1.12-.34 1.42-.84l1.46 1.46c-.57.53-1.3.91-2.12 1.08-.98 1.24-2.47 2.23-4.16 2.56 1.25 3.8 5 6.55 9.33 6.55 4.35 0 8.08-2.75 9.33-6.55-.14-.34-.27-.68-.41-1.01l-1.42-1.42c.3.6.56 1.22.75 1.88 1.25-1.25 2.48-3.18 2.48-6.45 0-4.35-2.75-8.08-6.55-9.33z" />
-                                                </svg>
-                                            )}
+                                            <HugeiconsIcon
+                                                icon={showPassword ? ViewOffIcon : EyeIcon}
+                                                className="w-4 h-4"
+                                                strokeWidth={2}
+                                            />
                                         </button>
                                     </div>
                                     {errors.key && (
@@ -453,6 +461,53 @@ export function RestoreBackup() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Encryption Key Display */}
+                                {encryptionKeyToDisplay && (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                                                Encryption Key
+                                            </h3>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Save this key for future use
+                                            </span>
+                                        </div>
+                                        <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div className="flex items-center gap-2">
+                                                <code className="flex-1 text-sm font-mono text-gray-800 dark:text-gray-200 break-all">
+                                                    {showKeyInConfirm
+                                                        ? encryptionKeyToDisplay
+                                                        : "•".repeat(Math.min(encryptionKeyToDisplay.length, 32))}
+                                                </code>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowKeyInConfirm(!showKeyInConfirm)}
+                                                    className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                                    title={showKeyInConfirm ? "Hide key" : "Show key"}
+                                                >
+                                                    <HugeiconsIcon
+                                                        icon={showKeyInConfirm ? ViewOffIcon : EyeIcon}
+                                                        className="w-4 h-4"
+                                                        strokeWidth={2}
+                                                    />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCopyEncryptionKey}
+                                                    className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                                    title="Copy to clipboard"
+                                                >
+                                                    <HugeiconsIcon
+                                                        icon={keyCopied ? Tick02Icon : Copy01Icon}
+                                                        className={`w-4 h-4 ${keyCopied ? "text-green-500" : ""}`}
+                                                        strokeWidth={2}
+                                                    />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 rounded-lg">
                                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
