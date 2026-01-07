@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useBackup } from "@/hooks/useBackup";
+import { useAppStore } from "@/stores/useAppStore";
 import {
     Card,
     CardContent,
@@ -34,10 +35,12 @@ export function CertificateDetail() {
         getCertificate,
         deleteCertificate,
         uploadCertificate,
+        downloadPrivateKey,
         isLoading: certLoading,
         error: certError,
     } = useCertificates();
     const { copyToClipboard, isLoading: backupLoading } = useBackup();
+    const { isEncryptionKeyProvided } = useAppStore();
 
     const [certificate, setCertificate] = useState<Certificate | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -496,6 +499,25 @@ export function CertificateDetail() {
                                     </Button>
                                 </>
                             )}
+                            {/* Download Private Key - requires encryption key */}
+                            <Button
+                                variant="outline"
+                                onClick={() =>
+                                    downloadPrivateKey(certificate.hostname)
+                                }
+                                disabled={
+                                    !isEncryptionKeyProvided ||
+                                    certLoading ||
+                                    backupLoading
+                                }
+                                title={
+                                    !isEncryptionKeyProvided
+                                        ? "Encryption key required"
+                                        : ""
+                                }
+                            >
+                                Download Private Key
+                            </Button>
                             {!certificate.read_only && (
                                 <>
                                     <Button
@@ -507,6 +529,12 @@ export function CertificateDetail() {
                                                         certificate.hostname,
                                                 },
                                             })
+                                        }
+                                        disabled={!isEncryptionKeyProvided}
+                                        title={
+                                            !isEncryptionKeyProvided
+                                                ? "Encryption key required"
+                                                : ""
                                         }
                                     >
                                         Renew Certificate

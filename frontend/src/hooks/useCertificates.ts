@@ -24,7 +24,7 @@ interface UseCertificatesReturn {
     deleteCertificate: (hostname: string) => Promise<void>;
     downloadCSR: (hostname: string, csr: string) => Promise<void>;
     downloadCertificate: (hostname: string, cert: string) => Promise<void>;
-    downloadPrivateKey: (hostname: string, key: string) => Promise<void>;
+    downloadPrivateKey: (hostname: string) => Promise<void>;
 
     // Utilities
     clearError: () => void;

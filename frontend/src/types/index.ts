@@ -133,6 +133,11 @@ export interface BackupValidationResult {
   exported_at: number;
 }
 
+export interface KeyValidationResult {
+  valid: boolean;
+  failed_hostnames?: string[];
+}
+
 export interface ImportResult {
   success: number;
   skipped: number;

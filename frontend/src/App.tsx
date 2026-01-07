@@ -55,6 +55,7 @@ function AppContent() {
     const {
         isWaitingForEncryptionKey,
         setIsWaitingForEncryptionKey,
+        setIsEncryptionKeyProvided,
         isSetupComplete,
         setIsSetupComplete,
         isLoading,
@@ -72,10 +73,16 @@ function AppContent() {
                 const setupComplete = await api.isSetupComplete();
                 setIsSetupComplete(setupComplete);
 
-                // Only check for encryption key if setup IS complete
+                // Only check for encryption key state if setup IS complete
                 if (setupComplete) {
                     const waiting = await api.isWaitingForEncryptionKey();
                     setIsWaitingForEncryptionKey(waiting);
+
+                    // If not waiting, also check if key was actually provided
+                    if (!waiting) {
+                        const keyProvided = await api.isEncryptionKeyProvided();
+                        setIsEncryptionKeyProvided(keyProvided);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to check initial state:", error);
@@ -94,7 +101,12 @@ function AppContent() {
         };
 
         checkInitialState();
-    }, [setIsWaitingForEncryptionKey, setIsSetupComplete, setIsLoading]);
+    }, [
+        setIsWaitingForEncryptionKey,
+        setIsEncryptionKeyProvided,
+        setIsSetupComplete,
+        setIsLoading,
+    ]);
 
     if (isLoading) {
         return (
@@ -173,7 +185,7 @@ function AppContent() {
             <Route
                 path="/certificates/generate"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireEncryptionKey>
                         <GenerateCSR />
                     </ProtectedRoute>
                 }
@@ -181,7 +193,7 @@ function AppContent() {
             <Route
                 path="/certificates/import"
                 element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireEncryptionKey>
                         <ImportCertificate />
                     </ProtectedRoute>
                 }

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useSetup } from "@/hooks/useSetup";
 import { useBackup } from "@/hooks/useBackup";
 import { useConfigStore } from "@/stores/useConfigStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
+import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import {
     Card,
     CardContent,
@@ -20,6 +22,7 @@ import { formatDateTime } from "@/lib/theme";
 export function Settings() {
     const navigate = useNavigate();
     const { config } = useConfigStore();
+    const { isEncryptionKeyProvided } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
     const {
         isLoading: backupLoading,
@@ -32,6 +35,7 @@ export function Settings() {
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
     const [copySuccess, setCopySuccess] = useState<string | null>(null);
+    const [showKeyDialog, setShowKeyDialog] = useState(false);
 
     useEffect(() => {
         loadDataDirectory();
@@ -294,6 +298,56 @@ export function Settings() {
                     </Card>
                 )}
 
+                {/* Encryption Key */}
+                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                    <CardHeader>
+                        <CardTitle>Encryption Key</CardTitle>
+                        <CardDescription>
+                            Manage encryption key for private key operations
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isEncryptionKeyProvided ? (
+                            <div className="p-4 bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-900 rounded-lg">
+                                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                    Encryption key is active
+                                </p>
+                                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                                    Full functionality is available. You can
+                                    generate CSRs, import certificates, and
+                                    download private keys.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 rounded-lg">
+                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                                        Limited mode - encryption key not
+                                        provided
+                                    </p>
+                                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                                        Without the encryption key, you cannot:
+                                    </p>
+                                    <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1">
+                                        <li>Generate new CSRs</li>
+                                        <li>
+                                            Import certificates with private
+                                            keys
+                                        </li>
+                                        <li>Download private keys</li>
+                                        <li>
+                                            Export backups with private keys
+                                        </li>
+                                    </ul>
+                                </div>
+                                <Button onClick={() => setShowKeyDialog(true)}>
+                                    Provide Encryption Key
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Backup Management */}
                 <Card className="shadow-sm border-gray-200 dark:border-gray-800">
                     <CardHeader>
@@ -443,6 +497,12 @@ export function Settings() {
                 isLoading={resetLoading}
                 onConfirm={handleResetDatabase}
                 onCancel={() => setResetConfirming(false)}
+            />
+
+            {/* Encryption Key Dialog */}
+            <EncryptionKeyDialog
+                open={showKeyDialog}
+                onClose={() => setShowKeyDialog(false)}
             />
         </div>
     );

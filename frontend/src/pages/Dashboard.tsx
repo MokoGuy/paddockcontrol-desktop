@@ -28,7 +28,7 @@ export function Dashboard() {
         listCertificates,
         deleteCertificate,
     } = useCertificates();
-    const { setError: setAppError } = useAppStore();
+    const { setError: setAppError, isEncryptionKeyProvided } = useAppStore();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<
@@ -97,12 +97,24 @@ export function Dashboard() {
                     <div className="flex gap-2">
                         <Button
                             onClick={() => navigate("/certificates/generate")}
+                            disabled={!isEncryptionKeyProvided}
+                            title={
+                                !isEncryptionKeyProvided
+                                    ? "Encryption key required"
+                                    : ""
+                            }
                         >
                             Generate CSR
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => navigate("/certificates/import")}
+                            disabled={!isEncryptionKeyProvided}
+                            title={
+                                !isEncryptionKeyProvided
+                                    ? "Encryption key required"
+                                    : ""
+                            }
                         >
                             Import Certificate
                         </Button>
@@ -122,6 +134,31 @@ export function Dashboard() {
                             <p className="text-sm text-red-800 dark:text-red-200">
                                 {error}
                             </p>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Limited Mode Notice */}
+                {!isEncryptionKeyProvided && (
+                    <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
+                        <CardContent className="pt-6 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                    Limited mode - encryption key not provided
+                                </p>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                    Some features are disabled. Provide your
+                                    encryption key to unlock full functionality.
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
+                                onClick={() => navigate("/settings")}
+                            >
+                                Provide Key
+                            </Button>
                         </CardContent>
                     </Card>
                 )}

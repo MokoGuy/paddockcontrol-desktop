@@ -13,13 +13,17 @@ import {
     SetupDefaults,
     BackupData,
     BackupValidationResult,
+    KeyValidationResult,
 } from "../types";
 
 // Encryption Key Management
 export const api = {
     // Key management
     isWaitingForEncryptionKey: () => App.IsWaitingForEncryptionKey(),
-    provideEncryptionKey: (key: string) => App.ProvideEncryptionKey(key),
+    isEncryptionKeyProvided: () => App.IsEncryptionKeyProvided(),
+    provideEncryptionKey: (key: string) =>
+        App.ProvideEncryptionKey(key) as Promise<KeyValidationResult>,
+    skipEncryptionKey: () => App.SkipEncryptionKey(),
 
     // Setup
     isSetupComplete: () => App.IsSetupComplete(),

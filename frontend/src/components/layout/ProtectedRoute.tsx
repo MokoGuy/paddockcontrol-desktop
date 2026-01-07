@@ -4,11 +4,19 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
+    requireEncryptionKey?: boolean; // If true, route requires encryption key
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-    const { isWaitingForEncryptionKey, isSetupComplete, isLoading } =
-        useAppStore();
+export function ProtectedRoute({
+    children,
+    requireEncryptionKey = false,
+}: ProtectedRouteProps) {
+    const {
+        isWaitingForEncryptionKey,
+        isSetupComplete,
+        isLoading,
+        isEncryptionKeyProvided,
+    } = useAppStore();
 
     // Still loading initial state
     if (isLoading) {
@@ -24,9 +32,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         return <Navigate to="/setup" replace />;
     }
 
-    // Setup complete but waiting for encryption key - redirect to key prompt
+    // Still waiting for user decision on key (neither provided nor skipped)
     if (isWaitingForEncryptionKey) {
         return <Navigate to="/key" replace />;
+    }
+
+    // Route requires encryption key but user skipped
+    if (requireEncryptionKey && !isEncryptionKeyProvided) {
+        return <Navigate to="/dashboard" replace state={{ keyRequired: true }} />;
     }
 
     // All checks passed

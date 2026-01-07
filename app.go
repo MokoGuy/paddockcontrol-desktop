@@ -35,6 +35,7 @@ type App struct {
 	// Runtime state
 	encryptionKey           []byte
 	waitingForEncryptionKey bool
+	encryptionKeyProvided   bool // true only if key was actually provided (not skipped)
 	isConfigured            bool
 	dataDir                 string
 }
@@ -90,6 +91,10 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	logger.Info("Configuration status: configured=%v", a.isConfigured)
+
+	// Initialize services without encryption key (for setup/restore to work)
+	a.initializeServicesWithoutKey()
+	logger.Info("Services initialized (without encryption key)")
 
 	// Wait for encryption key from user
 	a.waitingForEncryptionKey = true
@@ -156,12 +161,13 @@ func (a *App) showFatalError(title, message string) {
 }
 
 // requireEncryptionKey validates that encryption key is provided
+// Use this for operations that need to encrypt/decrypt private keys
 func (a *App) requireEncryptionKey() error {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	if a.waitingForEncryptionKey {
-		return fmt.Errorf("encryption key not provided")
+	if !a.encryptionKeyProvided {
+		return fmt.Errorf("encryption key required for this operation")
 	}
 
 	if len(a.encryptionKey) == 0 {
@@ -171,12 +177,9 @@ func (a *App) requireEncryptionKey() error {
 	return nil
 }
 
-// requireSetupComplete validates that setup is complete
-func (a *App) requireSetupComplete() error {
-	if err := a.requireEncryptionKey(); err != nil {
-		return err
-	}
-
+// requireSetupOnly validates that setup is complete but does NOT require encryption key
+// Use this for read-only operations like listing, viewing, deleting certificates
+func (a *App) requireSetupOnly() error {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -184,7 +187,22 @@ func (a *App) requireSetupComplete() error {
 		return fmt.Errorf("application not configured")
 	}
 
+	// Services must be initialized (either via ProvideEncryptionKey or SkipEncryptionKey)
+	if a.waitingForEncryptionKey {
+		return fmt.Errorf("encryption key decision not made")
+	}
+
 	return nil
+}
+
+// requireSetupComplete validates that setup is complete AND encryption key is provided
+// Use this for operations that need both setup and encryption key
+func (a *App) requireSetupComplete() error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	return a.requireEncryptionKey()
 }
 
 // ============================================================================
@@ -198,48 +216,116 @@ func (a *App) IsWaitingForEncryptionKey() bool {
 	return a.waitingForEncryptionKey
 }
 
+// IsEncryptionKeyProvided returns true if encryption key was actually provided (not skipped)
+func (a *App) IsEncryptionKeyProvided() bool {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.encryptionKeyProvided
+}
+
+// SkipEncryptionKey allows user to skip encryption key entry and proceed with limited functionality
+func (a *App) SkipEncryptionKey() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if a.encryptionKeyProvided {
+		return fmt.Errorf("encryption key already provided")
+	}
+
+	logger.Info("User skipped encryption key entry - limited functionality enabled")
+	a.waitingForEncryptionKey = false
+	a.encryptionKeyProvided = false
+
+	// Initialize services without encryption key for read-only operations
+	a.initializeServicesWithoutKey()
+
+	return nil
+}
+
+// initializeServicesWithoutKey initializes services for read-only access
+func (a *App) initializeServicesWithoutKey() {
+	a.configService = config.NewService(a.db)
+	a.backupService = services.NewBackupService(a.db)
+	a.certificateService = services.NewCertificateService(a.db, a.configService)
+	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
+	logger.Info("Services initialized without encryption key (limited access)")
+}
+
 // ProvideEncryptionKey stores encryption key and initializes services
-// Also validates the key by testing decryption on subsequent launches
-func (a *App) ProvideEncryptionKey(key string) error {
+// Validates the key by testing decryption on ALL stored certificates
+func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	logger.Info("Encryption key provided, validating...")
 
 	if key == "" {
-		return fmt.Errorf("encryption key cannot be empty")
+		return nil, fmt.Errorf("encryption key cannot be empty")
 	}
 
 	if len(key) < 16 {
-		return fmt.Errorf("encryption key must be at least 16 characters")
+		return nil, fmt.Errorf("encryption key must be at least 16 characters")
 	}
 
-	// If app is already configured, test decryption on first certificate
+	// If app is already configured, test decryption on ALL certificates
 	if a.isConfigured && a.db != nil {
-		logger.Info("Testing encryption key against stored certificates...")
+		logger.Info("Testing encryption key against ALL stored certificates...")
 		certs, err := a.db.Queries().ListAllCertificates(a.ctx)
 		if err != nil {
 			logger.Error("Failed to list certificates for key validation: %v", err)
-			return fmt.Errorf("failed to validate encryption key")
+			return nil, fmt.Errorf("failed to validate encryption key")
 		}
 
-		// Find first certificate with encrypted key and test decrypt
+		var failedHostnames []string
+
+		// Test ALL certificates with encrypted keys
 		for _, cert := range certs {
+			// Test active encrypted private key
 			if len(cert.EncryptedPrivateKey) > 0 {
 				_, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, key)
 				if err != nil {
-					logger.Error("Encryption key validation failed: %v", err)
-					return fmt.Errorf("invalid encryption key")
+					logger.Error("Encryption key validation failed for certificate: %s", cert.Hostname)
+					failedHostnames = append(failedHostnames, cert.Hostname)
+					continue
 				}
-				logger.Info("Encryption key validated successfully against certificate")
-				break
+			}
+
+			// Test pending encrypted private key
+			if len(cert.PendingEncryptedPrivateKey) > 0 {
+				_, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, key)
+				if err != nil {
+					logger.Error("Encryption key validation failed for pending key: %s", cert.Hostname)
+					// Only add if not already in the list
+					found := false
+					for _, h := range failedHostnames {
+						if h == cert.Hostname {
+							found = true
+							break
+						}
+					}
+					if !found {
+						failedHostnames = append(failedHostnames, cert.Hostname)
+					}
+				}
 			}
 		}
+
+		// If any certificates failed, return error with details
+		if len(failedHostnames) > 0 {
+			logger.Error("Encryption key validation failed for %d certificate(s)", len(failedHostnames))
+			return &models.KeyValidationResult{
+				Valid:           false,
+				FailedHostnames: failedHostnames,
+			}, fmt.Errorf("invalid encryption key: failed to decrypt %d certificate(s)", len(failedHostnames))
+		}
+
+		logger.Info("Encryption key validated successfully against all certificates")
 	}
 
 	// Store in memory
 	a.encryptionKey = []byte(key)
 	a.waitingForEncryptionKey = false
+	a.encryptionKeyProvided = true
 
 	logger.Info("Encryption key validated, initializing services...")
 
@@ -251,7 +337,7 @@ func (a *App) ProvideEncryptionKey(key string) error {
 
 	logger.Info("All services initialized successfully")
 
-	return nil
+	return &models.KeyValidationResult{Valid: true}, nil
 }
 
 // ============================================================================
@@ -275,10 +361,7 @@ func (a *App) IsSetupComplete() (bool, error) {
 
 // SaveSetup creates new configuration from scratch
 func (a *App) SaveSetup(req models.SetupRequest) error {
-	if err := a.requireEncryptionKey(); err != nil {
-		return err
-	}
-
+	// No encryption key required - just saving CA configuration
 	logger.Info("Saving setup configuration...")
 
 	a.mu.RLock()
@@ -406,6 +489,8 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 
 	a.mu.Lock()
 	a.isConfigured = true
+	a.waitingForEncryptionKey = false // Key was provided during restore
+	a.encryptionKeyProvided = true
 	a.mu.Unlock()
 
 	logger.Info("Restore completed successfully")
@@ -461,8 +546,9 @@ func (a *App) GenerateCSR(req models.CSRRequest) (*models.CSRResponse, error) {
 }
 
 // UploadCertificate activates a signed certificate
+// Does NOT require encryption key - just adds cert PEM to existing entry
 func (a *App) UploadCertificate(hostname, certPEM string) error {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return err
 	}
 
@@ -513,8 +599,9 @@ func (a *App) ImportCertificate(req models.ImportRequest) error {
 }
 
 // ListCertificates returns filtered and sorted certificate list
+// Does NOT require encryption key - read-only operation
 func (a *App) ListCertificates(filter models.CertificateFilter) ([]*models.CertificateListItem, error) {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return nil, err
 	}
 
@@ -539,8 +626,9 @@ func (a *App) ListCertificates(filter models.CertificateFilter) ([]*models.Certi
 }
 
 // GetCertificate returns detailed certificate information
+// Does NOT require encryption key - read-only operation
 func (a *App) GetCertificate(hostname string) (*models.Certificate, error) {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return nil, err
 	}
 
@@ -564,8 +652,9 @@ func (a *App) GetCertificate(hostname string) (*models.Certificate, error) {
 }
 
 // DeleteCertificate deletes a certificate
+// Does NOT require encryption key - deletion doesn't need decryption
 func (a *App) DeleteCertificate(hostname string) error {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return err
 	}
 
@@ -593,8 +682,9 @@ func (a *App) DeleteCertificate(hostname string) error {
 // ============================================================================
 
 // SaveCSRToFile prompts user to save CSR to file
+// Does NOT require encryption key - CSR is not encrypted
 func (a *App) SaveCSRToFile(hostname string) error {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return err
 	}
 
@@ -644,8 +734,9 @@ func (a *App) SaveCSRToFile(hostname string) error {
 }
 
 // SaveCertificateToFile prompts user to save certificate to file
+// Does NOT require encryption key - certificate is not encrypted
 func (a *App) SaveCertificateToFile(hostname string) error {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return err
 	}
 
@@ -752,9 +843,17 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 // ============================================================================
 
 // ExportBackup prompts user to save backup file
+// Requires encryption key only if includeKeys is true
 func (a *App) ExportBackup(includeKeys bool) error {
-	if err := a.requireSetupComplete(); err != nil {
+	if err := a.requireSetupOnly(); err != nil {
 		return err
+	}
+
+	// If including keys, require encryption key
+	if includeKeys {
+		if err := a.requireEncryptionKey(); err != nil {
+			return fmt.Errorf("encryption key required to export backup with private keys")
+		}
 	}
 
 	logger.Info("Exporting backup (includeKeys=%v)...", includeKeys)

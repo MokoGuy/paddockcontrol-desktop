@@ -20,7 +20,13 @@ import logo from "@/assets/images/logo-universal.png";
 
 export function EncryptionKeyPrompt() {
     const navigate = useNavigate();
-    const { setIsWaitingForEncryptionKey, setError } = useAppStore();
+    const {
+        setIsWaitingForEncryptionKey,
+        setIsEncryptionKeyProvided,
+        keyValidationError,
+        setKeyValidationError,
+        setError,
+    } = useAppStore();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -35,25 +41,53 @@ export function EncryptionKeyPrompt() {
 
     const onSubmit = async (data: EncryptionKeyInput) => {
         setIsLoading(true);
+        setKeyValidationError(null);
         try {
-            await api.provideEncryptionKey(data.key);
-            setIsWaitingForEncryptionKey(false);
-            setError(null);
+            const result = await api.provideEncryptionKey(data.key);
 
-            // Check if setup is complete
-            const isSetupComplete = await api.isSetupComplete();
-            if (isSetupComplete) {
-                navigate("/dashboard", { replace: true });
-            } else {
-                navigate("/setup", { replace: true });
+            if (result.valid) {
+                setIsWaitingForEncryptionKey(false);
+                setIsEncryptionKeyProvided(true);
+                setError(null);
+
+                // Check if setup is complete
+                const isSetupComplete = await api.isSetupComplete();
+                if (isSetupComplete) {
+                    navigate("/dashboard", { replace: true });
+                } else {
+                    navigate("/setup", { replace: true });
+                }
             }
         } catch (err) {
             const message =
                 err instanceof Error
                     ? err.message
                     : "Failed to validate encryption key";
-            setError(message);
+
+            // Check if the error contains failed hostnames from the backend
+            // The Wails error message format might include the validation result
+            setKeyValidationError({
+                message,
+                failedHostnames: [], // Backend returns error message, we show it
+            });
             reset();
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSkip = async () => {
+        setIsLoading(true);
+        setKeyValidationError(null);
+        try {
+            await api.skipEncryptionKey();
+            setIsWaitingForEncryptionKey(false);
+            setIsEncryptionKeyProvided(false);
+            navigate("/dashboard", { replace: true });
+        } catch (err) {
+            const message =
+                err instanceof Error ? err.message : "Failed to skip";
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -73,7 +107,7 @@ export function EncryptionKeyPrompt() {
                     <div>
                         <CardTitle className="text-2xl">Welcome Back</CardTitle>
                         <CardDescription>
-                            Enter your encryption key to continue
+                            Enter your encryption key to unlock all features
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -82,6 +116,30 @@ export function EncryptionKeyPrompt() {
                         onSubmit={handleSubmit(onSubmit)}
                         className="space-y-4"
                     >
+                        {/* Key validation error display */}
+                        {keyValidationError && (
+                            <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
+                                <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                    {keyValidationError.message}
+                                </p>
+                                {keyValidationError.failedHostnames.length >
+                                    0 && (
+                                    <div className="mt-2">
+                                        <p className="text-xs text-red-700 dark:text-red-300 mb-1">
+                                            Failed to decrypt keys for:
+                                        </p>
+                                        <ul className="text-xs text-red-600 dark:text-red-400 list-disc list-inside">
+                                            {keyValidationError.failedHostnames.map(
+                                                (h) => (
+                                                    <li key={h}>{h}</li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label htmlFor="key">Encryption Key</Label>
                             <div className="relative">
@@ -98,9 +156,9 @@ export function EncryptionKeyPrompt() {
                                     onClick={() =>
                                         setShowPassword(!showPassword)
                                     }
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 text-sm"
                                 >
-                                    {showPassword ? "👁️" : "👁️‍🗨️"}
+                                    {showPassword ? "Hide" : "Show"}
                                 </button>
                             </div>
                             {errors.key && (
@@ -117,11 +175,35 @@ export function EncryptionKeyPrompt() {
                         >
                             {isLoading ? "Validating..." : "Unlock"}
                         </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={handleSkip}
+                            disabled={isLoading}
+                        >
+                            Skip for Now
+                        </Button>
                     </form>
 
-                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg">
+                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-lg">
+                        <p className="text-xs font-medium text-amber-800 dark:text-amber-200 mb-2">
+                            Skipping will limit functionality:
+                        </p>
+                        <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-0.5">
+                            <li>Cannot generate new CSRs</li>
+                            <li>Cannot import certificates</li>
+                            <li>Cannot download private keys</li>
+                        </ul>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                            You can provide your key later in Settings.
+                        </p>
+                    </div>
+
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg">
                         <p className="text-xs text-blue-800 dark:text-blue-200">
-                            💡 The encryption key must be at least 16 characters
+                            The encryption key must be at least 16 characters
                             and is used to protect your private keys.
                         </p>
                     </div>
