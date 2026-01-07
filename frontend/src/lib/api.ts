@@ -79,6 +79,9 @@ export const api = {
     copyToClipboard: (text: string) => App.CopyToClipboard(text),
     getDataDirectory: () => App.GetDataDirectory() as Promise<string>,
     getBuildInfo: () => App.GetBuildInfo() as Promise<Record<string, string>>,
+
+    // Database management
+    resetDatabase: () => App.ResetDatabase(),
 };
 
 export type Api = typeof api;

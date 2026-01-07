@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSetup } from "@/hooks/useSetup";
 import { useBackup } from "@/hooks/useBackup";
 import { useConfigStore } from "@/stores/useConfigStore";
+import { api } from "@/lib/api";
 import {
     Card,
     CardContent,
@@ -28,6 +29,8 @@ export function Settings() {
     } = useBackup();
     const [dataDir, setDataDir] = useState<string | null>(null);
     const [exportConfirming, setExportConfirming] = useState(false);
+    const [resetConfirming, setResetConfirming] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
     const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
     useEffect(() => {
@@ -47,6 +50,18 @@ export function Settings() {
             setExportConfirming(false);
         } catch (err) {
             console.error("Export error:", err);
+        }
+    };
+
+    const handleResetDatabase = async () => {
+        setResetLoading(true);
+        try {
+            await api.resetDatabase();
+            // App will quit after this, so no need to update state
+        } catch (err) {
+            console.error("Reset error:", err);
+            setResetLoading(false);
+            setResetConfirming(false);
         }
     };
 
@@ -362,6 +377,40 @@ export function Settings() {
                     </CardContent>
                 </Card>
 
+                {/* Danger Zone */}
+                <Card className="mt-6 shadow-sm border-red-200 dark:border-red-900">
+                    <CardHeader>
+                        <CardTitle className="text-red-600 dark:text-red-400">
+                            Danger Zone
+                        </CardTitle>
+                        <CardDescription>
+                            Irreversible actions that affect all your data
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg">
+                            <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+                                Reset Database & Restart
+                            </h3>
+                            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                                This will permanently delete all certificates,
+                                configuration, and encryption keys. The application
+                                will close and you'll need to restart it manually.
+                                You will go through the setup wizard again.
+                            </p>
+                            <Button
+                                variant="destructive"
+                                onClick={() => setResetConfirming(true)}
+                                disabled={resetLoading}
+                            >
+                                {resetLoading
+                                    ? "Resetting..."
+                                    : "Reset Database & Restart"}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Footer */}
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
                     <p>
@@ -381,6 +430,19 @@ export function Settings() {
                 isLoading={backupLoading}
                 onConfirm={handleExportBackup}
                 onCancel={() => setExportConfirming(false)}
+            />
+
+            {/* Reset Confirmation Dialog */}
+            <ConfirmDialog
+                open={resetConfirming}
+                title="Reset Database & Restart"
+                description="This will permanently delete ALL data including certificates, configuration, and encryption keys. This action cannot be undone. The application will close after reset."
+                confirmText="Reset & Restart"
+                cancelText="Cancel"
+                isDestructive={true}
+                isLoading={resetLoading}
+                onConfirm={handleResetDatabase}
+                onCancel={() => setResetConfirming(false)}
             />
         </div>
     );

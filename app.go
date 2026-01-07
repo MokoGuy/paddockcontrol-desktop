@@ -840,3 +840,50 @@ func (a *App) GetBuildInfo() map[string]string {
 		"goVersion": runtime.Version(),
 	}
 }
+
+// ResetDatabase deletes all data and quits the app for a fresh restart
+func (a *App) ResetDatabase() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	logger.Info("Resetting database - deleting all data...")
+
+	// Close database connection
+	if a.db != nil {
+		if err := a.db.Close(); err != nil {
+			logger.Error("Failed to close database: %v", err)
+		}
+		a.db = nil
+	}
+
+	// Delete database files
+	dbPath := filepath.Join(a.dataDir, "certificates.db")
+	filesToDelete := []string{
+		dbPath,
+		dbPath + "-wal",
+		dbPath + "-shm",
+	}
+
+	for _, f := range filesToDelete {
+		if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
+			logger.Error("Failed to delete %s: %v", f, err)
+		} else if err == nil {
+			logger.Info("Deleted: %s", f)
+		}
+	}
+
+	// Clear encryption key from memory
+	if a.encryptionKey != nil {
+		for i := range a.encryptionKey {
+			a.encryptionKey[i] = 0
+		}
+		a.encryptionKey = nil
+	}
+
+	logger.Info("Database reset complete. Quitting app...")
+
+	// Quit app - user will restart manually
+	wailsruntime.Quit(a.ctx)
+
+	return nil
+}
