@@ -402,21 +402,6 @@ export function Dashboard() {
                                                     )}
                                                 </div>
                                             </div>
-
-                                            <div className="flex gap-2 ml-4">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(
-                                                            `/certificates/${cert.hostname}`,
-                                                        );
-                                                    }}
-                                                >
-                                                    View
-                                                </Button>
-                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
