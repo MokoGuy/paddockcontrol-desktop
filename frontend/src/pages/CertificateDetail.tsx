@@ -28,7 +28,11 @@ import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { formatDateTime } from "@/lib/theme";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Download04Icon } from "@hugeicons/core-free-icons";
+import {
+    Download04Icon,
+    RefreshIcon,
+    Delete02Icon,
+} from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
 
@@ -224,12 +228,57 @@ export function CertificateDetail() {
                             Certificate details and operations
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate("/dashboard")}
-                    >
-                        ← Back
-                    </Button>
+                    <div className="flex gap-2">
+                        {!certificate.read_only && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        navigate("/certificates/generate", {
+                                            state: {
+                                                renewal: certificate.hostname,
+                                            },
+                                        })
+                                    }
+                                    disabled={!isEncryptionKeyProvided}
+                                    title={
+                                        !isEncryptionKeyProvided
+                                            ? "Encryption key required"
+                                            : ""
+                                    }
+                                >
+                                    <HugeiconsIcon
+                                        icon={RefreshIcon}
+                                        className="w-4 h-4 mr-1"
+                                        strokeWidth={2}
+                                    />
+                                    Renew
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                    onClick={() => setDeleteConfirming(true)}
+                                    disabled={certLoading || backupLoading}
+                                >
+                                    <HugeiconsIcon
+                                        icon={Delete02Icon}
+                                        className="w-4 h-4 mr-1"
+                                        strokeWidth={2}
+                                    />
+                                    Delete
+                                </Button>
+                            </>
+                        )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/dashboard")}
+                        >
+                            ← Back
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Error Message */}
@@ -580,39 +629,6 @@ export function CertificateDetail() {
                             >
                                 Download Private Key
                             </Button>
-                            {!certificate.read_only && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() =>
-                                            navigate("/certificates/generate", {
-                                                state: {
-                                                    renewal:
-                                                        certificate.hostname,
-                                                },
-                                            })
-                                        }
-                                        disabled={!isEncryptionKeyProvided}
-                                        title={
-                                            !isEncryptionKeyProvided
-                                                ? "Encryption key required"
-                                                : ""
-                                        }
-                                    >
-                                        Renew Certificate
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                                        onClick={() =>
-                                            setDeleteConfirming(true)
-                                        }
-                                        disabled={certLoading || backupLoading}
-                                    >
-                                        Delete
-                                    </Button>
-                                </>
-                            )}
                         </div>
                     </CardContent>
                 </Card>
