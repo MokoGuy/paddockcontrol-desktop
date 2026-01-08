@@ -340,6 +340,28 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 	return &models.KeyValidationResult{Valid: true}, nil
 }
 
+// ClearEncryptionKey clears the provided encryption key and returns to read-only mode
+func (a *App) ClearEncryptionKey() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.encryptionKeyProvided {
+		return fmt.Errorf("no encryption key to clear")
+	}
+
+	logger.Info("Clearing encryption key - returning to read-only mode")
+
+	// Zero out the encryption key for security
+	for i := range a.encryptionKey {
+		a.encryptionKey[i] = 0
+	}
+	a.encryptionKey = nil
+	a.encryptionKeyProvided = false
+	// Keep waitingForEncryptionKey = false (user can provide again from Settings)
+
+	return nil
+}
+
 // ============================================================================
 // Setup Operations
 // ============================================================================

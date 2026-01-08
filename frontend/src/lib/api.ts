@@ -25,6 +25,7 @@ export const api = {
     provideEncryptionKey: (key: string) =>
         App.ProvideEncryptionKey(key) as Promise<KeyValidationResult>,
     skipEncryptionKey: () => App.SkipEncryptionKey(),
+    clearEncryptionKey: () => App.ClearEncryptionKey(),
 
     // Setup
     isSetupComplete: () => App.IsSetupComplete(),

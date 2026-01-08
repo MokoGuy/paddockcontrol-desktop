@@ -6,6 +6,8 @@ import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { LockIcon } from "@hugeicons/core-free-icons";
 import {
     Card,
     CardContent,
@@ -22,7 +24,7 @@ import { formatDateTime } from "@/lib/theme";
 export function Settings() {
     const navigate = useNavigate();
     const { config } = useConfigStore();
-    const { isEncryptionKeyProvided } = useAppStore();
+    const { isEncryptionKeyProvided, setIsEncryptionKeyProvided } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
     const {
         isLoading: backupLoading,
@@ -66,6 +68,15 @@ export function Settings() {
             console.error("Reset error:", err);
             setResetLoading(false);
             setResetConfirming(false);
+        }
+    };
+
+    const handleClearEncryptionKey = async () => {
+        try {
+            await api.clearEncryptionKey();
+            setIsEncryptionKeyProvided(false);
+        } catch (err) {
+            console.error("Failed to clear encryption key:", err);
         }
     };
 
@@ -301,10 +312,29 @@ export function Settings() {
                 {/* Encryption Key */}
                 <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
                     <CardHeader>
-                        <CardTitle>Encryption Key</CardTitle>
-                        <CardDescription>
-                            Manage encryption key for private key operations
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Encryption Key</CardTitle>
+                                <CardDescription>
+                                    Manage encryption key for private key
+                                    operations
+                                </CardDescription>
+                            </div>
+                            {isEncryptionKeyProvided && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleClearEncryptionKey}
+                                >
+                                    <HugeiconsIcon
+                                        icon={LockIcon}
+                                        className="w-4 h-4 mr-1"
+                                        strokeWidth={2}
+                                    />
+                                    Lock
+                                </Button>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {isEncryptionKeyProvided ? (
