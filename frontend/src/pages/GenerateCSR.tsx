@@ -84,13 +84,22 @@ export function GenerateCSR() {
 
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Generate CSR
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Create a new certificate signing request
-                        </p>
+                    <div className="flex items-start justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                Generate CSR
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                Create a new certificate signing request
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/")}
+                        >
+                            ← Back
+                        </Button>
                     </div>
 
                     {error && (
@@ -314,18 +323,9 @@ export function GenerateCSR() {
                                 {/* Buttons */}
                                 <div className="flex gap-3 pt-4">
                                     <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => navigate("/")}
-                                        disabled={isSubmitting || isLoading}
-                                        className="flex-1"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
                                         type="submit"
                                         disabled={isSubmitting || isLoading}
-                                        className="flex-1"
+                                        className="w-full"
                                     >
                                         {isSubmitting || isLoading
                                             ? "Generating..."

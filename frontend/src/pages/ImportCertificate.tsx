@@ -53,13 +53,22 @@ export function ImportCertificate() {
                 <Header />
                 <main className="flex-1 overflow-y-auto scrollbar-float">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <div className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                Confirm Import
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                Review the certificate before importing
-                            </p>
+                        <div className="flex items-start justify-between mb-8">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                    Confirm Import
+                                </h1>
+                                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                    Review the certificate before importing
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/")}
+                            >
+                                ← Back
+                            </Button>
                         </div>
 
                         <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
@@ -96,7 +105,7 @@ export function ImportCertificate() {
                                 onClick={() => setStep("form")}
                                 className="flex-1"
                             >
-                                Back
+                                Back to Form
                             </Button>
                             <Button
                                 onClick={handleSubmit(onSubmit)}
@@ -120,14 +129,23 @@ export function ImportCertificate() {
 
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Import Certificate
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Import an existing SSL/TLS certificate with its
-                            private key
-                        </p>
+                    <div className="flex items-start justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                Import Certificate
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                Import an existing SSL/TLS certificate with its
+                                private key
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/")}
+                        >
+                            ← Back
+                        </Button>
                     </div>
 
                     {error && (
@@ -247,20 +265,11 @@ export function ImportCertificate() {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 pt-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => navigate("/")}
-                                        disabled={isSubmitting || isLoading}
-                                        className="flex-1"
-                                    >
-                                        Cancel
-                                    </Button>
+                                <div className="pt-4">
                                     <Button
                                         type="submit"
                                         disabled={isSubmitting || isLoading}
-                                        className="flex-1"
+                                        className="w-full"
                                     >
                                         {isSubmitting || isLoading
                                             ? "Validating..."
