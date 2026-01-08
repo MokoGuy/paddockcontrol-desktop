@@ -1070,7 +1070,7 @@ func (a *App) GetBuildInfo() map[string]string {
 	}
 }
 
-// ResetDatabase deletes all data and quits the app for a fresh restart
+// ResetDatabase deletes all data and reinitializes for a fresh start
 func (a *App) ResetDatabase() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1109,10 +1109,23 @@ func (a *App) ResetDatabase() error {
 		a.encryptionKey = nil
 	}
 
-	logger.Info("Database reset complete. Quitting app...")
+	// Reinitialize database
+	var err error
+	a.db, err = db.NewDatabase(a.dataDir)
+	if err != nil {
+		logger.Error("Failed to reinitialize database: %v", err)
+		return fmt.Errorf("failed to reinitialize database: %w", err)
+	}
 
-	// Quit app - user will restart manually
-	wailsruntime.Quit(a.ctx)
+	// Reset state to initial values
+	a.isConfigured = false
+	a.waitingForEncryptionKey = true
+	a.encryptionKeyProvided = false
+
+	// Reinitialize services without encryption key
+	a.initializeServicesWithoutKey()
+
+	logger.Info("Database reset complete. Ready for fresh setup.")
 
 	return nil
 }

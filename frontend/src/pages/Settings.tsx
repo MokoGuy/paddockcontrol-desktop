@@ -30,7 +30,13 @@ import { formatDateTime } from "@/lib/theme";
 export function Settings() {
     const navigate = useNavigate();
     const { config } = useConfigStore();
-    const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
+    const {
+        isAdminModeEnabled,
+        setIsAdminModeEnabled,
+        setIsSetupComplete,
+        setIsWaitingForEncryptionKey,
+        setIsEncryptionKeyProvided,
+    } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
 
     // Enable admin mode via Konami code
@@ -75,7 +81,13 @@ export function Settings() {
         setResetLoading(true);
         try {
             await api.resetDatabase();
-            // App will quit after this, so no need to update state
+            // Reset frontend state to initial values
+            setIsSetupComplete(false);
+            setIsWaitingForEncryptionKey(true);
+            setIsEncryptionKeyProvided(false);
+            setIsAdminModeEnabled(false);
+            // Navigate to setup wizard
+            navigate("/setup", { replace: true });
         } catch (err) {
             console.error("Reset error:", err);
             setResetLoading(false);
@@ -414,13 +426,12 @@ export function Settings() {
                         <CardContent className="space-y-4">
                             <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg">
                                 <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
-                                    Reset Database & Restart
+                                    Reset Database
                                 </h3>
                                 <p className="text-sm text-red-700 dark:text-red-300 mb-4">
                                     This will permanently delete all certificates,
-                                    configuration, and encryption keys. The application
-                                    will close and you'll need to restart it manually.
-                                    You will go through the setup wizard again.
+                                    configuration, and encryption keys. You will be
+                                    returned to the setup wizard to start fresh.
                                 </p>
                                 <Button
                                     variant="destructive"
@@ -429,7 +440,7 @@ export function Settings() {
                                 >
                                     {resetLoading
                                         ? "Resetting..."
-                                        : "Reset Database & Restart"}
+                                        : "Reset Database"}
                                 </Button>
                             </div>
                         </CardContent>
@@ -460,9 +471,9 @@ export function Settings() {
             {/* Reset Confirmation Dialog */}
             <ConfirmDialog
                 open={resetConfirming}
-                title="Reset Database & Restart"
-                description="This will permanently delete ALL data including certificates, configuration, and encryption keys. This action cannot be undone. The application will close after reset."
-                confirmText="Reset & Restart"
+                title="Reset Database"
+                description="This will permanently delete ALL data including certificates, configuration, and encryption keys. This action cannot be undone."
+                confirmText="Reset"
                 cancelText="Cancel"
                 isDestructive={true}
                 isLoading={resetLoading}
