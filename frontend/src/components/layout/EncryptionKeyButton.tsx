@@ -3,7 +3,7 @@ import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LockIcon } from "@hugeicons/core-free-icons";
+import { LockIcon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
@@ -45,7 +45,7 @@ export function EncryptionKeyButton() {
                 } hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent`}
             >
                 <HugeiconsIcon
-                    icon={LockIcon}
+                    icon={isEncryptionKeyProvided ? LockKeyIcon : LockIcon}
                     className="w-5 h-5"
                     strokeWidth={2}
                 />
