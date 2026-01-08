@@ -110,7 +110,7 @@ export function Header() {
                         className="text-gray-600 dark:text-gray-400"
                     >
                         <HugeiconsIcon
-                            icon={isDarkMode ? Sun02Icon : Moon02Icon}
+                            icon={isDarkMode ? Moon02Icon : Sun02Icon}
                             className="w-5 h-5"
                             strokeWidth={2}
                         />

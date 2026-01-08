@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Sun02Icon, Moon02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import {
+    Sun02Icon,
+    Moon02Icon,
+    Cancel01Icon,
+} from "@hugeicons/core-free-icons";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { getTheme, setTheme, applyTheme } from "@/lib/theme";
 import { Quit } from "../../wailsjs/runtime/runtime";
@@ -17,7 +21,11 @@ import logo from "@/assets/images/logo-universal.png";
 
 export function SetupChoice() {
     const navigate = useNavigate();
-    const { isDarkMode, setTheme: setStoreTheme, setIsDarkMode } = useThemeStore();
+    const {
+        isDarkMode,
+        setTheme: setStoreTheme,
+        setIsDarkMode,
+    } = useThemeStore();
 
     useEffect(() => {
         const currentTheme = getTheme();
@@ -45,7 +53,9 @@ export function SetupChoice() {
             {/* Top-right controls */}
             <div
                 className="fixed top-4 right-4 flex items-center gap-1"
-                style={{ "--wails-draggable": "no-drag" } as React.CSSProperties}
+                style={
+                    { "--wails-draggable": "no-drag" } as React.CSSProperties
+                }
             >
                 <Button
                     variant="ghost"
@@ -55,7 +65,7 @@ export function SetupChoice() {
                     className="text-gray-600 dark:text-gray-400"
                 >
                     <HugeiconsIcon
-                        icon={isDarkMode ? Sun02Icon : Moon02Icon}
+                        icon={isDarkMode ? Moon02Icon : Sun02Icon}
                         className="w-5 h-5"
                         strokeWidth={2}
                     />
