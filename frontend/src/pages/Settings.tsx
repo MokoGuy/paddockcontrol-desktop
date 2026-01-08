@@ -17,6 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import {
+    InputGroup,
+    InputGroupInput,
+    InputGroupButton,
+} from "@/components/ui/input-group";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { formatDateTime } from "@/lib/theme";
 
 export function Settings() {
@@ -41,7 +49,7 @@ export function Settings() {
     const [exportConfirming, setExportConfirming] = useState(false);
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
-    const [copySuccess, setCopySuccess] = useState<string | null>(null);
+    const { copy, isCopied } = useCopyToClipboard();
 
     useEffect(() => {
         loadDataDirectory();
@@ -85,12 +93,6 @@ export function Settings() {
             </div>
         );
     }
-
-    const copyToClipboard = (text: string, field: string) => {
-        navigator.clipboard.writeText(text);
-        setCopySuccess(field);
-        setTimeout(() => setCopySuccess(null), 2000);
-    };
 
     if (configError) {
         return (
@@ -282,21 +284,32 @@ export function Settings() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                <code className="text-xs text-gray-700 dark:text-gray-300 break-all">
-                                    {dataDir}
-                                </code>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                        copyToClipboard(dataDir, "datadir")
-                                    }
+                            <InputGroup>
+                                <InputGroupInput
+                                    value={dataDir}
+                                    readOnly
+                                    className="font-mono"
+                                />
+                                <InputGroupButton
+                                    size="icon-xs"
+                                    onClick={() => copy(dataDir)}
                                 >
-                                    {copySuccess === "datadir" ? "✓" : "Copy"}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    <HugeiconsIcon
+                                        icon={
+                                            isCopied(dataDir)
+                                                ? Tick02Icon
+                                                : Copy01Icon
+                                        }
+                                        className={
+                                            isCopied(dataDir)
+                                                ? "text-green-500"
+                                                : ""
+                                        }
+                                        strokeWidth={2}
+                                    />
+                                </InputGroupButton>
+                            </InputGroup>
+                            <p className="text-xs text-muted-foreground">
                                 All certificate data, backups, and application
                                 files are stored in this directory.
                             </p>

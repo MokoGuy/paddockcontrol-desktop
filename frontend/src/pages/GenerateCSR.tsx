@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { CodeBlock } from "@/components/ui/code-block";
 
 export function GenerateCSR() {
     const navigate = useNavigate();
@@ -112,24 +113,11 @@ export function GenerateCSR() {
                                 Send this to your certificate authority
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="relative">
-                                <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-64 border border-gray-700">
-                                    {csrResult.csr}
-                                </pre>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(
-                                            csrResult.csr,
-                                        );
-                                    }}
-                                >
-                                    Copy
-                                </Button>
-                            </div>
+                        <CardContent>
+                            <CodeBlock
+                                content={csrResult.csr}
+                                maxHeight="max-h-64"
+                            />
                         </CardContent>
                     </Card>
 

@@ -27,6 +27,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
+import { CodeBlock } from "@/components/ui/code-block";
 import { formatDateTime } from "@/lib/theme";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -49,14 +50,13 @@ export function CertificateDetail() {
         isLoading: certLoading,
         error: certError,
     } = useCertificates();
-    const { copyToClipboard, isLoading: backupLoading } = useBackup();
+    const { isLoading: backupLoading } = useBackup();
     const { isEncryptionKeyProvided } = useAppStore();
 
     const [certificate, setCertificate] = useState<Certificate | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deleteConfirming, setDeleteConfirming] = useState(false);
-    const [copiedField, setCopiedField] = useState<string | null>(null);
 
     // Upload certificate dialog state
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -171,16 +171,6 @@ export function CertificateDetail() {
                     ? err.message
                     : "Failed to delete certificate",
             );
-        }
-    };
-
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await copyToClipboard(text);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-        } catch (err) {
-            console.error("Copy error:", err);
         }
     };
 
@@ -519,27 +509,8 @@ export function CertificateDetail() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="relative">
-                                <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
-                                    {certificate.certificate_pem}
-                                </pre>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() =>
-                                        handleCopy(
-                                            certificate.certificate_pem!,
-                                            "cert",
-                                        )
-                                    }
-                                >
-                                    {copiedField === "cert"
-                                        ? "✓ Copied"
-                                        : "Copy"}
-                                </Button>
-                            </div>
+                        <CardContent>
+                            <CodeBlock content={certificate.certificate_pem} />
                         </CardContent>
                     </Card>
                 )}
@@ -615,26 +586,7 @@ export function CertificateDetail() {
                                     {privateKeyError}
                                 </p>
                             ) : privateKeyPEM ? (
-                                <div className="relative">
-                                    <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
-                                        {privateKeyPEM}
-                                    </pre>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="absolute top-2 right-2"
-                                        onClick={() =>
-                                            handleCopy(
-                                                privateKeyPEM,
-                                                "privateKey",
-                                            )
-                                        }
-                                    >
-                                        {copiedField === "privateKey"
-                                            ? "✓ Copied"
-                                            : "Copy"}
-                                    </Button>
-                                </div>
+                                <CodeBlock content={privateKeyPEM} />
                             ) : (
                                 <p className="text-sm text-gray-500">
                                     No private key available
@@ -655,27 +607,8 @@ export function CertificateDetail() {
                                 This CSR is awaiting a signed certificate
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="relative">
-                                <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
-                                    {certificate.pending_csr}
-                                </pre>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() =>
-                                        handleCopy(
-                                            certificate.pending_csr!,
-                                            "csr",
-                                        )
-                                    }
-                                >
-                                    {copiedField === "csr"
-                                        ? "✓ Copied"
-                                        : "Copy"}
-                                </Button>
-                            </div>
+                        <CardContent>
+                            <CodeBlock content={certificate.pending_csr} />
                         </CardContent>
                     </Card>
                 )}
