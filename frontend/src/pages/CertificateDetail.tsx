@@ -619,12 +619,51 @@ export function CertificateDetail() {
                     {certificate.pending_csr && (
                         <Card className="mb-6 shadow-sm border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950">
                             <CardHeader>
-                                <CardTitle className="text-yellow-900 dark:text-yellow-100">
-                                    Pending Certificate Signing Request
-                                </CardTitle>
-                                <CardDescription className="text-yellow-800 dark:text-yellow-200">
-                                    This CSR is awaiting a signed certificate
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-yellow-900 dark:text-yellow-100">
+                                            Pending Certificate Signing Request
+                                        </CardTitle>
+                                        <CardDescription className="text-yellow-800 dark:text-yellow-200">
+                                            This CSR is awaiting a signed
+                                            certificate
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900"
+                                            onClick={() => {
+                                                const link =
+                                                    document.createElement("a");
+                                                link.href =
+                                                    "data:text/plain;charset=utf-8," +
+                                                    encodeURIComponent(
+                                                        certificate.pending_csr!,
+                                                    );
+                                                link.download = `${certificate.hostname}.csr`;
+                                                link.click();
+                                            }}
+                                        >
+                                            <HugeiconsIcon
+                                                icon={Download04Icon}
+                                                className="w-4 h-4 mr-1"
+                                                strokeWidth={2}
+                                            />
+                                            Download
+                                        </Button>
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={() =>
+                                                setUploadDialogOpen(true)
+                                            }
+                                        >
+                                            Upload Signed Certificate
+                                        </Button>
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <CodeBlock content={certificate.pending_csr} />
@@ -662,46 +701,6 @@ export function CertificateDetail() {
                                         </p>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Actions - only shown for pending CSRs */}
-                    {certificate.pending_csr && (
-                        <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                            <CardHeader>
-                                <CardTitle>Actions</CardTitle>
-                                <CardDescription>
-                                    Manage this certificate
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            const link =
-                                                document.createElement("a");
-                                            link.href =
-                                                "data:text/plain;charset=utf-8," +
-                                                encodeURIComponent(
-                                                    certificate.pending_csr!,
-                                                );
-                                            link.download = `${certificate.hostname}.csr`;
-                                            link.click();
-                                        }}
-                                    >
-                                        Download CSR
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        onClick={() =>
-                                            setUploadDialogOpen(true)
-                                        }
-                                    >
-                                        Upload Signed Certificate
-                                    </Button>
-                                </div>
                             </CardContent>
                         </Card>
                     )}
