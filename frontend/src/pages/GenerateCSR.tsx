@@ -37,6 +37,7 @@ export function GenerateCSR() {
         handleSubmit,
         formState: { errors, isSubmitting },
         watch,
+        reset,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
     });
@@ -46,6 +47,15 @@ export function GenerateCSR() {
     useEffect(() => {
         loadDefaults();
     }, []);
+
+    useEffect(() => {
+        if (defaults) {
+            reset({
+                key_size: defaults.default_key_size,
+                country: defaults.default_country,
+            });
+        }
+    }, [defaults, reset]);
 
     const onSubmit = async (data: CSRRequestInput) => {
         const sans = sanInputs.filter((s) => s.trim());
