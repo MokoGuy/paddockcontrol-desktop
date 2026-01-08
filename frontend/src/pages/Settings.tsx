@@ -24,9 +24,13 @@ import {
 } from "@/components/ui/input-group";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import {
+    Copy01Icon,
+    Tick02Icon,
+    FolderLinksIcon,
+} from "@hugeicons/core-free-icons";
 import { formatDateTime } from "@/lib/theme";
-import { GetBuildInfo } from "../../wailsjs/go/main/App";
+import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
 
 export function Settings() {
     const navigate = useNavigate();
@@ -80,6 +84,14 @@ export function Settings() {
 
         loadData();
     }, [getDataDirectory]);
+
+    const handleOpenDataDirectory = async () => {
+        try {
+            await OpenDataDirectory();
+        } catch (err) {
+            console.error("Failed to open data directory:", err);
+        }
+    };
 
     const handleExportBackup = async () => {
         try {
@@ -332,6 +344,16 @@ export function Settings() {
                                                     ? "text-green-500"
                                                     : ""
                                             }
+                                            strokeWidth={2}
+                                        />
+                                    </InputGroupButton>
+                                    <InputGroupButton
+                                        size="icon-xs"
+                                        onClick={handleOpenDataDirectory}
+                                        title="Open folder in explorer"
+                                    >
+                                        <HugeiconsIcon
+                                            icon={FolderLinksIcon}
                                             strokeWidth={2}
                                         />
                                     </InputGroupButton>

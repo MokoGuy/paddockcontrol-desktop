@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -1060,6 +1061,42 @@ func (a *App) GetDataDirectory() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.dataDir
+}
+
+// OpenDataDirectory opens the data directory in the OS file explorer
+func (a *App) OpenDataDirectory() error {
+	a.mu.RLock()
+	dataDir := a.dataDir
+	a.mu.RUnlock()
+
+	if dataDir == "" {
+		return fmt.Errorf("data directory not initialized")
+	}
+
+	// Verify directory exists
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		return fmt.Errorf("data directory does not exist: %s", dataDir)
+	}
+
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("explorer", dataDir)
+	case "darwin":
+		cmd = exec.Command("open", dataDir)
+	case "linux":
+		cmd = exec.Command("xdg-open", dataDir)
+	default:
+		return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+	}
+
+	if err := cmd.Start(); err != nil {
+		logger.Error("Failed to open data directory: %v", err)
+		return fmt.Errorf("failed to open directory: %w", err)
+	}
+
+	logger.Info("Opened data directory in file explorer: %s", dataDir)
+	return nil
 }
 
 // GetBuildInfo returns version and build information
