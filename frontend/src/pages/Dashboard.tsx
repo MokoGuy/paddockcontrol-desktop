@@ -180,34 +180,25 @@ export function Dashboard() {
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Search */}
-                                <div className="flex gap-2">
-                                    <InputGroup>
-                                        <InputGroupAddon>
-                                            <HugeiconsIcon
-                                                icon={Search01Icon}
-                                                className="w-4 h-4"
-                                                strokeWidth={2}
-                                            />
-                                        </InputGroupAddon>
-                                        <InputGroupInput
-                                            placeholder="Search by hostname or SAN..."
-                                            value={searchTerm}
-                                            onChange={(e) =>
-                                                setSearchTerm(e.target.value)
-                                            }
+                                <InputGroup>
+                                    <InputGroupAddon>
+                                        <HugeiconsIcon
+                                            icon={Search01Icon}
+                                            className="w-4 h-4"
+                                            strokeWidth={2}
                                         />
-                                    </InputGroup>
-                                    <Button
-                                        variant="outline"
-                                        onClick={resetFilters}
-                                        className="whitespace-nowrap"
-                                    >
-                                        Reset Filters
-                                    </Button>
-                                </div>
+                                    </InputGroupAddon>
+                                    <InputGroupInput
+                                        placeholder="Search by hostname or SAN..."
+                                        value={searchTerm}
+                                        onChange={(e) =>
+                                            setSearchTerm(e.target.value)
+                                        }
+                                    />
+                                </InputGroup>
 
                                 {/* Filter and Sort Controls */}
-                                <div className="flex flex-wrap gap-4">
+                                <div className="flex flex-wrap gap-4 items-center justify-between w-full">
                                     {/* Status Filter */}
                                     <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -299,6 +290,19 @@ export function Dashboard() {
                                             </Button>
                                         </div>
                                     </div>
+
+                                    {/* Vertical Separator */}
+                                    <div className="border-l border-gray-300 dark:border-gray-700 h-8"></div>
+
+                                    {/* Reset Filters Button */}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={resetFilters}
+                                        className="whitespace-nowrap"
+                                    >
+                                        Reset
+                                    </Button>
                                 </div>
                             </div>
                         </CardContent>
