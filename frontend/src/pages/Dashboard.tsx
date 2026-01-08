@@ -67,338 +67,353 @@ export function Dashboard() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
             <Header />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Certificates
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Manage your SSL/TLS certificates
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => navigate("/certificates/generate")}
-                            disabled={!isEncryptionKeyProvided}
-                            title={
-                                !isEncryptionKeyProvided
-                                    ? "Encryption key required"
-                                    : ""
-                            }
-                        >
-                            Generate CSR
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => navigate("/certificates/import")}
-                            disabled={!isEncryptionKeyProvided}
-                            title={
-                                !isEncryptionKeyProvided
-                                    ? "Encryption key required"
-                                    : ""
-                            }
-                        >
-                            Import Certificate
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => navigate("/settings")}
-                        >
-                            Settings
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                        <CardContent>
-                            <p className="text-sm text-red-800 dark:text-red-200">
-                                {error}
+            <main className="flex-1 overflow-y-auto scrollbar-float">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Page Header */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                Certificates
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                Manage your SSL/TLS certificates
                             </p>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Limited Mode Notice */}
-                {!isEncryptionKeyProvided && (
-                    <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
-                        <CardContent className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                                    Limited mode - encryption key not provided
-                                </p>
-                                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                                    Some features are disabled. Provide your
-                                    encryption key to unlock full functionality.
-                                </p>
-                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={() =>
+                                    navigate("/certificates/generate")
+                                }
+                                disabled={!isEncryptionKeyProvided}
+                                title={
+                                    !isEncryptionKeyProvided
+                                        ? "Encryption key required"
+                                        : ""
+                                }
+                            >
+                                Generate CSR
+                            </Button>
                             <Button
                                 variant="outline"
-                                size="sm"
-                                className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
-                                onClick={() => setShowKeyDialog(true)}
+                                onClick={() => navigate("/certificates/import")}
+                                disabled={!isEncryptionKeyProvided}
+                                title={
+                                    !isEncryptionKeyProvided
+                                        ? "Encryption key required"
+                                        : ""
+                                }
                             >
-                                Provide Key
+                                Import Certificate
                             </Button>
-                        </CardContent>
-                    </Card>
-                )}
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate("/settings")}
+                            >
+                                Settings
+                            </Button>
+                        </div>
+                    </div>
 
-                {/* Filters Card */}
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
-                    <CardContent>
-                        <div className="space-y-4">
-                            {/* Search */}
-                            <div>
-                                <Input
-                                    placeholder="Search by hostname or SAN..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    className="max-w-md"
-                                />
-                            </div>
+                    {/* Error Message */}
+                    {error && (
+                        <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                            <CardContent>
+                                <p className="text-sm text-red-800 dark:text-red-200">
+                                    {error}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                            {/* Filter and Sort Controls */}
-                            <div className="flex flex-wrap gap-4">
-                                {/* Status Filter */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Status
-                                    </label>
-                                    <div className="flex gap-2">
-                                        {[
-                                            "all",
-                                            "pending",
-                                            "active",
-                                            "expiring",
-                                            "expired",
-                                        ].map((status) => (
-                                            <Button
-                                                key={status}
-                                                variant={
-                                                    statusFilter === status
-                                                        ? "default"
-                                                        : "outline"
-                                                }
-                                                size="sm"
-                                                onClick={() =>
-                                                    handleStatusFilterChange(
-                                                        status,
+                    {/* Limited Mode Notice */}
+                    {!isEncryptionKeyProvided && (
+                        <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
+                            <CardContent className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                        Limited mode - encryption key not
+                                        provided
+                                    </p>
+                                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                        Some features are disabled. Provide your
+                                        encryption key to unlock full
+                                        functionality.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
+                                    onClick={() => setShowKeyDialog(true)}
+                                >
+                                    Provide Key
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Filters Card */}
+                    <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                        <CardContent>
+                            <div className="space-y-4">
+                                {/* Search */}
+                                <div>
+                                    <Input
+                                        placeholder="Search by hostname or SAN..."
+                                        value={searchTerm}
+                                        onChange={(e) =>
+                                            setSearchTerm(e.target.value)
+                                        }
+                                        className="max-w-md"
+                                    />
+                                </div>
+
+                                {/* Filter and Sort Controls */}
+                                <div className="flex flex-wrap gap-4">
+                                    {/* Status Filter */}
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Status
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {[
+                                                "all",
+                                                "pending",
+                                                "active",
+                                                "expiring",
+                                                "expired",
+                                            ].map((status) => (
+                                                <Button
+                                                    key={status}
+                                                    variant={
+                                                        statusFilter === status
+                                                            ? "default"
+                                                            : "outline"
+                                                    }
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleStatusFilterChange(
+                                                            status,
+                                                        )
+                                                    }
+                                                >
+                                                    {status
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        status.slice(1)}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Sort Controls */}
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Sort By
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <Select
+                                                value={sortBy}
+                                                onValueChange={(value) =>
+                                                    setSortBy(
+                                                        value as
+                                                            | "created"
+                                                            | "expiring"
+                                                            | "hostname",
                                                     )
                                                 }
                                             >
-                                                {status
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    status.slice(1)}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Sort Controls */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Sort By
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            value={sortBy}
-                                            onValueChange={(value) =>
-                                                setSortBy(
-                                                    value as
-                                                        | "created"
-                                                        | "expiring"
-                                                        | "hostname",
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger size="sm" className="w-[120px]">
-                                                <SelectValue placeholder="Sort by" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="created">
-                                                    Created
-                                                </SelectItem>
-                                                <SelectItem value="expiring">
-                                                    Expiring
-                                                </SelectItem>
-                                                <SelectItem value="hostname">
-                                                    Hostname
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setSortOrder(
-                                                    sortOrder === "asc"
-                                                        ? "desc"
-                                                        : "asc",
-                                                )
-                                            }
-                                        >
-                                            {sortOrder === "asc" ? "↑" : "↓"}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={loadCertificates}
-                                            disabled={isLoading}
-                                        >
-                                            {isLoading
-                                                ? "Refreshing..."
-                                                : "Refresh"}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Loading State */}
-                {isLoading && !certificates.length ? (
-                    <div className="flex items-center justify-center py-12">
-                        <LoadingSpinner text="Loading certificates..." />
-                    </div>
-                ) : filteredCerts.length === 0 ? (
-                    <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                        <CardContent>
-                            <EmptyState
-                                icon={
-                                    <HugeiconsIcon
-                                        icon={Certificate02Icon}
-                                        className="w-12 h-12"
-                                        strokeWidth={1.5}
-                                    />
-                                }
-                                title={
-                                    certificates.length === 0
-                                        ? "No certificates yet"
-                                        : "No results"
-                                }
-                                description={
-                                    certificates.length === 0
-                                        ? "Create your first certificate by generating a CSR or importing an existing one."
-                                        : "Try adjusting your filters or search term."
-                                }
-                                action={
-                                    certificates.length === 0
-                                        ? {
-                                              label: "Generate CSR",
-                                              onClick: () =>
-                                                  navigate(
-                                                      "/certificates/generate",
-                                                  ),
-                                          }
-                                        : undefined
-                                }
-                            />
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {filteredCerts.map((cert) => (
-                            <Card
-                                key={cert.hostname}
-                                className="shadow-sm border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer"
-                                onClick={() =>
-                                    navigate(`/certificates/${cert.hostname}`)
-                                }
-                            >
-                                <CardContent>
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1 space-y-2">
-                                            <div className="flex items-center gap-3">
-                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                    {cert.hostname}
-                                                </h3>
-                                                <StatusBadge
-                                                    status={cert.status}
-                                                    daysUntilExpiration={
-                                                        cert.days_until_expiration
-                                                    }
-                                                />
-                                                {cert.read_only && (
-                                                    <Badge variant="secondary">
-                                                        Read-only
-                                                    </Badge>
-                                                )}
-                                            </div>
-
-                                            {cert.sans &&
-                                                cert.sans.length > 0 && (
-                                                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                        SANs:{" "}
-                                                        {cert.sans.join(", ")}
-                                                    </div>
-                                                )}
-
-                                            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
-                                                <div>
-                                                    <span className="font-medium">
-                                                        Created:
-                                                    </span>{" "}
-                                                    {formatDate(
-                                                        cert.created_at,
-                                                    )}
-                                                </div>
-                                                {cert.expires_at && (
-                                                    <div>
-                                                        <span className="font-medium">
-                                                            Expires:
-                                                        </span>{" "}
-                                                        {formatDate(
-                                                            cert.expires_at,
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {cert.key_size && (
-                                                    <div>
-                                                        <span className="font-medium">
-                                                            Key Size:
-                                                        </span>{" "}
-                                                        {cert.key_size} bits
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-2 ml-4">
+                                                <SelectTrigger
+                                                    size="sm"
+                                                    className="w-[120px]"
+                                                >
+                                                    <SelectValue placeholder="Sort by" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="created">
+                                                        Created
+                                                    </SelectItem>
+                                                    <SelectItem value="expiring">
+                                                        Expiring
+                                                    </SelectItem>
+                                                    <SelectItem value="hostname">
+                                                        Hostname
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(
-                                                        `/certificates/${cert.hostname}`,
-                                                    );
-                                                }}
+                                                onClick={() =>
+                                                    setSortOrder(
+                                                        sortOrder === "asc"
+                                                            ? "desc"
+                                                            : "asc",
+                                                    )
+                                                }
                                             >
-                                                View
+                                                {sortOrder === "asc"
+                                                    ? "↑"
+                                                    : "↓"}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={loadCertificates}
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading
+                                                    ? "Refreshing..."
+                                                    : "Refresh"}
                                             </Button>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                {/* Certificates Count */}
-                <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                    Showing {filteredCerts.length} of {certificates.length}{" "}
-                    certificates
+                    {/* Loading State */}
+                    {isLoading && !certificates.length ? (
+                        <div className="flex items-center justify-center py-12">
+                            <LoadingSpinner text="Loading certificates..." />
+                        </div>
+                    ) : filteredCerts.length === 0 ? (
+                        <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                            <CardContent>
+                                <EmptyState
+                                    icon={
+                                        <HugeiconsIcon
+                                            icon={Certificate02Icon}
+                                            className="w-12 h-12"
+                                            strokeWidth={1.5}
+                                        />
+                                    }
+                                    title={
+                                        certificates.length === 0
+                                            ? "No certificates yet"
+                                            : "No results"
+                                    }
+                                    description={
+                                        certificates.length === 0
+                                            ? "Create your first certificate by generating a CSR or importing an existing one."
+                                            : "Try adjusting your filters or search term."
+                                    }
+                                    action={
+                                        certificates.length === 0
+                                            ? {
+                                                  label: "Generate CSR",
+                                                  onClick: () =>
+                                                      navigate(
+                                                          "/certificates/generate",
+                                                      ),
+                                              }
+                                            : undefined
+                                    }
+                                />
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredCerts.map((cert) => (
+                                <Card
+                                    key={cert.hostname}
+                                    className="shadow-sm border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer"
+                                    onClick={() =>
+                                        navigate(
+                                            `/certificates/${cert.hostname}`,
+                                        )
+                                    }
+                                >
+                                    <CardContent>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                        {cert.hostname}
+                                                    </h3>
+                                                    <StatusBadge
+                                                        status={cert.status}
+                                                        daysUntilExpiration={
+                                                            cert.days_until_expiration
+                                                        }
+                                                    />
+                                                    {cert.read_only && (
+                                                        <Badge variant="secondary">
+                                                            Read-only
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                {cert.sans &&
+                                                    cert.sans.length > 0 && (
+                                                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                            SANs:{" "}
+                                                            {cert.sans.join(
+                                                                ", ",
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
+                                                    <div>
+                                                        <span className="font-medium">
+                                                            Created:
+                                                        </span>{" "}
+                                                        {formatDate(
+                                                            cert.created_at,
+                                                        )}
+                                                    </div>
+                                                    {cert.expires_at && (
+                                                        <div>
+                                                            <span className="font-medium">
+                                                                Expires:
+                                                            </span>{" "}
+                                                            {formatDate(
+                                                                cert.expires_at,
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {cert.key_size && (
+                                                        <div>
+                                                            <span className="font-medium">
+                                                                Key Size:
+                                                            </span>{" "}
+                                                            {cert.key_size} bits
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2 ml-4">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(
+                                                            `/certificates/${cert.hostname}`,
+                                                        );
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Certificates Count */}
+                    <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+                        Showing {filteredCerts.length} of {certificates.length}{" "}
+                        certificates
+                    </div>
                 </div>
             </main>
 
