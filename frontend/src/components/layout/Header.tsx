@@ -20,7 +20,7 @@ export function Header() {
         setTheme: setStoreTheme,
         setIsDarkMode,
     } = useThemeStore();
-    const { isAdminModeEnabled } = useAppStore();
+    const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
     const [version, setVersion] = useState<string>("");
 
     useEffect(() => {
@@ -87,8 +87,19 @@ export function Header() {
 
                 {isAdminModeEnabled && (
                     <div className="absolute left-1/2 transform -translate-x-1/2">
-                        <span className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center">
+                        <span className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 pl-2 pr-1 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center gap-1">
                             admin mode
+                            <button
+                                onClick={() => setIsAdminModeEnabled(false)}
+                                className="hover:bg-red-100 dark:hover:bg-red-900 rounded p-0.5 transition-colors"
+                                title="Disable admin mode"
+                            >
+                                <HugeiconsIcon
+                                    icon={Cancel01Icon}
+                                    className="w-3 h-3"
+                                    strokeWidth={2}
+                                />
+                            </button>
                         </span>
                     </div>
                 )}
