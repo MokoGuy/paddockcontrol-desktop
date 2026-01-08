@@ -536,79 +536,76 @@ export function CertificateDetail() {
                 )}
 
                 {/* Private Key (PEM) */}
-                {isEncryptionKeyProvided && (
-                    <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <HugeiconsIcon
+                                    icon={Key01Icon}
+                                    className="w-5 h-5"
+                                    strokeWidth={2}
+                                />
+                                <div>
+                                    <CardTitle>Private Key (PEM)</CardTitle>
+                                    <CardDescription>
+                                        RSA private key in PEM format
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            {isEncryptionKeyProvided && privateKeyPEM && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        downloadPrivateKey(certificate.hostname)
+                                    }
+                                >
                                     <HugeiconsIcon
-                                        icon={Key01Icon}
-                                        className="w-5 h-5"
+                                        icon={Download04Icon}
+                                        className="w-4 h-4 mr-1"
                                         strokeWidth={2}
                                     />
-                                    <div>
-                                        <CardTitle>Private Key (PEM)</CardTitle>
-                                        <CardDescription>
-                                            RSA private key in PEM format
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                                {privateKeyPEM && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            downloadPrivateKey(
-                                                certificate.hostname,
-                                            )
-                                        }
-                                    >
-                                        <HugeiconsIcon
-                                            icon={Download04Icon}
-                                            className="w-4 h-4 mr-1"
-                                            strokeWidth={2}
-                                        />
-                                        Download
-                                    </Button>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {privateKeyLoading ? (
-                                <LoadingSpinner text="Decrypting private key..." />
-                            ) : privateKeyError ? (
-                                <p className="text-sm text-red-600 dark:text-red-400">
-                                    {privateKeyError}
-                                </p>
-                            ) : privateKeyPEM ? (
-                                <div className="relative">
-                                    <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
-                                        {privateKeyPEM}
-                                    </pre>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="absolute top-2 right-2"
-                                        onClick={() =>
-                                            handleCopy(
-                                                privateKeyPEM,
-                                                "privateKey",
-                                            )
-                                        }
-                                    >
-                                        {copiedField === "privateKey"
-                                            ? "✓ Copied"
-                                            : "Copy"}
-                                    </Button>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-gray-500">
-                                    No private key available
-                                </p>
+                                    Download
+                                </Button>
                             )}
-                        </CardContent>
-                    </Card>
-                )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {!isEncryptionKeyProvided ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Encryption key required to view private key
+                            </p>
+                        ) : privateKeyLoading ? (
+                            <LoadingSpinner text="Decrypting private key..." />
+                        ) : privateKeyError ? (
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                                {privateKeyError}
+                            </p>
+                        ) : privateKeyPEM ? (
+                            <div className="relative">
+                                <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
+                                    {privateKeyPEM}
+                                </pre>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="absolute top-2 right-2"
+                                    onClick={() =>
+                                        handleCopy(privateKeyPEM, "privateKey")
+                                    }
+                                >
+                                    {copiedField === "privateKey"
+                                        ? "✓ Copied"
+                                        : "Copy"}
+                                </Button>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500">
+                                No private key available
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Pending CSR */}
                 {certificate.pending_csr && (
@@ -680,45 +677,43 @@ export function CertificateDetail() {
                     </Card>
                 )}
 
-                {/* Actions */}
-                <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                    <CardHeader>
-                        <CardTitle>Actions</CardTitle>
-                        <CardDescription>
-                            Manage this certificate
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                            {certificate.pending_csr && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            const link =
-                                                document.createElement("a");
-                                            link.href =
-                                                "data:text/plain;charset=utf-8," +
-                                                encodeURIComponent(
-                                                    certificate.pending_csr!,
-                                                );
-                                            link.download = `${certificate.hostname}.csr`;
-                                            link.click();
-                                        }}
-                                    >
-                                        Download CSR
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        onClick={() => setUploadDialogOpen(true)}
-                                    >
-                                        Upload Signed Certificate
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Actions - only shown for pending CSRs */}
+                {certificate.pending_csr && (
+                    <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                        <CardHeader>
+                            <CardTitle>Actions</CardTitle>
+                            <CardDescription>
+                                Manage this certificate
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        const link =
+                                            document.createElement("a");
+                                        link.href =
+                                            "data:text/plain;charset=utf-8," +
+                                            encodeURIComponent(
+                                                certificate.pending_csr!,
+                                            );
+                                        link.download = `${certificate.hostname}.csr`;
+                                        link.click();
+                                    }}
+                                >
+                                    Download CSR
+                                </Button>
+                                <Button
+                                    variant="default"
+                                    onClick={() => setUploadDialogOpen(true)}
+                                >
+                                    Upload Signed Certificate
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </main>
 
             {/* Delete Confirmation Dialog */}
