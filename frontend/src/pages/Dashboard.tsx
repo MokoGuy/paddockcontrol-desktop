@@ -62,6 +62,13 @@ export function Dashboard() {
         );
     };
 
+    const resetFilters = () => {
+        setSearchTerm("");
+        setStatusFilter("all");
+        setSortBy("created");
+        setSortOrder("desc");
+    };
+
     const filteredCerts = certificates.filter(
         (cert) =>
             cert.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -174,13 +181,10 @@ export function Dashboard() {
                                     />
                                     <Button
                                         variant="outline"
-                                        onClick={loadCertificates}
-                                        disabled={isLoading}
+                                        onClick={resetFilters}
                                         className="whitespace-nowrap"
                                     >
-                                        {isLoading
-                                            ? "Refreshing..."
-                                            : "Refresh"}
+                                        Reset Filters
                                     </Button>
                                 </div>
 
