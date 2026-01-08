@@ -651,6 +651,34 @@ func (a *App) GetCertificate(hostname string) (*models.Certificate, error) {
 	return cert, nil
 }
 
+// GetCertificateChain returns the certificate chain for a hostname
+// Fetches chain via AIA (Authority Information Access) from the leaf certificate
+// Does NOT require encryption key - read-only operation
+func (a *App) GetCertificateChain(hostname string) ([]models.ChainCertificateInfo, error) {
+	if err := a.requireSetupOnly(); err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Getting certificate chain for: %s", hostname)
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return nil, fmt.Errorf("certificate service not initialized")
+	}
+
+	chain, err := certificateService.GetCertificateChain(a.ctx, hostname)
+	if err != nil {
+		logger.Error("Get certificate chain failed: %v", err)
+		return nil, err
+	}
+
+	logger.Debug("Certificate chain retrieved: %d certificates", len(chain))
+	return chain, nil
+}
+
 // DeleteCertificate deletes a certificate
 // Does NOT require encryption key - deletion doesn't need decryption
 func (a *App) DeleteCertificate(hostname string) error {

@@ -14,6 +14,7 @@ import {
     BackupData,
     BackupValidationResult,
     KeyValidationResult,
+    ChainCertificateInfo,
 } from "../types";
 
 // Encryption Key Management
@@ -67,6 +68,8 @@ export const api = {
         App.ListCertificates(filter as any) as Promise<CertificateListItem[]>,
     getCertificate: (hostname: string) =>
         App.GetCertificate(hostname) as Promise<Certificate>,
+    getCertificateChain: (hostname: string) =>
+        App.GetCertificateChain(hostname) as Promise<ChainCertificateInfo[]>,
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
 
     // File operations

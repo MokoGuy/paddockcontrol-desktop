@@ -25,8 +25,10 @@ import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
+import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { formatDateTime } from "@/lib/theme";
-import { Certificate } from "@/types";
+import { api } from "@/lib/api";
+import { Certificate, ChainCertificateInfo } from "@/types";
 
 export function CertificateDetail() {
     const { hostname } = useParams<{ hostname: string }>();
@@ -54,6 +56,11 @@ export function CertificateDetail() {
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Certificate chain state
+    const [chain, setChain] = useState<ChainCertificateInfo[]>([]);
+    const [chainLoading, setChainLoading] = useState(false);
+    const [chainError, setChainError] = useState<string | null>(null);
+
     useEffect(() => {
         loadCertificate();
     }, [hostname]);
@@ -79,6 +86,33 @@ export function CertificateDetail() {
             setIsLoading(false);
         }
     };
+
+    // Load certificate chain when we have a certificate with PEM
+    const loadCertificateChain = async () => {
+        if (!hostname || !certificate?.certificate_pem) return;
+
+        setChainLoading(true);
+        setChainError(null);
+        try {
+            const chainData = await api.getCertificateChain(hostname);
+            setChain(chainData || []);
+        } catch (err) {
+            setChainError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to load certificate chain",
+            );
+        } finally {
+            setChainLoading(false);
+        }
+    };
+
+    // Trigger chain loading when certificate PEM is available
+    useEffect(() => {
+        if (certificate?.certificate_pem) {
+            loadCertificateChain();
+        }
+    }, [certificate?.certificate_pem, hostname]);
 
     const handleDelete = async () => {
         if (!hostname) return;
@@ -339,6 +373,15 @@ export function CertificateDetail() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Certificate Path - only for active certificates */}
+                {certificate.certificate_pem && (
+                    <CertificatePath
+                        chain={chain}
+                        isLoading={chainLoading}
+                        error={chainError}
+                    />
+                )}
 
                 {/* Certificate Content */}
                 {certificate.certificate_pem && (
