@@ -342,6 +342,11 @@ export function Dashboard() {
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-3">
+                                                    <HugeiconsIcon
+                                                        icon={Certificate02Icon}
+                                                        className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                                                        strokeWidth={2}
+                                                    />
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                                         {cert.hostname}
                                                     </h3>
