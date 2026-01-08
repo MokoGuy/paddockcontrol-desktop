@@ -36,7 +36,7 @@ export function SetupChoice() {
                 {/* Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* New Setup */}
-                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800">
+                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800 flex flex-col">
                         <CardHeader>
                             <div className="flex items-start justify-between">
                                 <div>
@@ -51,7 +51,7 @@ export function SetupChoice() {
                                 <span className="text-3xl">✨</span>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="flex flex-col flex-1">
                             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-start gap-2">
                                     <span className="text-green-600">✓</span>
@@ -68,17 +68,19 @@ export function SetupChoice() {
                                     </span>
                                 </div>
                             </div>
-                            <Button
-                                onClick={() => navigate("/setup/wizard")}
-                                className="w-full"
-                            >
-                                Continue with New Setup
-                            </Button>
+                            <div className="mt-auto pt-4">
+                                <Button
+                                    onClick={() => navigate("/setup/wizard")}
+                                    className="w-full"
+                                >
+                                    Continue with New Setup
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
 
                     {/* Restore from Backup */}
-                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800">
+                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800 flex flex-col">
                         <CardHeader>
                             <div className="flex items-start justify-between">
                                 <div>
@@ -93,7 +95,7 @@ export function SetupChoice() {
                                 <span className="text-3xl">📦</span>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="flex flex-col flex-1">
                             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-start gap-2">
                                     <span className="text-green-600">✓</span>
@@ -108,13 +110,15 @@ export function SetupChoice() {
                                     <span>Recover from a previous backup</span>
                                 </div>
                             </div>
-                            <Button
-                                onClick={() => navigate("/setup/restore")}
-                                variant="outline"
-                                className="w-full"
-                            >
-                                Restore from Backup
-                            </Button>
+                            <div className="mt-auto pt-4">
+                                <Button
+                                    onClick={() => navigate("/setup/restore")}
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    Restore from Backup
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
