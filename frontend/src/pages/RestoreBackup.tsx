@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { EyeIcon, ViewOffIcon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
@@ -39,10 +40,7 @@ export function RestoreBackup() {
         resolver: zodResolver(backupKeySchema),
     });
 
-    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const handleFileSelect = async (file: File) => {
         try {
             console.log("📁 Selected backup file:", file.name);
             console.log("📊 File size:", (file.size / 1024).toFixed(2), "KB");
@@ -309,38 +307,17 @@ export function RestoreBackup() {
                         {step === "file" && (
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="backup-file">
-                                        Select Backup File
-                                    </Label>
-                                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
-                                        <input
-                                            id="backup-file"
-                                            type="file"
-                                            accept=".json"
-                                            onChange={handleFileSelect}
-                                            className="hidden"
-                                        />
-                                        <label
-                                            htmlFor="backup-file"
-                                            className="cursor-pointer block"
-                                        >
-                                            <div className="text-3xl mb-2">
-                                                📦
-                                            </div>
-                                            <p className="font-semibold text-gray-900 dark:text-white mb-1">
-                                                Click to select or drag and drop
-                                            </p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                JSON backup file (.json)
-                                            </p>
-                                            {selectedFile && (
-                                                <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                                                    Selected:{" "}
-                                                    {selectedFile.name}
-                                                </p>
-                                            )}
-                                        </label>
-                                    </div>
+                                    <Label>Select Backup File</Label>
+                                    <FileDropZone
+                                        onFileSelect={handleFileSelect}
+                                        accept=".json"
+                                        acceptedExtensions={[".json"]}
+                                        label="Click to select or drag and drop"
+                                        sublabel="JSON backup file (.json)"
+                                        dropLabel="Drop backup file here"
+                                        icon={<span className="text-3xl">📦</span>}
+                                        selectedFile={selectedFile}
+                                    />
                                 </div>
                             </div>
                         )}
