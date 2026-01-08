@@ -347,6 +347,40 @@ func (s *CertificateService) GetCertificateChain(ctx context.Context, hostname s
 	return chainInfo, nil
 }
 
+// GetChainPEMForDownload returns the full certificate chain as concatenated PEM
+// Chain order: leaf + intermediates + root
+func (s *CertificateService) GetChainPEMForDownload(ctx context.Context, hostname string) (string, error) {
+	dbCert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
+	if err != nil {
+		return "", fmt.Errorf("certificate not found: %w", err)
+	}
+
+	if !dbCert.CertificatePem.Valid || dbCert.CertificatePem.String == "" {
+		return "", fmt.Errorf("no certificate for hostname: %s", hostname)
+	}
+
+	leafCert, err := crypto.ParseCertificate([]byte(dbCert.CertificatePem.String))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse certificate: %w", err)
+	}
+
+	// Build chain from AIA
+	chain, err := crypto.BuildChainFromAIA(leafCert)
+	if err != nil {
+		// Return just the leaf cert if chain building fails
+		return dbCert.CertificatePem.String, nil
+	}
+
+	// Concatenate: leaf + chain (intermediates + root)
+	result := dbCert.CertificatePem.String
+	chainPEMs := crypto.ConvertChainToPEM(chain)
+	for _, pem := range chainPEMs {
+		result += "\n" + pem
+	}
+
+	return result, nil
+}
+
 // DeleteCertificate deletes a certificate
 func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname string) error {
 	// Check read-only

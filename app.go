@@ -813,6 +813,59 @@ func (a *App) SaveCertificateToFile(hostname string) error {
 	return nil
 }
 
+// SaveChainToFile prompts user to save certificate chain to file
+// Chain includes: leaf certificate + intermediate CAs + root CA
+// Does NOT require encryption key - certificates are not encrypted
+func (a *App) SaveChainToFile(hostname string) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	logger.Info("Downloading certificate chain for: %s", hostname)
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	chainPEM, err := certificateService.GetChainPEMForDownload(a.ctx, hostname)
+	if err != nil {
+		logger.Error("Get chain failed: %v", err)
+		return err
+	}
+
+	path, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
+		DefaultFilename: hostname + "-chain.crt",
+		Title:           "Save Certificate Chain",
+		Filters: []wailsruntime.FileFilter{
+			{DisplayName: "Certificate Files (*.crt)", Pattern: "*.crt"},
+			{DisplayName: "PEM Files (*.pem)", Pattern: "*.pem"},
+			{DisplayName: "All Files (*.*)", Pattern: "*.*"},
+		},
+	})
+
+	if err != nil {
+		logger.Error("File dialog error: %v", err)
+		return fmt.Errorf("file dialog error: %w", err)
+	}
+
+	if path == "" {
+		logger.Info("User cancelled chain save dialog")
+		return nil
+	}
+
+	if err := os.WriteFile(path, []byte(chainPEM), 0644); err != nil {
+		logger.Error("Failed to write chain file: %v", err)
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	logger.Info("Chain saved to: %s", path)
+	return nil
+}
+
 // SavePrivateKeyToFile prompts user to save decrypted private key to file
 func (a *App) SavePrivateKeyToFile(hostname string) error {
 	if err := a.requireSetupComplete(); err != nil {

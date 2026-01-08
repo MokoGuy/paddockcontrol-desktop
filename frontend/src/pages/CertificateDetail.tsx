@@ -164,6 +164,15 @@ export function CertificateDetail() {
         }
     };
 
+    const handleDownloadChain = async () => {
+        if (!hostname) return;
+        try {
+            await api.saveChainToFile(hostname);
+        } catch (err) {
+            console.error("Download chain failed:", err);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -380,6 +389,7 @@ export function CertificateDetail() {
                         chain={chain}
                         isLoading={chainLoading}
                         error={chainError}
+                        onDownloadChain={handleDownloadChain}
                     />
                 )}
 

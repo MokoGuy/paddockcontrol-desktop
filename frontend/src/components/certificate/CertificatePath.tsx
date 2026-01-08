@@ -6,16 +6,22 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ChainCertificateInfo } from "@/types";
 import { formatDateTime } from "@/lib/theme";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link04Icon, Alert02Icon } from "@hugeicons/core-free-icons";
+import {
+    Link04Icon,
+    Alert02Icon,
+    Download04Icon,
+} from "@hugeicons/core-free-icons";
 
 interface CertificatePathProps {
     chain: ChainCertificateInfo[];
     isLoading: boolean;
     error: string | null;
+    onDownloadChain?: () => void;
 }
 
 // Color and label mappings for certificate types
@@ -109,6 +115,7 @@ export function CertificatePath({
     chain,
     isLoading,
     error,
+    onDownloadChain,
 }: CertificatePathProps) {
     // Don't render if loading
     if (isLoading) {
@@ -175,17 +182,35 @@ export function CertificatePath({
     return (
         <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
             <CardHeader>
-                <div className="flex items-center gap-2">
-                    <HugeiconsIcon
-                        icon={Link04Icon}
-                        className="w-5 h-5"
-                        strokeWidth={2}
-                    />
-                    <CardTitle>Certificate Path</CardTitle>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <HugeiconsIcon
+                                icon={Link04Icon}
+                                className="w-5 h-5"
+                                strokeWidth={2}
+                            />
+                            <CardTitle>Certificate Path</CardTitle>
+                        </div>
+                        <CardDescription>
+                            Certificate chain from leaf to root CA
+                        </CardDescription>
+                    </div>
+                    {onDownloadChain && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onDownloadChain}
+                        >
+                            <HugeiconsIcon
+                                icon={Download04Icon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            Download Chain
+                        </Button>
+                    )}
                 </div>
-                <CardDescription>
-                    Certificate chain from leaf to root CA
-                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-3">

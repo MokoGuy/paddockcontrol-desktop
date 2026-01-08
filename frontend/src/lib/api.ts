@@ -76,6 +76,7 @@ export const api = {
     saveCSRToFile: (hostname: string) => App.SaveCSRToFile(hostname),
     saveCertificateToFile: (hostname: string) =>
         App.SaveCertificateToFile(hostname),
+    saveChainToFile: (hostname: string) => App.SaveChainToFile(hostname),
     savePrivateKeyToFile: (hostname: string) =>
         App.SavePrivateKeyToFile(hostname),
 
