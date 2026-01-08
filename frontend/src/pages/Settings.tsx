@@ -441,78 +441,27 @@ export function Settings() {
                                 Export and manage your backups
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent>
                             {backupError && (
-                                <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
+                                <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg mb-4">
                                     <p className="text-sm text-red-800 dark:text-red-200">
                                         {backupError}
                                     </p>
                                 </div>
                             )}
 
-                            <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                                    Export Backup
-                                </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    Create a complete backup of your CA
-                                    configuration and all certificates. The
-                                    backup file will be encrypted and saved to
-                                    your data directory.
-                                </p>
-                                <Button
-                                    onClick={() => setExportConfirming(true)}
-                                    disabled={backupLoading}
-                                >
-                                    {backupLoading
-                                        ? "Exporting..."
-                                        : "Export Backup Now"}
-                                </Button>
-                            </div>
-
-                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                                    About Backups
-                                </h3>
-                                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-green-600 dark:text-green-400 font-bold mt-0.5">
-                                            ✓
-                                        </span>
-                                        <span>
-                                            Backups include your complete CA
-                                            configuration
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-green-600 dark:text-green-400 font-bold mt-0.5">
-                                            ✓
-                                        </span>
-                                        <span>
-                                            All certificates and their metadata
-                                            are backed up
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-green-600 dark:text-green-400 font-bold mt-0.5">
-                                            ✓
-                                        </span>
-                                        <span>
-                                            Private keys are encrypted with your
-                                            encryption key
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-green-600 dark:text-green-400 font-bold mt-0.5">
-                                            ✓
-                                        </span>
-                                        <span>
-                                            Backups are portable and can be
-                                            restored on any system
-                                        </span>
-                                    </li>
-                                </ul>
-                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                Create an encrypted backup of your CA
+                                configuration and certificates.
+                            </p>
+                            <Button
+                                onClick={() => setExportConfirming(true)}
+                                disabled={backupLoading}
+                            >
+                                {backupLoading
+                                    ? "Exporting..."
+                                    : "Export Backup Now"}
+                            </Button>
                         </CardContent>
                     </Card>
 
