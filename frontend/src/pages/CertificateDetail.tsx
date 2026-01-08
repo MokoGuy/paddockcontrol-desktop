@@ -24,6 +24,7 @@ import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { formatDateTime } from "@/lib/theme";
@@ -72,6 +73,9 @@ export function CertificateDetail() {
     const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null);
     const [privateKeyLoading, setPrivateKeyLoading] = useState(false);
     const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
+
+    // Encryption key dialog state
+    const [showKeyDialog, setShowKeyDialog] = useState(false);
 
     useEffect(() => {
         loadCertificate();
@@ -541,23 +545,50 @@ export function CertificateDetail() {
                 )}
 
                 {/* Private Key (PEM) */}
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card
+                    className={`mb-6 shadow-sm ${!isEncryptionKeyProvided ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900" : "border-gray-200 dark:border-gray-800"}`}
+                >
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <HugeiconsIcon
                                     icon={Key01Icon}
-                                    className="w-5 h-5"
+                                    className={`w-5 h-5 ${!isEncryptionKeyProvided ? "text-amber-700 dark:text-amber-300" : ""}`}
                                     strokeWidth={2}
                                 />
                                 <div>
-                                    <CardTitle>Private Key (PEM)</CardTitle>
-                                    <CardDescription>
-                                        RSA private key in PEM format
+                                    <CardTitle
+                                        className={
+                                            !isEncryptionKeyProvided
+                                                ? "text-amber-900 dark:text-amber-100"
+                                                : ""
+                                        }
+                                    >
+                                        Private Key (PEM)
+                                    </CardTitle>
+                                    <CardDescription
+                                        className={
+                                            !isEncryptionKeyProvided
+                                                ? "text-amber-700 dark:text-amber-300"
+                                                : ""
+                                        }
+                                    >
+                                        {!isEncryptionKeyProvided
+                                            ? "Provide your encryption key to view and download the private key"
+                                            : "RSA private key in PEM format"}
                                     </CardDescription>
                                 </div>
                             </div>
-                            {isEncryptionKeyProvided && privateKeyPEM && (
+                            {!isEncryptionKeyProvided ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
+                                    onClick={() => setShowKeyDialog(true)}
+                                >
+                                    Unlock
+                                </Button>
+                            ) : privateKeyPEM ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -572,44 +603,45 @@ export function CertificateDetail() {
                                     />
                                     Download
                                 </Button>
-                            )}
+                            ) : null}
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        {!isEncryptionKeyProvided ? (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Encryption key required to view private key
-                            </p>
-                        ) : privateKeyLoading ? (
-                            <LoadingSpinner text="Decrypting private key..." />
-                        ) : privateKeyError ? (
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                                {privateKeyError}
-                            </p>
-                        ) : privateKeyPEM ? (
-                            <div className="relative">
-                                <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
-                                    {privateKeyPEM}
-                                </pre>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() =>
-                                        handleCopy(privateKeyPEM, "privateKey")
-                                    }
-                                >
-                                    {copiedField === "privateKey"
-                                        ? "✓ Copied"
-                                        : "Copy"}
-                                </Button>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-gray-500">
-                                No private key available
-                            </p>
-                        )}
-                    </CardContent>
+                    {isEncryptionKeyProvided && (
+                        <CardContent>
+                            {privateKeyLoading ? (
+                                <LoadingSpinner text="Decrypting private key..." />
+                            ) : privateKeyError ? (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {privateKeyError}
+                                </p>
+                            ) : privateKeyPEM ? (
+                                <div className="relative">
+                                    <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
+                                        {privateKeyPEM}
+                                    </pre>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="absolute top-2 right-2"
+                                        onClick={() =>
+                                            handleCopy(
+                                                privateKeyPEM,
+                                                "privateKey",
+                                            )
+                                        }
+                                    >
+                                        {copiedField === "privateKey"
+                                            ? "✓ Copied"
+                                            : "Copy"}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    No private key available
+                                </p>
+                            )}
+                        </CardContent>
+                    )}
                 </Card>
 
                 {/* Pending CSR */}
@@ -775,11 +807,19 @@ export function CertificateDetail() {
                             onClick={handleUploadCertificate}
                             disabled={isUploading || !uploadCertPEM.trim()}
                         >
-                            {isUploading ? "Uploading..." : "Upload Certificate"}
+                            {isUploading
+                                ? "Uploading..."
+                                : "Upload Certificate"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Encryption Key Dialog */}
+            <EncryptionKeyDialog
+                open={showKeyDialog}
+                onClose={() => setShowKeyDialog(false)}
+            />
         </div>
     );
 }

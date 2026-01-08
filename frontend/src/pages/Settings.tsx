@@ -22,7 +22,7 @@ import { formatDateTime } from "@/lib/theme";
 export function Settings() {
     const navigate = useNavigate();
     const { config } = useConfigStore();
-    const { isEncryptionKeyProvided, isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
+    const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
 
     // Enable admin mode via Konami code
@@ -303,55 +303,6 @@ export function Settings() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Encryption Key */}
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
-                    <CardHeader>
-                        <CardTitle>Encryption Key</CardTitle>
-                        <CardDescription>
-                            Encryption key status for private key operations
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isEncryptionKeyProvided ? (
-                            <div className="p-4 bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-900 rounded-lg">
-                                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                    Encryption key is active
-                                </p>
-                                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                                    Full functionality is available. You can
-                                    generate CSRs, import certificates, and
-                                    download private keys.
-                                </p>
-                                <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                                    Use the lock button in the header to clear
-                                    the key when done.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 rounded-lg">
-                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-                                    Limited mode - encryption key not provided
-                                </p>
-                                <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                                    Without the encryption key, you cannot:
-                                </p>
-                                <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1">
-                                    <li>Generate new CSRs</li>
-                                    <li>
-                                        Import certificates with private keys
-                                    </li>
-                                    <li>Download private keys</li>
-                                    <li>Export backups with private keys</li>
-                                </ul>
-                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
-                                    Use the lock button in the header to provide
-                                    your encryption key.
-                                </p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
 
                 {/* Backup Management */}
                 <Card className="shadow-sm border-gray-200 dark:border-gray-800">

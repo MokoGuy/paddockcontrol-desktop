@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { formatDate } from "@/lib/theme";
 import { CertificateFilter } from "@/types";
@@ -36,6 +37,7 @@ export function Dashboard() {
         "created",
     );
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+    const [showKeyDialog, setShowKeyDialog] = useState(false);
 
     useEffect(() => {
         loadCertificates();
@@ -140,7 +142,7 @@ export function Dashboard() {
                                 variant="outline"
                                 size="sm"
                                 className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
-                                onClick={() => navigate("/settings")}
+                                onClick={() => setShowKeyDialog(true)}
                             >
                                 Provide Key
                             </Button>
@@ -399,6 +401,12 @@ export function Dashboard() {
                     certificates
                 </div>
             </main>
+
+            {/* Encryption Key Dialog */}
+            <EncryptionKeyDialog
+                open={showKeyDialog}
+                onClose={() => setShowKeyDialog(false)}
+            />
         </div>
     );
 }
