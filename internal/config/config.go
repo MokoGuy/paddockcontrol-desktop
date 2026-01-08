@@ -2,9 +2,11 @@ package config
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/models"
 )
 
 // Service handles configuration management
@@ -62,6 +64,41 @@ func (s *Service) SetConfigured(ctx context.Context) error {
 	return s.db.Queries().SetConfigured(ctx)
 }
 
+// UpdateConfig updates configuration in database
+func (s *Service) UpdateConfig(ctx context.Context, req *models.UpdateConfigRequest) (*models.Config, error) {
+	// Convert UpdateConfigRequest to UpdateConfigParams
+	params := sqlc.UpdateConfigParams{
+		OwnerEmail:          req.OwnerEmail,
+		CaName:              req.CAName,
+		HostnameSuffix:      req.HostnameSuffix,
+		ValidityPeriodDays:  int64(req.ValidityPeriodDays),
+		DefaultOrganization: req.DefaultOrganization,
+		DefaultOrganizationalUnit: sql.NullString{
+			String: req.DefaultOrganizationalUnit,
+			Valid:  req.DefaultOrganizationalUnit != "",
+		},
+		DefaultCity:    req.DefaultCity,
+		DefaultState:   req.DefaultState,
+		DefaultCountry: req.DefaultCountry,
+		DefaultKeySize: int64(req.DefaultKeySize),
+	}
+
+	// Update configuration
+	err := s.db.Queries().UpdateConfig(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update config: %w", err)
+	}
+
+	// Fetch and return updated config
+	cfg, err := s.db.Queries().GetConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated config: %w", err)
+	}
+
+	// Convert sqlc.Config to models.Config
+	return convertSqlcToModelsConfig(&cfg), nil
+}
+
 // GetDefaults returns default values for setup
 func (s *Service) GetDefaults() *ConfigDefaults {
 	return &ConfigDefaults{
@@ -76,4 +113,24 @@ type ConfigDefaults struct {
 	ValidityPeriodDays int
 	DefaultKeySize     int
 	DefaultCountry     string
+}
+
+// convertSqlcToModelsConfig converts sqlc.Config to models.Config
+func convertSqlcToModelsConfig(cfg *sqlc.Config) *models.Config {
+	return &models.Config{
+		ID:                        int(cfg.ID),
+		OwnerEmail:                cfg.OwnerEmail,
+		CAName:                    cfg.CaName,
+		HostnameSuffix:            cfg.HostnameSuffix,
+		ValidityPeriodDays:        int(cfg.ValidityPeriodDays),
+		DefaultOrganization:       cfg.DefaultOrganization,
+		DefaultOrganizationalUnit: cfg.DefaultOrganizationalUnit.String,
+		DefaultCity:               cfg.DefaultCity,
+		DefaultState:              cfg.DefaultState,
+		DefaultCountry:            cfg.DefaultCountry,
+		DefaultKeySize:            int(cfg.DefaultKeySize),
+		IsConfigured:              int(cfg.IsConfigured),
+		CreatedAt:                 cfg.CreatedAt,
+		LastModified:              cfg.LastModified,
+	}
 }

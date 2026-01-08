@@ -32,6 +32,20 @@ type SetupRequest struct {
 	DefaultKeySize            int    `json:"default_key_size"`
 }
 
+// UpdateConfigRequest represents a request to update the application configuration
+type UpdateConfigRequest struct {
+	OwnerEmail                string `json:"owner_email"`
+	CAName                    string `json:"ca_name"`
+	HostnameSuffix            string `json:"hostname_suffix"`
+	ValidityPeriodDays        int    `json:"validity_period_days"`
+	DefaultOrganization       string `json:"default_organization"`
+	DefaultOrganizationalUnit string `json:"default_organizational_unit,omitempty"`
+	DefaultCity               string `json:"default_city"`
+	DefaultState              string `json:"default_state"`
+	DefaultCountry            string `json:"default_country"`
+	DefaultKeySize            int    `json:"default_key_size"`
+}
+
 // SetupDefaults represents default values for setup form
 type SetupDefaults struct {
 	ValidityPeriodDays int    `json:"validity_period_days"`

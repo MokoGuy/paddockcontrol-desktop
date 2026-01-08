@@ -538,6 +538,71 @@ func (a *App) GetSetupDefaults() *models.SetupDefaults {
 	return setupService.GetSetupDefaults()
 }
 
+// GetConfig returns the current configuration
+func (a *App) GetConfig() (*models.Config, error) {
+	logger.Info("Getting configuration...")
+
+	a.mu.RLock()
+	configService := a.configService
+	a.mu.RUnlock()
+
+	if configService == nil {
+		return nil, fmt.Errorf("config service not initialized")
+	}
+
+	cfg, err := configService.GetConfig(a.ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// Convert sqlc.Config to models.Config
+	return &models.Config{
+		ID:                        int(cfg.ID),
+		OwnerEmail:                cfg.OwnerEmail,
+		CAName:                    cfg.CaName,
+		HostnameSuffix:            cfg.HostnameSuffix,
+		ValidityPeriodDays:        int(cfg.ValidityPeriodDays),
+		DefaultOrganization:       cfg.DefaultOrganization,
+		DefaultOrganizationalUnit: cfg.DefaultOrganizationalUnit.String,
+		DefaultCity:               cfg.DefaultCity,
+		DefaultState:              cfg.DefaultState,
+		DefaultCountry:            cfg.DefaultCountry,
+		DefaultKeySize:            int(cfg.DefaultKeySize),
+		IsConfigured:              int(cfg.IsConfigured),
+		CreatedAt:                 cfg.CreatedAt,
+		LastModified:              cfg.LastModified,
+	}, nil
+}
+
+// UpdateConfig updates the application configuration
+func (a *App) UpdateConfig(req models.UpdateConfigRequest) (*models.Config, error) {
+	logger.Info("Updating configuration...")
+
+	// Validate request
+	if err := config.ValidateConfigUpdate(&req); err != nil {
+		logger.Error("Config validation failed: %v", err)
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	a.mu.RLock()
+	configService := a.configService
+	a.mu.RUnlock()
+
+	if configService == nil {
+		return nil, fmt.Errorf("config service not initialized")
+	}
+
+	// Update configuration
+	updatedConfig, err := configService.UpdateConfig(a.ctx, &req)
+	if err != nil {
+		logger.Error("Failed to update config: %v", err)
+		return nil, fmt.Errorf("failed to update config: %w", err)
+	}
+
+	logger.Info("Configuration updated successfully")
+	return updatedConfig, nil
+}
+
 // ============================================================================
 // Certificate Operations
 // ============================================================================

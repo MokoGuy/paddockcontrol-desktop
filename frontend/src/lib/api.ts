@@ -15,6 +15,8 @@ import {
     BackupValidationResult,
     KeyValidationResult,
     ChainCertificateInfo,
+    Config,
+    UpdateConfigRequest,
 } from "../types";
 
 // Encryption Key Management
@@ -31,6 +33,11 @@ export const api = {
     isSetupComplete: () => App.IsSetupComplete(),
     saveSetup: (req: SetupRequest) => App.SaveSetup(req),
     getSetupDefaults: () => App.GetSetupDefaults() as Promise<SetupDefaults>,
+
+    // Config management
+    getConfig: () => App.GetConfig() as Promise<Config>,
+    updateConfig: (req: UpdateConfigRequest) =>
+        App.UpdateConfig(req) as Promise<Config>,
 
     // Backup validation and restore
     validateBackupFile: (path: string) =>

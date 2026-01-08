@@ -5,6 +5,7 @@ import {
     Route,
     Navigate,
 } from "react-router-dom";
+import { Toaster } from "sonner";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -223,6 +224,7 @@ export default function App() {
             <Router>
                 <AppContent />
             </Router>
+            <Toaster richColors position="top-right" offset="80px" />
         </ErrorBoundary>
     );
 }

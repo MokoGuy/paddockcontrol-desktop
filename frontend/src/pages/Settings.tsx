@@ -6,6 +6,8 @@ import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { UpdateConfigRequest } from "@/types";
 import {
     Card,
     CardContent,
@@ -31,10 +33,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { formatDateTime } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
+import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 
 export function Settings() {
     const navigate = useNavigate();
-    const { config } = useConfigStore();
+    const { config, setConfig } = useConfigStore();
     const {
         isAdminModeEnabled,
         setIsAdminModeEnabled,
@@ -43,6 +46,8 @@ export function Settings() {
         setIsEncryptionKeyProvided,
     } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Enable admin mode via Konami code
     const handleKonamiSuccess = useCallback(() => {
@@ -67,6 +72,14 @@ export function Settings() {
 
     useEffect(() => {
         const loadData = async () => {
+            // Load configuration
+            try {
+                const cfg = await api.getConfig();
+                setConfig(cfg);
+            } catch (err) {
+                console.error("Failed to load config:", err);
+            }
+
             // Load data directory
             const dir = await getDataDirectory();
             if (dir) {
@@ -83,7 +96,7 @@ export function Settings() {
         };
 
         loadData();
-    }, [getDataDirectory]);
+    }, [getDataDirectory, setConfig]);
 
     const handleOpenDataDirectory = async () => {
         try {
@@ -117,6 +130,23 @@ export function Settings() {
             console.error("Reset error:", err);
             setResetLoading(false);
             setResetConfirming(false);
+        }
+    };
+
+    const handleEditConfig = async (data: UpdateConfigRequest) => {
+        setIsSaving(true);
+        try {
+            const updatedConfig = await api.updateConfig(data);
+            setConfig(updatedConfig);
+            toast.success("Settings updated successfully");
+            setIsEditMode(false);
+        } catch (err) {
+            console.error("Failed to update config:", err);
+            toast.error(
+                `Failed to update settings: ${err instanceof Error ? err.message : "Unknown error"}`,
+            );
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -181,10 +211,20 @@ export function Settings() {
                     {config && (
                         <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
                             <CardHeader>
-                                <CardTitle>CA Configuration</CardTitle>
-                                <CardDescription>
-                                    Your certificate authority settings
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>CA Configuration</CardTitle>
+                                        <CardDescription>
+                                            Your certificate authority settings
+                                        </CardDescription>
+                                    </div>
+                                    <Button
+                                        onClick={() => setIsEditMode(true)}
+                                        size="sm"
+                                    >
+                                        Edit Settings
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
@@ -311,6 +351,31 @@ export function Settings() {
                                 </div>
                             </CardContent>
                         </Card>
+                    )}
+
+                    {/* Edit Configuration Modal */}
+                    {config && (
+                        <ConfigEditForm
+                            config={{
+                                owner_email: config.owner_email,
+                                ca_name: config.ca_name,
+                                hostname_suffix: config.hostname_suffix,
+                                validity_period_days:
+                                    config.validity_period_days,
+                                default_organization:
+                                    config.default_organization,
+                                default_organizational_unit:
+                                    config.default_organizational_unit || "",
+                                default_city: config.default_city,
+                                default_state: config.default_state,
+                                default_country: config.default_country,
+                                default_key_size: config.default_key_size,
+                            }}
+                            onSave={handleEditConfig}
+                            onCancel={() => setIsEditMode(false)}
+                            isLoading={isSaving}
+                            open={isEditMode}
+                        />
                     )}
 
                     {/* Data Directory */}
@@ -499,36 +564,32 @@ export function Settings() {
                     )}
 
                     {/* Danger Zone - disabled until admin mode enabled via Konami code */}
-                    <Card
-                        className={`mt-6 border-red-200 dark:border-red-900 ${
-                            isAdminModeEnabled
-                                ? "bg-red-50 dark:bg-red-950"
-                                : "bg-red-50/50 dark:bg-red-950/50 opacity-60"
-                        }`}
-                    >
-                        <CardContent className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                                    Danger Zone - Reset Database
-                                </p>
-                                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                                    Permanently delete all certificates,
-                                    configuration, and encryption keys.
-                                </p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900"
-                                onClick={() => setResetConfirming(true)}
-                                disabled={!isAdminModeEnabled || resetLoading}
-                            >
-                                {resetLoading
-                                    ? "Resetting..."
-                                    : "Reset Database"}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    {isAdminModeEnabled && (
+                        <Card className="mt-6 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950">
+                            <CardContent className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                        Danger Zone - Reset Database
+                                    </p>
+                                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                                        Permanently delete all certificates,
+                                        configuration, and encryption keys.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900"
+                                    onClick={() => setResetConfirming(true)}
+                                    disabled={resetLoading}
+                                >
+                                    {resetLoading
+                                        ? "Resetting..."
+                                        : "Reset Database"}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Footer */}
                     <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-500">
