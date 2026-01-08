@@ -107,7 +107,7 @@ export function Header() {
                         size="icon"
                         onClick={toggleTheme}
                         title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
-                        className="text-gray-600 dark:text-gray-400"
+                        className="text-gray-600 dark:text-gray-400 hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent"
                     >
                         <HugeiconsIcon
                             icon={isDarkMode ? Moon02Icon : Sun02Icon}
@@ -120,7 +120,7 @@ export function Header() {
                         size="icon"
                         onClick={() => Quit()}
                         title="Close"
-                        className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent"
                     >
                         <HugeiconsIcon
                             icon={Cancel01Icon}

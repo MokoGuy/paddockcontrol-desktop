@@ -8,7 +8,8 @@ import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 export function EncryptionKeyButton() {
-    const { isEncryptionKeyProvided, setIsEncryptionKeyProvided } = useAppStore();
+    const { isEncryptionKeyProvided, setIsEncryptionKeyProvided } =
+        useAppStore();
     const [showUnlockDialog, setShowUnlockDialog] = useState(false);
     const [showLockConfirm, setShowLockConfirm] = useState(false);
 
@@ -32,13 +33,22 @@ export function EncryptionKeyButton() {
                 variant="ghost"
                 size="icon"
                 onClick={handleClick}
-                title={isEncryptionKeyProvided ? "Lock encryption key" : "Unlock encryption key"}
-                className={isEncryptionKeyProvided
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-amber-600 dark:text-amber-400"
+                title={
+                    isEncryptionKeyProvided
+                        ? "Lock encryption key"
+                        : "Unlock encryption key"
                 }
+                className={`${
+                    isEncryptionKeyProvided
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-amber-600 dark:text-amber-400"
+                } hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent`}
             >
-                <HugeiconsIcon icon={LockIcon} className="w-5 h-5" strokeWidth={2} />
+                <HugeiconsIcon
+                    icon={LockIcon}
+                    className="w-5 h-5"
+                    strokeWidth={2}
+                />
             </Button>
 
             <EncryptionKeyDialog
