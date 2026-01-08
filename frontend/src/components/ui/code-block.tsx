@@ -26,7 +26,7 @@ export function CodeBlock({
                     "bg-accent text-accent-foreground",
                     "ring-1 ring-border",
                     "rounded-none",
-                    "p-4 text-xs overflow-auto font-mono",
+                    "p-4 text-xs overflow-auto font-mono scrollbar-float",
                     maxHeight,
                     className,
                 )}

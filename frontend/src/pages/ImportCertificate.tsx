@@ -69,7 +69,7 @@ export function ImportCertificate() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
+                            <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700 scrollbar-float">
                                 {certificatePem.substring(0, 500)}...
                             </pre>
                         </CardContent>
@@ -83,7 +83,7 @@ export function ImportCertificate() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
+                            <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700 scrollbar-float">
                                 {privateKeyPem.substring(0, 200)}...
                             </pre>
                         </CardContent>
@@ -166,7 +166,12 @@ export function ImportCertificate() {
                                             disabled={isSubmitting || isLoading}
                                             rows={6}
                                             dropLabel="Drop certificate file here"
-                                            acceptedExtensions={[".crt", ".pem", ".cer", ".txt"]}
+                                            acceptedExtensions={[
+                                                ".crt",
+                                                ".pem",
+                                                ".cer",
+                                                ".txt",
+                                            ]}
                                             className="font-mono text-xs"
                                         />
                                     )}
@@ -194,7 +199,11 @@ export function ImportCertificate() {
                                             disabled={isSubmitting || isLoading}
                                             rows={6}
                                             dropLabel="Drop private key file here"
-                                            acceptedExtensions={[".key", ".pem", ".txt"]}
+                                            acceptedExtensions={[
+                                                ".key",
+                                                ".pem",
+                                                ".txt",
+                                            ]}
                                             className="font-mono text-xs"
                                         />
                                     )}

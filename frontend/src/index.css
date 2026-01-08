@@ -127,3 +127,213 @@
         @apply font-sans;
     }
 }
+
+/* ==========================================
+   Floating Overlay Scrollbar Styles
+   ========================================== */
+
+/* Base floating scrollbar - Standard (8px) */
+.scrollbar-float {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.556 0 0 / 0.3) transparent;
+}
+
+.scrollbar-float::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-float::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px;
+}
+
+.scrollbar-float::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.3);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition:
+        background 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.scrollbar-float::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.488 0 0 / 0.5);
+    background-clip: padding-box;
+}
+
+.scrollbar-float::-webkit-scrollbar-thumb:active {
+    background: oklch(0.424 0 0 / 0.7);
+    background-clip: padding-box;
+}
+
+/* Thin variant (4px) */
+.scrollbar-float-thin {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.556 0 0 / 0.25) transparent;
+}
+
+.scrollbar-float-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.scrollbar-float-thin::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 2px;
+}
+
+.scrollbar-float-thin::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.25);
+    border-radius: 6px;
+    transition:
+        background 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.scrollbar-float-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.488 0 0 / 0.45);
+}
+
+.scrollbar-float-thin::-webkit-scrollbar-thumb:active {
+    background: oklch(0.424 0 0 / 0.65);
+}
+
+/* Auto-hide variant - appears on hover/scroll */
+.scrollbar-float-auto {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.556 0 0 / 0) transparent;
+    transition: scrollbar-color 0.3s ease;
+}
+
+.scrollbar-float-auto:hover,
+.scrollbar-float-auto:focus-within {
+    scrollbar-color: oklch(0.556 0 0 / 0.3) transparent;
+}
+
+.scrollbar-float-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-float-auto::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px;
+}
+
+.scrollbar-float-auto::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition:
+        background 0.3s ease,
+        opacity 0.3s ease;
+}
+
+.scrollbar-float-auto:hover::-webkit-scrollbar-thumb,
+.scrollbar-float-auto:focus-within::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.3);
+    background-clip: padding-box;
+}
+
+.scrollbar-float-auto::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.488 0 0 / 0.5) !important;
+    background-clip: padding-box;
+}
+
+.scrollbar-float-auto::-webkit-scrollbar-thumb:active {
+    background: oklch(0.424 0 0 / 0.7) !important;
+    background-clip: padding-box;
+}
+
+/* Dark mode variants */
+.dark .scrollbar-float {
+    scrollbar-color: oklch(0.556 0 0 / 0.4) transparent;
+}
+
+.dark .scrollbar-float::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.4);
+}
+
+.dark .scrollbar-float::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.623 0.214 259.815 / 0.6);
+    background-clip: padding-box;
+}
+
+.dark .scrollbar-float::-webkit-scrollbar-thumb:active {
+    background: oklch(0.708 0 0 / 0.8);
+    background-clip: padding-box;
+}
+
+.dark .scrollbar-float-thin {
+    scrollbar-color: oklch(0.556 0 0 / 0.35) transparent;
+}
+
+.dark .scrollbar-float-thin::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.35);
+}
+
+.dark .scrollbar-float-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.623 0.214 259.815 / 0.55);
+}
+
+.dark .scrollbar-float-thin::-webkit-scrollbar-thumb:active {
+    background: oklch(0.708 0 0 / 0.75);
+}
+
+.dark .scrollbar-float-auto {
+    scrollbar-color: oklch(0.556 0 0 / 0) transparent;
+}
+
+.dark .scrollbar-float-auto:hover,
+.dark .scrollbar-float-auto:focus-within {
+    scrollbar-color: oklch(0.556 0 0 / 0.4) transparent;
+}
+
+.dark .scrollbar-float-auto::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0);
+}
+
+.dark .scrollbar-float-auto:hover::-webkit-scrollbar-thumb,
+.dark .scrollbar-float-auto:focus-within::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.4);
+}
+
+.dark .scrollbar-float-auto::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.623 0.214 259.815 / 0.6) !important;
+}
+
+.dark .scrollbar-float-auto::-webkit-scrollbar-thumb:active {
+    background: oklch(0.708 0 0 / 0.8) !important;
+}
+
+/* ==========================================
+   Scrollbar with Header Offset
+   ========================================== */
+
+/* Variant that starts below a fixed/sticky header (64px = 4rem header height) */
+.scrollbar-float-below-header::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 64px; /* Header height */
+    margin-bottom: 4px;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.scrollbar-float-thin-below-header::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 64px; /* Header height */
+    margin-bottom: 2px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.scrollbar-float-auto-below-header::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 64px; /* Header height */
+    margin-bottom: 4px;
+    margin-left: 4px;
+    margin-right: 4px;
+}
