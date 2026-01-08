@@ -10,11 +10,14 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ChainCertificateInfo } from "@/types";
 import { formatDateTime } from "@/lib/theme";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Link04Icon,
     Alert02Icon,
     Download04Icon,
+    Copy01Icon,
+    Tick02Icon,
 } from "@hugeicons/core-free-icons";
 
 interface CertificatePathProps {
@@ -22,6 +25,7 @@ interface CertificatePathProps {
     isLoading: boolean;
     error: string | null;
     onDownloadChain?: () => void;
+    hostname?: string;
 }
 
 // Color and label mappings for certificate types
@@ -43,17 +47,82 @@ const typeConfig = {
     },
 } as const;
 
-function ChainCertificateCard({ cert }: { cert: ChainCertificateInfo }) {
+interface ChainCertificateCardProps {
+    cert: ChainCertificateInfo;
+    hostname?: string;
+    onCopy: (text: string) => Promise<boolean>;
+    isCopied: (text: string) => boolean;
+}
+
+function ChainCertificateCard({
+    cert,
+    hostname,
+    onCopy,
+    isCopied,
+}: ChainCertificateCardProps) {
     const config =
         typeConfig[cert.cert_type as keyof typeof typeConfig] ||
         typeConfig.leaf;
+
+    const getFilename = () => {
+        const base = hostname || "certificate";
+        if (cert.cert_type === "intermediate" && cert.depth > 1) {
+            return `${base}-intermediate-${cert.depth}.crt`;
+        }
+        return `${base}-${cert.cert_type}.crt`;
+    };
+
+    const handleDownload = () => {
+        if (!cert.pem) return;
+        const link = document.createElement("a");
+        link.href =
+            "data:text/plain;charset=utf-8," + encodeURIComponent(cert.pem);
+        link.download = getFilename();
+        link.click();
+    };
+
+    const handleCopy = () => {
+        if (cert.pem) {
+            onCopy(cert.pem);
+        }
+    };
 
     return (
         <div
             className={`border-l-4 ${config.border} pl-4 py-3 bg-gray-50 dark:bg-gray-900 rounded-r-md`}
         >
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center justify-between mb-3">
                 <Badge className={config.badge}>{config.label}</Badge>
+                {cert.pem && cert.cert_type !== "leaf" && (
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={handleCopy}
+                            title="Copy PEM"
+                        >
+                            <HugeiconsIcon
+                                icon={isCopied(cert.pem) ? Tick02Icon : Copy01Icon}
+                                className={`w-4 h-4 ${isCopied(cert.pem) ? "text-green-500" : ""}`}
+                                strokeWidth={2}
+                            />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={handleDownload}
+                            title="Download"
+                        >
+                            <HugeiconsIcon
+                                icon={Download04Icon}
+                                className="w-4 h-4"
+                                strokeWidth={2}
+                            />
+                        </Button>
+                    </div>
+                )}
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <div>
@@ -116,7 +185,10 @@ export function CertificatePath({
     isLoading,
     error,
     onDownloadChain,
+    hostname,
 }: CertificatePathProps) {
+    const { copy, isCopied } = useCopyToClipboard();
+
     // Don't render if loading
     if (isLoading) {
         return (
@@ -218,6 +290,9 @@ export function CertificatePath({
                         <ChainCertificateCard
                             key={`${cert.serial_number}-${index}`}
                             cert={cert}
+                            hostname={hostname}
+                            onCopy={copy}
+                            isCopied={isCopied}
                         />
                     ))}
                 </div>

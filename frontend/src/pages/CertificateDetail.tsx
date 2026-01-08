@@ -471,6 +471,7 @@ export function CertificateDetail() {
                         isLoading={chainLoading}
                         error={chainError}
                         onDownloadChain={handleDownloadChain}
+                        hostname={certificate.hostname}
                     />
                 )}
 

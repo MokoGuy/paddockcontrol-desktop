@@ -304,6 +304,13 @@ func ExtractChainInfo(cert *x509.Certificate, certType string, depth int) models
 	// Serial number (hex)
 	info.SerialNumber = fmt.Sprintf("%X", cert.SerialNumber)
 
+	// PEM encoding for export
+	pemBlock := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	}
+	info.PEM = string(pem.EncodeToMemory(pemBlock))
+
 	return info
 }
 

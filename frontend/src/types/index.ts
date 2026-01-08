@@ -155,6 +155,7 @@ export interface ChainCertificateInfo {
   serial_number: string;
   cert_type: 'leaf' | 'intermediate' | 'root';
   depth: number;
+  pem?: string;
 }
 
 // Frontend-only types

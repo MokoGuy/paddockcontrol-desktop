@@ -127,4 +127,5 @@ type ChainCertificateInfo struct {
 	SerialNumber       string `json:"serial_number"`        // Serial number (hex formatted)
 	CertType           string `json:"cert_type"`            // "leaf", "intermediate", "root"
 	Depth              int    `json:"depth"`                // Depth in chain (0 = leaf)
+	PEM                string `json:"pem,omitempty"`        // Certificate PEM data (for export)
 }
