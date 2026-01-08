@@ -1,10 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { applyTheme, getTheme, setTheme, watchSystemTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Sun02Icon, Moon02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import {
+    Sun02Icon,
+    Moon02Icon,
+    Cancel01Icon,
+} from "@hugeicons/core-free-icons";
 import { Quit } from "../../../wailsjs/runtime/runtime";
+import { GetBuildInfo } from "../../../wailsjs/go/main/App";
 import { EncryptionKeyButton } from "./EncryptionKeyButton";
 import logo from "@/assets/images/logo-universal.png";
 
@@ -14,6 +19,18 @@ export function Header() {
         setTheme: setStoreTheme,
         setIsDarkMode,
     } = useThemeStore();
+    const [version, setVersion] = useState<string>("");
+
+    useEffect(() => {
+        // Fetch build info
+        GetBuildInfo()
+            .then((info) => {
+                setVersion(info.version);
+            })
+            .catch(() => {
+                setVersion("dev");
+            });
+    }, []);
 
     useEffect(() => {
         // Initialize theme on mount
@@ -52,14 +69,25 @@ export function Header() {
             <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
                 <div className="flex items-center gap-3">
                     <img src={logo} alt="PaddockControl" className="w-8 h-8" />
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                        PaddockControl
-                    </h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                            PaddockControl
+                        </h1>
+                        {version && (
+                            <span className="text-sm text-gray-400 dark:text-gray-600">
+                                v{version}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div
                     className="flex items-center gap-2"
-                    style={{ "--wails-draggable": "no-drag" } as React.CSSProperties}
+                    style={
+                        {
+                            "--wails-draggable": "no-drag",
+                        } as React.CSSProperties
+                    }
                 >
                     <EncryptionKeyButton />
                     <Button

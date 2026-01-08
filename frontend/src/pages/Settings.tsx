@@ -26,6 +26,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { formatDateTime } from "@/lib/theme";
+import { GetBuildInfo } from "../../wailsjs/go/main/App";
 
 export function Settings() {
     const navigate = useNavigate();
@@ -56,17 +57,29 @@ export function Settings() {
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
     const { copy, isCopied } = useCopyToClipboard();
+    const [buildInfo, setBuildInfo] = useState<Record<string, string> | null>(
+        null,
+    );
 
     useEffect(() => {
-        loadDataDirectory();
-    }, []);
+        const loadData = async () => {
+            // Load data directory
+            const dir = await getDataDirectory();
+            if (dir) {
+                setDataDir(dir);
+            }
 
-    const loadDataDirectory = async () => {
-        const dir = await getDataDirectory();
-        if (dir) {
-            setDataDir(dir);
-        }
-    };
+            // Load build info
+            try {
+                const info = await GetBuildInfo();
+                setBuildInfo(info);
+            } catch (err) {
+                console.error("Failed to load build info:", err);
+            }
+        };
+
+        loadData();
+    }, [getDataDirectory]);
 
     const handleExportBackup = async () => {
         try {
@@ -144,10 +157,7 @@ export function Settings() {
                             Manage configuration and backups
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate("/")}
-                    >
+                    <Button variant="outline" onClick={() => navigate("/")}>
                         ← Back
                     </Button>
                 </div>
@@ -412,6 +422,54 @@ export function Settings() {
                     </CardContent>
                 </Card>
 
+                {/* Build Information */}
+                {buildInfo && (
+                    <Card className="mt-6 shadow-sm border-gray-200 dark:border-gray-800">
+                        <CardHeader>
+                            <CardTitle>Build Information</CardTitle>
+                            <CardDescription>
+                                Application version and build details
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                        Version
+                                    </p>
+                                    <p className="font-mono text-gray-900 dark:text-white">
+                                        {buildInfo.version}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                        Build Time
+                                    </p>
+                                    <p className="font-mono text-gray-700 dark:text-gray-300">
+                                        {buildInfo.buildTime}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                        Git Commit
+                                    </p>
+                                    <p className="font-mono text-gray-700 dark:text-gray-300">
+                                        {buildInfo.gitCommit}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                        Go Version
+                                    </p>
+                                    <p className="font-mono text-gray-700 dark:text-gray-300">
+                                        {buildInfo.goVersion}
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Danger Zone - disabled until admin mode enabled via Konami code */}
                 <Card
                     className={`mt-6 border-red-200 dark:border-red-900 ${
@@ -426,8 +484,8 @@ export function Settings() {
                                 Danger Zone - Reset Database
                             </p>
                             <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                                Permanently delete all certificates, configuration,
-                                and encryption keys.
+                                Permanently delete all certificates,
+                                configuration, and encryption keys.
                             </p>
                         </div>
                         <Button
@@ -443,7 +501,7 @@ export function Settings() {
                 </Card>
 
                 {/* Footer */}
-                <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-500">
                     <p>
                         For support, visit the documentation or contact your
                         administrator
