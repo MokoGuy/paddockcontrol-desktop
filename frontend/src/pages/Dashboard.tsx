@@ -21,7 +21,10 @@ import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { formatDate } from "@/lib/theme";
 import { CertificateFilter } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Certificate02Icon } from "@hugeicons/core-free-icons";
+import {
+    Certificate02Icon,
+    ArrowRight01Icon,
+} from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -331,7 +334,7 @@ export function Dashboard() {
                             {filteredCerts.map((cert) => (
                                 <Card
                                     key={cert.hostname}
-                                    className="shadow-sm border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer"
+                                    className="shadow-sm border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
                                     onClick={() =>
                                         navigate(
                                             `/certificates/${cert.hostname}`,
@@ -401,6 +404,14 @@ export function Dashboard() {
                                                         </div>
                                                     )}
                                                 </div>
+                                            </div>
+
+                                            <div className="ml-4 flex items-center">
+                                                <HugeiconsIcon
+                                                    icon={ArrowRight01Icon}
+                                                    className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all"
+                                                    strokeWidth={2}
+                                                />
                                             </div>
                                         </div>
                                     </CardContent>
