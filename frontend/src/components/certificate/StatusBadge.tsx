@@ -1,10 +1,25 @@
 import { Badge } from "@/components/ui/badge";
-import { getStatusColor, getStatusIcon } from "@/lib/theme";
+import { getStatusColor } from "@/lib/theme";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+    Tick02Icon,
+    Clock04Icon,
+    Alert02Icon,
+    Cancel01Icon,
+    HelpCircleIcon,
+} from "@hugeicons/core-free-icons";
 
 interface StatusBadgeProps {
     status: "pending" | "active" | "expiring" | "expired";
     daysUntilExpiration?: number;
 }
+
+const statusIcons = {
+    active: Tick02Icon,
+    pending: Clock04Icon,
+    expiring: Alert02Icon,
+    expired: Cancel01Icon,
+} as const;
 
 export function StatusBadge({ status, daysUntilExpiration }: StatusBadgeProps) {
     const getLabel = () => {
@@ -22,9 +37,12 @@ export function StatusBadge({ status, daysUntilExpiration }: StatusBadgeProps) {
         }
     };
 
+    const icon = statusIcons[status] || HelpCircleIcon;
+
     return (
-        <Badge className={getStatusColor(status)}>
-            {getStatusIcon(status)} {getLabel()}
+        <Badge className={`${getStatusColor(status)} inline-flex items-center gap-1`}>
+            <HugeiconsIcon icon={icon} className="w-3.5 h-3.5" strokeWidth={2} />
+            {getLabel()}
         </Badge>
     );
 }

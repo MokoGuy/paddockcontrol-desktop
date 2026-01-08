@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { applyTheme, getTheme, setTheme, watchSystemTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Sun02Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import logo from "@/assets/images/logo-universal.png";
 
 export function Header() {
@@ -58,7 +60,11 @@ export function Header() {
                         title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
                         className="text-gray-600 dark:text-gray-400"
                     >
-                        {isDarkMode ? "☀️" : "🌙"}
+                        <HugeiconsIcon
+                            icon={isDarkMode ? Sun02Icon : Moon02Icon}
+                            className="w-5 h-5"
+                            strokeWidth={2}
+                        />
                     </Button>
                 </div>
             </div>

@@ -18,6 +18,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { formatDate } from "@/lib/theme";
 import { CertificateFilter } from "@/types";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Certificate02Icon } from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -279,7 +281,13 @@ export function Dashboard() {
                     <Card className="shadow-sm border-gray-200 dark:border-gray-800">
                         <CardContent>
                             <EmptyState
-                                icon="📜"
+                                icon={
+                                    <HugeiconsIcon
+                                        icon={Certificate02Icon}
+                                        className="w-12 h-12"
+                                        strokeWidth={1.5}
+                                    />
+                                }
                                 title={
                                     certificates.length === 0
                                         ? "No certificates yet"

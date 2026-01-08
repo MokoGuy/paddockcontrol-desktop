@@ -14,7 +14,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { EyeIcon, ViewOffIcon, Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { EyeIcon, ViewOffIcon, Copy01Icon, Tick02Icon, Package01Icon } from "@hugeicons/core-free-icons";
 import logo from "@/assets/images/logo-universal.png";
 
 export function RestoreBackup() {
@@ -315,7 +315,13 @@ export function RestoreBackup() {
                                         label="Click to select or drag and drop"
                                         sublabel="JSON backup file (.json)"
                                         dropLabel="Drop backup file here"
-                                        icon={<span className="text-3xl">📦</span>}
+                                        icon={
+                                            <HugeiconsIcon
+                                                icon={Package01Icon}
+                                                className="w-8 h-8 text-gray-400"
+                                                strokeWidth={1.5}
+                                            />
+                                        }
                                         selectedFile={selectedFile}
                                     />
                                 </div>

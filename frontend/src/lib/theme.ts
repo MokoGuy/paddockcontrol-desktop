@@ -120,20 +120,3 @@ export function getStatusColor(status: string): string {
   }
 }
 
-/**
- * Get status icon class for certificate status
- */
-export function getStatusIcon(status: string): string {
-  switch (status) {
-    case 'active':
-      return '✓';
-    case 'pending':
-      return '⏳';
-    case 'expiring':
-      return '⚠';
-    case 'expired':
-      return '✕';
-    default:
-      return '?';
-  }
-}

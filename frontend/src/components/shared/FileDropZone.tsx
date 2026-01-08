@@ -156,7 +156,7 @@ export function FileDropZone({
                 </div>
             ) : (
                 <>
-                    {icon && <div className="mb-2">{icon}</div>}
+                    {icon && <div className="mb-2 flex justify-center">{icon}</div>}
                     <p className="font-semibold text-gray-900 dark:text-white mb-1">
                         {label}
                     </p>
