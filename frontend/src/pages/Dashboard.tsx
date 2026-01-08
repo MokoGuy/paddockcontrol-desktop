@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -225,23 +232,32 @@ export function Dashboard() {
                                         Sort By
                                     </label>
                                     <div className="flex gap-2">
-                                        <select
+                                        <Select
                                             value={sortBy}
-                                            onChange={(e) =>
-                                                setSortBy(e.target.value as any)
+                                            onValueChange={(value) =>
+                                                setSortBy(
+                                                    value as
+                                                        | "created"
+                                                        | "expiring"
+                                                        | "hostname",
+                                                )
                                             }
-                                            className="border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                                         >
-                                            <option value="created">
-                                                Created
-                                            </option>
-                                            <option value="expiring">
-                                                Expiring
-                                            </option>
-                                            <option value="hostname">
-                                                Hostname
-                                            </option>
-                                        </select>
+                                            <SelectTrigger size="sm" className="w-[120px]">
+                                                <SelectValue placeholder="Sort by" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="created">
+                                                    Created
+                                                </SelectItem>
+                                                <SelectItem value="expiring">
+                                                    Expiring
+                                                </SelectItem>
+                                                <SelectItem value="hostname">
+                                                    Hostname
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <Button
                                             variant="outline"
                                             size="sm"
