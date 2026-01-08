@@ -189,7 +189,7 @@ export function Dashboard() {
                                 </div>
 
                                 {/* Filter and Sort Controls */}
-                                <div className="flex flex-wrap gap-6">
+                                <div className="flex flex-wrap gap-4">
                                     {/* Status Filter */}
                                     <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -225,6 +225,9 @@ export function Dashboard() {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* Vertical Separator */}
+                                    <div className="border-l border-gray-300 dark:border-gray-700 h-8"></div>
 
                                     {/* Sort Controls */}
                                     <div className="flex items-center gap-2">
