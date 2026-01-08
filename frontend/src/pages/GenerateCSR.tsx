@@ -26,6 +26,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 
 export function GenerateCSR() {
     const navigate = useNavigate();
@@ -75,12 +77,24 @@ export function GenerateCSR() {
     }, [config, reset]);
 
     const onSubmit = async (data: CSRRequestInput) => {
-        const sans = sanInputs.filter((s) => s.trim());
+        const suffix = config?.hostname_suffix || "";
+        // Append suffix to hostname if not already present
+        const fullHostname = data.hostname.endsWith(suffix)
+            ? data.hostname
+            : data.hostname + suffix;
+
+        // Append suffix to SANs and filter empty values
+        const sans = sanInputs
+            .filter((s) => s.trim())
+            .map((s) => (s.endsWith(suffix) ? s : s + suffix));
+
         // Always include hostname as first SAN entry
-        const allSans = [data.hostname, ...sans];
+        const allSans = [fullHostname, ...sans];
+
         try {
             const result = await generateCSR({
                 ...data,
+                hostname: fullHostname,
                 sans: allSans,
             });
             if (result) {
@@ -153,12 +167,24 @@ export function GenerateCSR() {
                                 {/* Hostname */}
                                 <div className="space-y-2">
                                     <Label htmlFor="hostname">Hostname *</Label>
-                                    <Input
-                                        id="hostname"
-                                        placeholder="example.com"
-                                        disabled={isSubmitting || isLoading}
-                                        {...register("hostname")}
-                                    />
+                                    <div className="flex gap-2">
+                                        <ButtonGroup className="flex-1">
+                                            <InputGroup>
+                                                <InputGroupInput
+                                                    id="hostname"
+                                                    placeholder="example"
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        isLoading
+                                                    }
+                                                    {...register("hostname")}
+                                                />
+                                            </InputGroup>
+                                            <ButtonGroupText>
+                                                {config?.hostname_suffix}
+                                            </ButtonGroupText>
+                                        </ButtonGroup>
+                                    </div>
                                     {errors.hostname && (
                                         <p className="text-sm text-red-600 dark:text-red-400">
                                             {errors.hostname.message}
@@ -181,44 +207,63 @@ export function GenerateCSR() {
                                     </p>
                                     <div className="space-y-2">
                                         {/* Show hostname as first SAN */}
-                                        {hostname && (
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    value={hostname}
-                                                    disabled
-                                                    className="bg-gray-50 dark:bg-gray-900"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    disabled
-                                                    className="opacity-50 w-24"
-                                                >
-                                                    Primary
-                                                </Button>
-                                            </div>
-                                        )}
+                                        <div className="flex gap-2">
+                                            <ButtonGroup className="flex-1 bg-gray-50 dark:bg-gray-900">
+                                                <InputGroup>
+                                                    <InputGroupInput
+                                                        value={hostname || ""}
+                                                        placeholder="Enter hostname first"
+                                                        disabled
+                                                    />
+                                                </InputGroup>
+                                                <ButtonGroupText className="opacity-50">
+                                                    {config?.hostname_suffix}
+                                                </ButtonGroupText>
+                                            </ButtonGroup>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled
+                                                className="opacity-50 w-24"
+                                            >
+                                                Primary
+                                            </Button>
+                                        </div>
                                         {sanInputs.map((_, index) => (
                                             <div
                                                 key={index}
                                                 className="flex gap-2"
                                             >
-                                                <Input
-                                                    placeholder="example.com"
-                                                    disabled={
-                                                        isSubmitting ||
-                                                        isLoading
-                                                    }
-                                                    value={sanInputs[index]}
-                                                    onChange={(e) => {
-                                                        const newSans = [
-                                                            ...sanInputs,
-                                                        ];
-                                                        newSans[index] =
-                                                            e.target.value;
-                                                        setSanInputs(newSans);
-                                                    }}
-                                                />
+                                                <ButtonGroup className="flex-1">
+                                                    <InputGroup>
+                                                        <InputGroupInput
+                                                            placeholder="example"
+                                                            disabled={
+                                                                isSubmitting ||
+                                                                isLoading
+                                                            }
+                                                            value={
+                                                                sanInputs[index]
+                                                            }
+                                                            onChange={(e) => {
+                                                                const newSans =
+                                                                    [
+                                                                        ...sanInputs,
+                                                                    ];
+                                                                newSans[index] =
+                                                                    e.target.value;
+                                                                setSanInputs(
+                                                                    newSans,
+                                                                );
+                                                            }}
+                                                        />
+                                                    </InputGroup>
+                                                    <ButtonGroupText>
+                                                        {
+                                                            config?.hostname_suffix
+                                                        }
+                                                    </ButtonGroupText>
+                                                </ButtonGroup>
                                                 <Button
                                                     type="button"
                                                     variant="outline"
