@@ -136,9 +136,14 @@ export function CertificateDetail() {
             const pem = await api.getPrivateKeyPEM(hostname);
             setPrivateKeyPEM(pem);
         } catch (err) {
-            setPrivateKeyError(
-                err instanceof Error ? err.message : "Failed to load private key",
-            );
+            // Wails throws Go errors as strings, not Error objects
+            const message =
+                typeof err === "string"
+                    ? err
+                    : err instanceof Error
+                      ? err.message
+                      : "Failed to load private key";
+            setPrivateKeyError(message);
         } finally {
             setPrivateKeyLoading(false);
         }

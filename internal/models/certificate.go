@@ -77,7 +77,7 @@ type CertificateFilter struct {
 // BackupCertificate represents a certificate in a backup file
 type BackupCertificate struct {
 	Hostname            string `json:"hostname"`
-	EncryptedKey        []byte `json:"encrypted_key,omitempty"`
+	EncryptedKey        []byte `json:"encrypted_private_key,omitempty"`
 	PendingCSR          string `json:"pending_csr_pem,omitempty"`
 	CertificatePEM      string `json:"certificate_pem,omitempty"`
 	PendingEncryptedKey []byte `json:"pending_encrypted_private_key,omitempty"`
