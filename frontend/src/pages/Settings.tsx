@@ -412,40 +412,35 @@ export function Settings() {
                     </CardContent>
                 </Card>
 
-                {/* Danger Zone - hidden behind Konami code */}
-                {isAdminModeEnabled && (
-                    <Card className="mt-6 shadow-sm border-red-200 dark:border-red-900">
-                        <CardHeader>
-                            <CardTitle className="text-red-600 dark:text-red-400">
-                                Danger Zone
-                            </CardTitle>
-                            <CardDescription>
-                                Irreversible actions that affect all your data
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg">
-                                <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
-                                    Reset Database
-                                </h3>
-                                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-                                    This will permanently delete all certificates,
-                                    configuration, and encryption keys. You will be
-                                    returned to the setup wizard to start fresh.
-                                </p>
-                                <Button
-                                    variant="destructive"
-                                    onClick={() => setResetConfirming(true)}
-                                    disabled={resetLoading}
-                                >
-                                    {resetLoading
-                                        ? "Resetting..."
-                                        : "Reset Database"}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                {/* Danger Zone - disabled until admin mode enabled via Konami code */}
+                <Card
+                    className={`mt-6 border-red-200 dark:border-red-900 ${
+                        isAdminModeEnabled
+                            ? "bg-red-50 dark:bg-red-950"
+                            : "bg-red-50/50 dark:bg-red-950/50 opacity-60"
+                    }`}
+                >
+                    <CardContent className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                Danger Zone - Reset Database
+                            </p>
+                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                                Permanently delete all certificates, configuration,
+                                and encryption keys.
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900"
+                            onClick={() => setResetConfirming(true)}
+                            disabled={!isAdminModeEnabled || resetLoading}
+                        >
+                            {resetLoading ? "Resetting..." : "Reset Database"}
+                        </Button>
+                    </CardContent>
+                </Card>
 
                 {/* Footer */}
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
