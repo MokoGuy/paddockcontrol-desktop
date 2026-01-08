@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { UpdateConfigRequest } from "@/types";
 import {
@@ -37,10 +38,16 @@ export function ConfigEditForm({
         register,
         handleSubmit,
         control,
+        reset,
         formState: { errors, isDirty },
     } = useForm<UpdateConfigRequest>({
         defaultValues: config,
     });
+
+    // Reset form when config changes (after save)
+    useEffect(() => {
+        reset(config);
+    }, [config, reset]);
 
     const onSubmit = (data: UpdateConfigRequest) => {
         onSave(data);

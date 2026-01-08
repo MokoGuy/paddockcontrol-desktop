@@ -96,7 +96,8 @@ export function Settings() {
         };
 
         loadData();
-    }, [getDataDirectory, setConfig]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleOpenDataDirectory = async () => {
         try {
