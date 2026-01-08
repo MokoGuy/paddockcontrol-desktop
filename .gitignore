@@ -32,4 +32,4 @@ tracked_tasks/
 **/CLAUDE.md
 
 # But keep the root CLAUDE.md if you want
-!CLAUDE.md
+!/CLAUDE.md
