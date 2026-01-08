@@ -43,6 +43,10 @@ export function Dashboard() {
         loadCertificates();
     }, []);
 
+    useEffect(() => {
+        loadCertificates();
+    }, [statusFilter, sortBy, sortOrder]);
+
     const loadCertificates = async () => {
         const filter: CertificateFilter = {
             status: statusFilter,
