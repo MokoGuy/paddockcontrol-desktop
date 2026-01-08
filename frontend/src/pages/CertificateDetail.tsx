@@ -27,6 +27,8 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { formatDateTime } from "@/lib/theme";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Download04Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
 
@@ -397,10 +399,36 @@ export function CertificateDetail() {
                 {certificate.certificate_pem && (
                     <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
                         <CardHeader>
-                            <CardTitle>Certificate (PEM)</CardTitle>
-                            <CardDescription>
-                                X.509 certificate in PEM format
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Certificate (PEM)</CardTitle>
+                                    <CardDescription>
+                                        X.509 certificate in PEM format
+                                    </CardDescription>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const link =
+                                            document.createElement("a");
+                                        link.href =
+                                            "data:text/plain;charset=utf-8," +
+                                            encodeURIComponent(
+                                                certificate.certificate_pem!,
+                                            );
+                                        link.download = `${certificate.hostname}.crt`;
+                                        link.click();
+                                    }}
+                                >
+                                    <HugeiconsIcon
+                                        icon={Download04Icon}
+                                        className="w-4 h-4 mr-1"
+                                        strokeWidth={2}
+                                    />
+                                    Download
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="relative">
@@ -507,25 +535,6 @@ export function CertificateDetail() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
-                            {certificate.certificate_pem && (
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        // Download certificate - handled by backend Wails method
-                                        const link =
-                                            document.createElement("a");
-                                        link.href =
-                                            "data:text/plain;charset=utf-8," +
-                                            encodeURIComponent(
-                                                certificate.certificate_pem!,
-                                            );
-                                        link.download = `${certificate.hostname}.crt`;
-                                        link.click();
-                                    }}
-                                >
-                                    Download Certificate
-                                </Button>
-                            )}
                             {certificate.pending_csr && (
                                 <>
                                     <Button
