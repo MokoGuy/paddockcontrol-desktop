@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCertificates } from "@/hooks/useCertificates";
-import { useSetup } from "@/hooks/useSetup";
+import { useConfigStore } from "@/stores/useConfigStore";
+import { api } from "@/lib/api";
 import { csrRequestSchema, type CSRRequestInput } from "@/lib/validation";
 import {
     Card,
@@ -18,37 +19,57 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export function GenerateCSR() {
     const navigate = useNavigate();
-    const { defaults, loadDefaults } = useSetup();
+    const { config, setConfig } = useConfigStore();
     const { generateCSR, isLoading, error } = useCertificates();
     const [sanInputs, setSanInputs] = useState<string[]>([]);
 
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors, isSubmitting },
-        watch,
         reset,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
     });
 
-    const keySize = watch("key_size");
-
     useEffect(() => {
-        loadDefaults();
+        const loadConfig = async () => {
+            if (!config) {
+                try {
+                    const cfg = await api.getConfig();
+                    setConfig(cfg);
+                } catch (err) {
+                    console.error("Failed to load config:", err);
+                }
+            }
+        };
+        loadConfig();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
-        if (defaults) {
+        if (config) {
             reset({
-                key_size: defaults.default_key_size,
-                country: defaults.default_country,
+                organization: config.default_organization,
+                organizational_unit: config.default_organizational_unit || "",
+                city: config.default_city,
+                state: config.default_state,
+                country: config.default_country,
+                key_size: config.default_key_size,
             });
         }
-    }, [defaults, reset]);
+    }, [config, reset]);
 
     const onSubmit = async (data: CSRRequestInput) => {
         const sans = sanInputs.filter((s) => s.trim());
@@ -67,12 +88,12 @@ export function GenerateCSR() {
         }
     };
 
-    if (!defaults) {
+    if (!config) {
         return (
             <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
                 <Header />
                 <div className="flex-1 flex items-center justify-center">
-                    <LoadingSpinner text="Loading defaults..." />
+                    <LoadingSpinner text="Loading configuration..." />
                 </div>
             </div>
         );
@@ -288,24 +309,52 @@ export function GenerateCSR() {
                                     <Label htmlFor="key_size">
                                         Key Size (bits) *
                                     </Label>
-                                    <Input
-                                        id="key_size"
-                                        type="number"
-                                        placeholder="4096"
-                                        disabled={isSubmitting || isLoading}
-                                        {...register("key_size", {
-                                            valueAsNumber: true,
-                                        })}
+                                    <Controller
+                                        name="key_size"
+                                        control={control}
+                                        rules={{
+                                            required: "Key size is required",
+                                        }}
+                                        render={({ field }) => (
+                                            <Select
+                                                value={field.value?.toString()}
+                                                onValueChange={(value) =>
+                                                    field.onChange(
+                                                        parseInt(value),
+                                                    )
+                                                }
+                                                disabled={
+                                                    isSubmitting || isLoading
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    className={`w-full ${
+                                                        errors.key_size
+                                                            ? "border-red-500"
+                                                            : ""
+                                                    }`}
+                                                >
+                                                    <SelectValue placeholder="Select key size" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="2048">
+                                                        2048 bits
+                                                    </SelectItem>
+                                                    <SelectItem value="3072">
+                                                        3072 bits
+                                                    </SelectItem>
+                                                    <SelectItem value="4096">
+                                                        4096 bits (Recommended)
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
                                     />
                                     {errors.key_size && (
                                         <p className="text-sm text-red-600 dark:text-red-400">
                                             {errors.key_size.message}
                                         </p>
                                     )}
-                                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                                        Current: {keySize} bits. Larger keys
-                                        (4096+) are more secure.
-                                    </p>
                                 </div>
 
                                 {/* Note */}
@@ -321,7 +370,7 @@ export function GenerateCSR() {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-3">
                                     <Button
                                         type="submit"
                                         disabled={isSubmitting || isLoading}

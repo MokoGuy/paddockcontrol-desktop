@@ -48,7 +48,11 @@ type UpdateConfigRequest struct {
 
 // SetupDefaults represents default values for setup form
 type SetupDefaults struct {
-	ValidityPeriodDays int    `json:"validity_period_days"`
-	DefaultKeySize     int    `json:"default_key_size"`
-	DefaultCountry     string `json:"default_country"`
+	ValidityPeriodDays        int    `json:"validity_period_days"`
+	DefaultKeySize            int    `json:"default_key_size"`
+	DefaultCountry            string `json:"default_country"`
+	DefaultOrganization       string `json:"default_organization"`
+	DefaultOrganizationalUnit string `json:"default_organizational_unit,omitempty"`
+	DefaultCity               string `json:"default_city"`
+	DefaultState              string `json:"default_state"`
 }

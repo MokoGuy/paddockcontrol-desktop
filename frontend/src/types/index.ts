@@ -113,6 +113,10 @@ export interface SetupDefaults {
     validity_period_days: number;
     default_key_size: number;
     default_country: string;
+    default_organization: string;
+    default_organizational_unit?: string;
+    default_city: string;
+    default_state: string;
 }
 
 export interface BackupData {
