@@ -160,21 +160,30 @@ export function Dashboard() {
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Search */}
-                                <div>
+                                <div className="flex gap-2">
                                     <Input
                                         placeholder="Search by hostname or SAN..."
                                         value={searchTerm}
                                         onChange={(e) =>
                                             setSearchTerm(e.target.value)
                                         }
-                                        className="max-w-md"
                                     />
+                                    <Button
+                                        variant="outline"
+                                        onClick={loadCertificates}
+                                        disabled={isLoading}
+                                        className="whitespace-nowrap"
+                                    >
+                                        {isLoading
+                                            ? "Refreshing..."
+                                            : "Refresh"}
+                                    </Button>
                                 </div>
 
                                 {/* Filter and Sort Controls */}
-                                <div className="flex flex-wrap gap-4">
+                                <div className="flex flex-wrap gap-6">
                                     {/* Status Filter */}
-                                    <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Status
                                         </label>
@@ -210,7 +219,7 @@ export function Dashboard() {
                                     </div>
 
                                     {/* Sort Controls */}
-                                    <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Sort By
                                         </label>
@@ -258,16 +267,6 @@ export function Dashboard() {
                                                 {sortOrder === "asc"
                                                     ? "↑"
                                                     : "↓"}
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={loadCertificates}
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading
-                                                    ? "Refreshing..."
-                                                    : "Refresh"}
                                             </Button>
                                         </div>
                                     </div>
