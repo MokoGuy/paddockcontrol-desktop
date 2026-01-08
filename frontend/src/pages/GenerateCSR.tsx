@@ -37,11 +37,14 @@ export function GenerateCSR() {
         register,
         handleSubmit,
         control,
+        watch,
         formState: { errors, isSubmitting },
         reset,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
     });
+
+    const hostname = watch("hostname");
 
     useEffect(() => {
         const loadConfig = async () => {
@@ -73,10 +76,12 @@ export function GenerateCSR() {
 
     const onSubmit = async (data: CSRRequestInput) => {
         const sans = sanInputs.filter((s) => s.trim());
+        // Always include hostname as first SAN entry
+        const allSans = [data.hostname, ...sans];
         try {
             const result = await generateCSR({
                 ...data,
-                sans: sans.length > 0 ? sans : [],
+                sans: allSans,
             });
             if (result) {
                 navigate(
@@ -166,7 +171,33 @@ export function GenerateCSR() {
                                     <Label>
                                         Subject Alternative Names (SANs)
                                     </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        The hostname will be automatically
+                                        included as the first SAN entry.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        This is required for browser validation
+                                        of server certificates.
+                                    </p>
                                     <div className="space-y-2">
+                                        {/* Show hostname as first SAN */}
+                                        {hostname && (
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    value={hostname}
+                                                    disabled
+                                                    className="bg-gray-50 dark:bg-gray-900"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    disabled
+                                                    className="opacity-50 w-24"
+                                                >
+                                                    Primary
+                                                </Button>
+                                            </div>
+                                        )}
                                         {sanInputs.map((_, index) => (
                                             <div
                                                 key={index}
@@ -203,6 +234,7 @@ export function GenerateCSR() {
                                                         isSubmitting ||
                                                         isLoading
                                                     }
+                                                    className="w-24"
                                                 >
                                                     Remove
                                                 </Button>
