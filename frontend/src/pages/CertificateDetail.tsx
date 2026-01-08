@@ -253,7 +253,7 @@ export function CertificateDetail() {
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                                 {certificate.hostname}
