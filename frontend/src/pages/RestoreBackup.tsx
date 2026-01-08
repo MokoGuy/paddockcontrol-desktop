@@ -325,6 +325,15 @@ export function RestoreBackup() {
                                         selectedFile={selectedFile}
                                     />
                                 </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleBack}
+                                    className="w-full"
+                                >
+                                    Back
+                                </Button>
                             </div>
                         )}
 
