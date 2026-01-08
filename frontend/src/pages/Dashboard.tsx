@@ -6,6 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
+} from "@/components/ui/input-group";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -24,6 +29,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Certificate02Icon,
     ArrowRight01Icon,
+    Search01Icon,
 } from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
@@ -175,13 +181,22 @@ export function Dashboard() {
                             <div className="space-y-4">
                                 {/* Search */}
                                 <div className="flex gap-2">
-                                    <Input
-                                        placeholder="Search by hostname or SAN..."
-                                        value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
-                                    />
+                                    <InputGroup>
+                                        <InputGroupAddon>
+                                            <HugeiconsIcon
+                                                icon={Search01Icon}
+                                                className="w-4 h-4"
+                                                strokeWidth={2}
+                                            />
+                                        </InputGroupAddon>
+                                        <InputGroupInput
+                                            placeholder="Search by hostname or SAN..."
+                                            value={searchTerm}
+                                            onChange={(e) =>
+                                                setSearchTerm(e.target.value)
+                                            }
+                                        />
+                                    </InputGroup>
                                     <Button
                                         variant="outline"
                                         onClick={resetFilters}
