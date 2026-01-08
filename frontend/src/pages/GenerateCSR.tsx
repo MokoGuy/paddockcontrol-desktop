@@ -124,7 +124,7 @@ export function GenerateCSR() {
                     <div className="flex gap-3">
                         <Button
                             variant="outline"
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate("/")}
                             className="flex-1"
                         >
                             Back to Dashboard
@@ -366,7 +366,7 @@ export function GenerateCSR() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => navigate("/dashboard")}
+                                    onClick={() => navigate("/")}
                                     disabled={isSubmitting || isLoading}
                                     className="flex-1"
                                 >

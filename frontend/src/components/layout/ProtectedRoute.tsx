@@ -11,12 +11,8 @@ export function ProtectedRoute({
     children,
     requireEncryptionKey = false,
 }: ProtectedRouteProps) {
-    const {
-        isWaitingForEncryptionKey,
-        isSetupComplete,
-        isLoading,
-        isEncryptionKeyProvided,
-    } = useAppStore();
+    const { isSetupComplete, isLoading, isEncryptionKeyProvided } =
+        useAppStore();
 
     // Still loading initial state
     if (isLoading) {
@@ -32,14 +28,9 @@ export function ProtectedRoute({
         return <Navigate to="/setup" replace />;
     }
 
-    // Still waiting for user decision on key (neither provided nor skipped)
-    if (isWaitingForEncryptionKey) {
-        return <Navigate to="/key" replace />;
-    }
-
     // Route requires encryption key but user skipped
     if (requireEncryptionKey && !isEncryptionKeyProvided) {
-        return <Navigate to="/dashboard" replace state={{ keyRequired: true }} />;
+        return <Navigate to="/" replace state={{ keyRequired: true }} />;
     }
 
     // All checks passed

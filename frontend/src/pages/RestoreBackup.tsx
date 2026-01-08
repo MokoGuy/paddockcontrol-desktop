@@ -153,7 +153,7 @@ export function RestoreBackup() {
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
             console.log("🚀 Navigating to dashboard...");
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
             console.log("✅ Navigation complete");
         } catch (err) {
             const message =

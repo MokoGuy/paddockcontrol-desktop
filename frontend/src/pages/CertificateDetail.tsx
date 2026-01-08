@@ -164,7 +164,7 @@ export function CertificateDetail() {
         if (!hostname) return;
         try {
             await deleteCertificate(hostname);
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
         } catch (err) {
             setError(
                 err instanceof Error
@@ -231,7 +231,7 @@ export function CertificateDetail() {
                                 {error || "Certificate not found"}
                             </p>
                             <Button
-                                onClick={() => navigate("/dashboard")}
+                                onClick={() => navigate("/")}
                                 className="mt-4"
                             >
                                 Back to Dashboard
@@ -304,7 +304,7 @@ export function CertificateDetail() {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate("/")}
                         >
                             ← Back
                         </Button>

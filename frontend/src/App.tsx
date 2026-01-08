@@ -126,7 +126,7 @@ function AppContent() {
                         <EncryptionKeyPrompt />
                     ) : (
                         <Navigate
-                            to={isSetupComplete ? "/dashboard" : "/setup"}
+                            to={isSetupComplete ? "/" : "/setup"}
                             replace
                         />
                     )
@@ -138,7 +138,7 @@ function AppContent() {
                 path="/setup"
                 element={
                     isSetupComplete ? (
-                        <Navigate to="/dashboard" replace />
+                        <Navigate to="/" replace />
                     ) : (
                         <SetupChoice />
                     )
@@ -148,7 +148,7 @@ function AppContent() {
                 path="/setup/wizard"
                 element={
                     isSetupComplete ? (
-                        <Navigate to="/dashboard" replace />
+                        <Navigate to="/" replace />
                     ) : (
                         <SetupWizard />
                     )
@@ -158,22 +158,15 @@ function AppContent() {
                 path="/setup/restore"
                 element={
                     isSetupComplete ? (
-                        <Navigate to="/dashboard" replace />
+                        <Navigate to="/" replace />
                     ) : (
                         <RestoreBackup />
                     )
                 }
             />
 
-            {/* Main App Routes - Requires setup complete and encryption key */}
-            <Route
-                path="/dashboard"
-                element={
-                    <ProtectedRoute>
-                        <Dashboard />
-                    </ProtectedRoute>
-                }
-            />
+            {/* Backwards compatibility redirect */}
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route
                 path="/certificates/:hostname"
                 element={
@@ -207,16 +200,16 @@ function AppContent() {
                 }
             />
 
-            {/* Catch-all redirect based on app state */}
+            {/* Dashboard at root */}
             <Route
                 path="/"
                 element={
                     !isSetupComplete ? (
                         <Navigate to="/setup" replace />
-                    ) : isWaitingForEncryptionKey ? (
-                        <Navigate to="/key" replace />
                     ) : (
-                        <Navigate to="/dashboard" replace />
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
                     )
                 }
             />

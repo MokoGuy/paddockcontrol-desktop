@@ -46,7 +46,7 @@ export function SetupWizard() {
     const onSubmit = async (data: SetupRequestInput) => {
         try {
             await saveSetup(data);
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
         } catch (err) {
             console.error("Setup error:", err);
         }

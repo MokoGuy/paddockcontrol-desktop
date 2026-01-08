@@ -41,7 +41,7 @@ export function ImportCertificate() {
     const onSubmit = async (data: ImportCertificateInput) => {
         try {
             await importCertificate(data);
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
         } catch (err) {
             console.error("Import error:", err);
         }
@@ -232,7 +232,7 @@ export function ImportCertificate() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => navigate("/dashboard")}
+                                    onClick={() => navigate("/")}
                                     disabled={isSubmitting || isLoading}
                                     className="flex-1"
                                 >

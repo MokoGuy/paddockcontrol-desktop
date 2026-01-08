@@ -117,7 +117,7 @@ export function Settings() {
                                 {configError}
                             </p>
                             <Button
-                                onClick={() => navigate("/dashboard")}
+                                onClick={() => navigate("/")}
                                 className="mt-4"
                             >
                                 Back to Dashboard
@@ -146,7 +146,7 @@ export function Settings() {
                     </div>
                     <Button
                         variant="outline"
-                        onClick={() => navigate("/dashboard")}
+                        onClick={() => navigate("/")}
                     >
                         ← Back
                     </Button>

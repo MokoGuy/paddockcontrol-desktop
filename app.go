@@ -96,9 +96,11 @@ func (a *App) startup(ctx context.Context) {
 	a.initializeServicesWithoutKey()
 	logger.Info("Services initialized (without encryption key)")
 
-	// Wait for encryption key from user
-	a.waitingForEncryptionKey = true
-	logger.Info("Waiting for encryption key...")
+	// Auto-skip encryption key at startup (limited mode by default)
+	// Users can provide key anytime via Settings
+	a.waitingForEncryptionKey = false
+	a.encryptionKeyProvided = false
+	logger.Info("Starting in limited mode (encryption key can be provided via Settings)")
 }
 
 // shutdown is called when the app exits

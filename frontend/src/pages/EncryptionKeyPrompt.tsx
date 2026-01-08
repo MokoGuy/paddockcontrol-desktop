@@ -53,7 +53,7 @@ export function EncryptionKeyPrompt() {
                 // Check if setup is complete
                 const isSetupComplete = await api.isSetupComplete();
                 if (isSetupComplete) {
-                    navigate("/dashboard", { replace: true });
+                    navigate("/", { replace: true });
                 } else {
                     navigate("/setup", { replace: true });
                 }
@@ -83,7 +83,7 @@ export function EncryptionKeyPrompt() {
             await api.skipEncryptionKey();
             setIsWaitingForEncryptionKey(false);
             setIsEncryptionKeyProvided(false);
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
         } catch (err) {
             const message =
                 err instanceof Error ? err.message : "Failed to skip";
