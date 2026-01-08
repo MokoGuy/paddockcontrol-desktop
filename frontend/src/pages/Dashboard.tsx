@@ -2,13 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useAppStore } from "@/stores/useAppStore";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,14 +24,9 @@ import { Certificate02Icon } from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
     const navigate = useNavigate();
-    const {
-        certificates,
-        isLoading,
-        error,
-        listCertificates,
-        deleteCertificate,
-    } = useCertificates();
-    const { setError: setAppError, isEncryptionKeyProvided } = useAppStore();
+    const { certificates, isLoading, error, listCertificates } =
+        useCertificates();
+    const { isEncryptionKeyProvided } = useAppStore();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<
@@ -47,9 +36,6 @@ export function Dashboard() {
         "created",
     );
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-    const [deleteConfirming, setDeleteConfirming] = useState<string | null>(
-        null,
-    );
 
     useEffect(() => {
         loadCertificates();
@@ -68,16 +54,6 @@ export function Dashboard() {
         setStatusFilter(
             status as "all" | "pending" | "active" | "expiring" | "expired",
         );
-    };
-
-    const handleDelete = async (hostname: string) => {
-        try {
-            await deleteCertificate(hostname);
-            setDeleteConfirming(null);
-            setAppError(null);
-        } catch (err) {
-            console.error("Delete error:", err);
-        }
     };
 
     const filteredCerts = certificates.filter(
@@ -409,68 +385,11 @@ export function Dashboard() {
                                             >
                                                 View
                                             </Button>
-                                            {!cert.read_only && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDeleteConfirming(
-                                                            cert.hostname,
-                                                        );
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            )}
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
                         ))}
-                    </div>
-                )}
-
-                {/* Delete Confirmation Dialog */}
-                {deleteConfirming && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <Card className="w-full max-w-sm">
-                            <CardHeader>
-                                <CardTitle>Delete Certificate</CardTitle>
-                                <CardDescription>
-                                    Are you sure you want to delete{" "}
-                                    {deleteConfirming}?
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    This action cannot be undone. The
-                                    certificate and all its data will be
-                                    permanently deleted.
-                                </p>
-                                <div className="flex gap-3">
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1"
-                                        onClick={() =>
-                                            setDeleteConfirming(null)
-                                        }
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        className="flex-1 bg-red-600 hover:bg-red-700"
-                                        onClick={() =>
-                                            handleDelete(deleteConfirming)
-                                        }
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? "Deleting..." : "Delete"}
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
                 )}
 
