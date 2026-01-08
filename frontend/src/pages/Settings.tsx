@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSetup } from "@/hooks/useSetup";
 import { useBackup } from "@/hooks/useBackup";
+import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
-import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { LockIcon } from "@hugeicons/core-free-icons";
 import {
     Card,
     CardContent,
@@ -24,8 +22,15 @@ import { formatDateTime } from "@/lib/theme";
 export function Settings() {
     const navigate = useNavigate();
     const { config } = useConfigStore();
-    const { isEncryptionKeyProvided, setIsEncryptionKeyProvided } = useAppStore();
+    const { isEncryptionKeyProvided, isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
+
+    // Enable admin mode via Konami code
+    const handleKonamiSuccess = useCallback(() => {
+        console.debug("[Settings] Konami code entered - admin mode enabled");
+        setIsAdminModeEnabled(true);
+    }, [setIsAdminModeEnabled]);
+    useKonamiCode(handleKonamiSuccess);
     const {
         isLoading: backupLoading,
         error: backupError,
@@ -37,7 +42,6 @@ export function Settings() {
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
     const [copySuccess, setCopySuccess] = useState<string | null>(null);
-    const [showKeyDialog, setShowKeyDialog] = useState(false);
 
     useEffect(() => {
         loadDataDirectory();
@@ -68,15 +72,6 @@ export function Settings() {
             console.error("Reset error:", err);
             setResetLoading(false);
             setResetConfirming(false);
-        }
-    };
-
-    const handleClearEncryptionKey = async () => {
-        try {
-            await api.clearEncryptionKey();
-            setIsEncryptionKeyProvided(false);
-        } catch (err) {
-            console.error("Failed to clear encryption key:", err);
         }
     };
 
@@ -312,29 +307,10 @@ export function Settings() {
                 {/* Encryption Key */}
                 <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Encryption Key</CardTitle>
-                                <CardDescription>
-                                    Manage encryption key for private key
-                                    operations
-                                </CardDescription>
-                            </div>
-                            {isEncryptionKeyProvided && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleClearEncryptionKey}
-                                >
-                                    <HugeiconsIcon
-                                        icon={LockIcon}
-                                        className="w-4 h-4 mr-1"
-                                        strokeWidth={2}
-                                    />
-                                    Lock
-                                </Button>
-                            )}
-                        </div>
+                        <CardTitle>Encryption Key</CardTitle>
+                        <CardDescription>
+                            Encryption key status for private key operations
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {isEncryptionKeyProvided ? (
@@ -347,32 +323,31 @@ export function Settings() {
                                     generate CSRs, import certificates, and
                                     download private keys.
                                 </p>
+                                <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                                    Use the lock button in the header to clear
+                                    the key when done.
+                                </p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 rounded-lg">
-                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-                                        Limited mode - encryption key not
-                                        provided
-                                    </p>
-                                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                                        Without the encryption key, you cannot:
-                                    </p>
-                                    <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1">
-                                        <li>Generate new CSRs</li>
-                                        <li>
-                                            Import certificates with private
-                                            keys
-                                        </li>
-                                        <li>Download private keys</li>
-                                        <li>
-                                            Export backups with private keys
-                                        </li>
-                                    </ul>
-                                </div>
-                                <Button onClick={() => setShowKeyDialog(true)}>
-                                    Provide Encryption Key
-                                </Button>
+                            <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 rounded-lg">
+                                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                                    Limited mode - encryption key not provided
+                                </p>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                                    Without the encryption key, you cannot:
+                                </p>
+                                <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-1">
+                                    <li>Generate new CSRs</li>
+                                    <li>
+                                        Import certificates with private keys
+                                    </li>
+                                    <li>Download private keys</li>
+                                    <li>Export backups with private keys</li>
+                                </ul>
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+                                    Use the lock button in the header to provide
+                                    your encryption key.
+                                </p>
                             </div>
                         )}
                     </CardContent>
@@ -461,39 +436,41 @@ export function Settings() {
                     </CardContent>
                 </Card>
 
-                {/* Danger Zone */}
-                <Card className="mt-6 shadow-sm border-red-200 dark:border-red-900">
-                    <CardHeader>
-                        <CardTitle className="text-red-600 dark:text-red-400">
-                            Danger Zone
-                        </CardTitle>
-                        <CardDescription>
-                            Irreversible actions that affect all your data
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg">
-                            <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
-                                Reset Database & Restart
-                            </h3>
-                            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-                                This will permanently delete all certificates,
-                                configuration, and encryption keys. The application
-                                will close and you'll need to restart it manually.
-                                You will go through the setup wizard again.
-                            </p>
-                            <Button
-                                variant="destructive"
-                                onClick={() => setResetConfirming(true)}
-                                disabled={resetLoading}
-                            >
-                                {resetLoading
-                                    ? "Resetting..."
-                                    : "Reset Database & Restart"}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Danger Zone - hidden behind Konami code */}
+                {isAdminModeEnabled && (
+                    <Card className="mt-6 shadow-sm border-red-200 dark:border-red-900">
+                        <CardHeader>
+                            <CardTitle className="text-red-600 dark:text-red-400">
+                                Danger Zone
+                            </CardTitle>
+                            <CardDescription>
+                                Irreversible actions that affect all your data
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg">
+                                <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+                                    Reset Database & Restart
+                                </h3>
+                                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                                    This will permanently delete all certificates,
+                                    configuration, and encryption keys. The application
+                                    will close and you'll need to restart it manually.
+                                    You will go through the setup wizard again.
+                                </p>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setResetConfirming(true)}
+                                    disabled={resetLoading}
+                                >
+                                    {resetLoading
+                                        ? "Resetting..."
+                                        : "Reset Database & Restart"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Footer */}
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -527,12 +504,6 @@ export function Settings() {
                 isLoading={resetLoading}
                 onConfirm={handleResetDatabase}
                 onCancel={() => setResetConfirming(false)}
-            />
-
-            {/* Encryption Key Dialog */}
-            <EncryptionKeyDialog
-                open={showKeyDialog}
-                onClose={() => setShowKeyDialog(false)}
             />
         </div>
     );

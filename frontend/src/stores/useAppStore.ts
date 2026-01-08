@@ -30,6 +30,10 @@ interface AppState {
     error: string | null;
     setError: (error: string | null) => void;
     clearError: () => void;
+
+    // Admin mode (hidden behind Konami code)
+    isAdminModeEnabled: boolean;
+    setIsAdminModeEnabled: (enabled: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -53,4 +57,7 @@ export const useAppStore = create<AppState>((set) => ({
     error: null,
     setError: (error) => set({ error }),
     clearError: () => set({ error: null }),
+
+    isAdminModeEnabled: false,
+    setIsAdminModeEnabled: (enabled) => set({ isAdminModeEnabled: enabled }),
 }));

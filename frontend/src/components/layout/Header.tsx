@@ -4,6 +4,7 @@ import { applyTheme, getTheme, setTheme, watchSystemTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Sun02Icon, Moon02Icon } from "@hugeicons/core-free-icons";
+import { EncryptionKeyButton } from "./EncryptionKeyButton";
 import logo from "@/assets/images/logo-universal.png";
 
 export function Header() {
@@ -53,6 +54,7 @@ export function Header() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <EncryptionKeyButton />
                     <Button
                         variant="ghost"
                         size="icon"
