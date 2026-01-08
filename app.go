@@ -919,6 +919,33 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 	return nil
 }
 
+// GetPrivateKeyPEM returns the decrypted private key PEM for display in UI
+func (a *App) GetPrivateKeyPEM(hostname string) (string, error) {
+	if err := a.requireSetupComplete(); err != nil {
+		return "", err
+	}
+
+	logger.Debug("Getting private key PEM for: %s", hostname)
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	encryptionKey := make([]byte, len(a.encryptionKey))
+	copy(encryptionKey, a.encryptionKey)
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return "", fmt.Errorf("certificate service not initialized")
+	}
+
+	privateKeyPEM, err := certificateService.GetPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
+	if err != nil {
+		logger.Error("Get private key PEM failed: %v", err)
+		return "", err
+	}
+
+	return privateKeyPEM, nil
+}
+
 // ============================================================================
 // Backup Operations
 // ============================================================================

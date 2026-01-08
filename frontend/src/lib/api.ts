@@ -70,6 +70,8 @@ export const api = {
         App.GetCertificate(hostname) as Promise<Certificate>,
     getCertificateChain: (hostname: string) =>
         App.GetCertificateChain(hostname) as Promise<ChainCertificateInfo[]>,
+    getPrivateKeyPEM: (hostname: string) =>
+        App.GetPrivateKeyPEM(hostname) as Promise<string>,
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
 
     // File operations

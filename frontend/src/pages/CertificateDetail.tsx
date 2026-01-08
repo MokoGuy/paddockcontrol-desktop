@@ -32,6 +32,7 @@ import {
     Download04Icon,
     RefreshIcon,
     Delete02Icon,
+    Key01Icon,
 } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
@@ -66,6 +67,11 @@ export function CertificateDetail() {
     const [chain, setChain] = useState<ChainCertificateInfo[]>([]);
     const [chainLoading, setChainLoading] = useState(false);
     const [chainError, setChainError] = useState<string | null>(null);
+
+    // Private key state
+    const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null);
+    const [privateKeyLoading, setPrivateKeyLoading] = useState(false);
+    const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
 
     useEffect(() => {
         loadCertificate();
@@ -119,6 +125,31 @@ export function CertificateDetail() {
             loadCertificateChain();
         }
     }, [certificate?.certificate_pem, hostname]);
+
+    // Load private key when encryption key is available
+    const loadPrivateKey = async () => {
+        if (!hostname || !isEncryptionKeyProvided) return;
+
+        setPrivateKeyLoading(true);
+        setPrivateKeyError(null);
+        try {
+            const pem = await api.getPrivateKeyPEM(hostname);
+            setPrivateKeyPEM(pem);
+        } catch (err) {
+            setPrivateKeyError(
+                err instanceof Error ? err.message : "Failed to load private key",
+            );
+        } finally {
+            setPrivateKeyLoading(false);
+        }
+    };
+
+    // Trigger private key loading when certificate and encryption key are available
+    useEffect(() => {
+        if (certificate && isEncryptionKeyProvided) {
+            loadPrivateKey();
+        }
+    }, [certificate, isEncryptionKeyProvided, hostname]);
 
     const handleDelete = async () => {
         if (!hostname) return;
@@ -504,6 +535,81 @@ export function CertificateDetail() {
                     </Card>
                 )}
 
+                {/* Private Key (PEM) */}
+                {isEncryptionKeyProvided && (
+                    <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <HugeiconsIcon
+                                        icon={Key01Icon}
+                                        className="w-5 h-5"
+                                        strokeWidth={2}
+                                    />
+                                    <div>
+                                        <CardTitle>Private Key (PEM)</CardTitle>
+                                        <CardDescription>
+                                            RSA private key in PEM format
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                                {privateKeyPEM && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            downloadPrivateKey(
+                                                certificate.hostname,
+                                            )
+                                        }
+                                    >
+                                        <HugeiconsIcon
+                                            icon={Download04Icon}
+                                            className="w-4 h-4 mr-1"
+                                            strokeWidth={2}
+                                        />
+                                        Download
+                                    </Button>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {privateKeyLoading ? (
+                                <LoadingSpinner text="Decrypting private key..." />
+                            ) : privateKeyError ? (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {privateKeyError}
+                                </p>
+                            ) : privateKeyPEM ? (
+                                <div className="relative">
+                                    <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700">
+                                        {privateKeyPEM}
+                                    </pre>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="absolute top-2 right-2"
+                                        onClick={() =>
+                                            handleCopy(
+                                                privateKeyPEM,
+                                                "privateKey",
+                                            )
+                                        }
+                                    >
+                                        {copiedField === "privateKey"
+                                            ? "✓ Copied"
+                                            : "Copy"}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    No private key available
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Pending CSR */}
                 {certificate.pending_csr && (
                     <Card className="mb-6 shadow-sm border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950">
@@ -610,25 +716,6 @@ export function CertificateDetail() {
                                     </Button>
                                 </>
                             )}
-                            {/* Download Private Key - requires encryption key */}
-                            <Button
-                                variant="outline"
-                                onClick={() =>
-                                    downloadPrivateKey(certificate.hostname)
-                                }
-                                disabled={
-                                    !isEncryptionKeyProvided ||
-                                    certLoading ||
-                                    backupLoading
-                                }
-                                title={
-                                    !isEncryptionKeyProvided
-                                        ? "Encryption key required"
-                                        : ""
-                                }
-                            >
-                                Download Private Key
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
