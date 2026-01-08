@@ -18,18 +18,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/layout/Header";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { CodeBlock } from "@/components/ui/code-block";
 
 export function GenerateCSR() {
     const navigate = useNavigate();
     const { defaults, loadDefaults } = useSetup();
-    const { generateCSR, isLoading, error, downloadCSR } = useCertificates();
-    const [step, setStep] = useState<"form" | "result">("form");
-    const [csrResult, setCSRResult] = useState<{
-        hostname: string;
-        csr: string;
-        message: string;
-    } | null>(null);
+    const { generateCSR, isLoading, error } = useCertificates();
     const [sanInputs, setSanInputs] = useState<string[]>([]);
 
     const {
@@ -65,20 +58,10 @@ export function GenerateCSR() {
                 sans: sans.length > 0 ? sans : [],
             });
             if (result) {
-                setCSRResult(result);
-                setStep("result");
+                navigate(`/certificates/${encodeURIComponent(result.hostname)}`);
             }
         } catch (err) {
             console.error("CSR generation error:", err);
-        }
-    };
-
-    const handleDownload = async () => {
-        if (!csrResult) return;
-        try {
-            await downloadCSR(csrResult.hostname, csrResult.csr);
-        } catch (err) {
-            console.error("Download error:", err);
         }
     };
 
@@ -89,61 +72,6 @@ export function GenerateCSR() {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <LoadingSpinner text="Loading defaults..." />
                 </div>
-            </div>
-        );
-    }
-
-    if (step === "result" && csrResult) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-                <Header />
-                <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            CSR Generated
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Your certificate signing request is ready
-                        </p>
-                    </div>
-
-                    <Card className="mb-6 shadow-sm border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950">
-                        <CardContent>
-                            <p className="text-sm text-green-800 dark:text-green-200">
-                                ✓ CSR generated successfully for{" "}
-                                {csrResult.hostname}
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
-                        <CardHeader>
-                            <CardTitle>Certificate Signing Request</CardTitle>
-                            <CardDescription>
-                                Send this to your certificate authority
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CodeBlock
-                                content={csrResult.csr}
-                                maxHeight="max-h-64"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex gap-3">
-                        <Button
-                            variant="outline"
-                            onClick={() => navigate("/")}
-                            className="flex-1"
-                        >
-                            Back to Dashboard
-                        </Button>
-                        <Button onClick={handleDownload} className="flex-1">
-                            Download CSR File
-                        </Button>
-                    </div>
-                </main>
             </div>
         );
     }
