@@ -206,29 +206,6 @@ export function ImportCertificate() {
                                 )}
                             </div>
 
-                            {/* Certificate Chain (Optional) */}
-                            <div className="space-y-2">
-                                <Label htmlFor="cert_chain_pem">
-                                    Certificate Chain (Optional)
-                                </Label>
-                                <Controller
-                                    name="cert_chain_pem"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <FileDropTextarea
-                                            value={field.value || ""}
-                                            onChange={field.onChange}
-                                            placeholder="Additional certificates if part of a chain"
-                                            disabled={isSubmitting || isLoading}
-                                            rows={4}
-                                            dropLabel="Drop certificate chain file here"
-                                            acceptedExtensions={[".crt", ".pem", ".cer", ".txt"]}
-                                            className="font-mono text-xs"
-                                        />
-                                    )}
-                                />
-                            </div>
-
                             {/* Note */}
                             <div className="space-y-2">
                                 <Label htmlFor="note">Note</Label>

@@ -116,10 +116,6 @@ export const importCertificateSchema = z.object({
     .string()
     .min(50, 'Private key is required (PEM format)')
     .refine((val) => val.includes('BEGIN') && val.includes('PRIVATE'), 'Invalid private key format'),
-  cert_chain_pem: z
-    .string()
-    .optional()
-    .or(z.literal('')),
   note: z
     .string()
     .max(500, 'Note is too long')
