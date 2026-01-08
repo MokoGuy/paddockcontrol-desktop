@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useThemeStore } from "@/stores/useThemeStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { applyTheme, getTheme, setTheme, watchSystemTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -19,6 +20,7 @@ export function Header() {
         setTheme: setStoreTheme,
         setIsDarkMode,
     } = useThemeStore();
+    const { isAdminModeEnabled } = useAppStore();
     const [version, setVersion] = useState<string>("");
 
     useEffect(() => {
@@ -70,7 +72,9 @@ export function Header() {
                 <div className="flex items-center gap-3">
                     <img src={logo} alt="PaddockControl" className="w-8 h-8" />
                     <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                        <h1
+                            className={`text-xl font-bold ${isAdminModeEnabled ? "text-red-600 dark:text-red-500" : "text-gray-900 dark:text-white"}`}
+                        >
                             PaddockControl
                         </h1>
                         {version && (
@@ -80,6 +84,14 @@ export function Header() {
                         )}
                     </div>
                 </div>
+
+                {isAdminModeEnabled && (
+                    <div className="absolute left-1/2 transform -translate-x-1/2">
+                        <span className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center">
+                            admin mode
+                        </span>
+                    </div>
+                )}
 
                 <div
                     className="flex items-center gap-2"
