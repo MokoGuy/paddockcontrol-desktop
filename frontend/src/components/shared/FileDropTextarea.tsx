@@ -12,6 +12,8 @@ interface FileDropTextareaProps {
     /** Drop zone label shown when dragging */
     dropLabel?: string;
     disabled?: boolean;
+    /** Number of visible text rows */
+    rows?: number;
 }
 
 export function FileDropTextarea({
@@ -23,6 +25,7 @@ export function FileDropTextarea({
     acceptedExtensions = [".crt", ".pem", ".cer", ".txt"],
     dropLabel = "Drop file here",
     disabled = false,
+    rows,
 }: FileDropTextareaProps) {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -101,6 +104,7 @@ export function FileDropTextarea({
                 placeholder={placeholder}
                 className={className}
                 disabled={disabled}
+                rows={rows}
             />
             {isDragging && (
                 <div className="absolute inset-0 bg-blue-500/10 rounded-md flex items-center justify-center pointer-events-none">

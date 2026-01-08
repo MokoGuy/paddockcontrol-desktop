@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCertificates } from "@/hooks/useCertificates";
 import {
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/layout/Header";
+import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 
 export function ImportCertificate() {
     const navigate = useNavigate();
@@ -29,6 +30,7 @@ export function ImportCertificate() {
         handleSubmit,
         formState: { errors, isSubmitting },
         watch,
+        control,
     } = useForm<ImportCertificateInput>({
         resolver: zodResolver(importCertificateSchema),
     });
@@ -153,13 +155,21 @@ export function ImportCertificate() {
                                 <Label htmlFor="certificate_pem">
                                     Certificate (PEM) *
                                 </Label>
-                                <Textarea
-                                    id="certificate_pem"
-                                    placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                                    disabled={isSubmitting || isLoading}
-                                    rows={6}
-                                    {...register("certificate_pem")}
-                                    className="font-mono text-xs"
+                                <Controller
+                                    name="certificate_pem"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <FileDropTextarea
+                                            value={field.value || ""}
+                                            onChange={field.onChange}
+                                            placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                                            disabled={isSubmitting || isLoading}
+                                            rows={6}
+                                            dropLabel="Drop certificate file here"
+                                            acceptedExtensions={[".crt", ".pem", ".cer", ".txt"]}
+                                            className="font-mono text-xs"
+                                        />
+                                    )}
                                 />
                                 {errors.certificate_pem && (
                                     <p className="text-sm text-red-600 dark:text-red-400">
@@ -173,13 +183,21 @@ export function ImportCertificate() {
                                 <Label htmlFor="private_key_pem">
                                     Private Key (PEM) *
                                 </Label>
-                                <Textarea
-                                    id="private_key_pem"
-                                    placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
-                                    disabled={isSubmitting || isLoading}
-                                    rows={6}
-                                    {...register("private_key_pem")}
-                                    className="font-mono text-xs"
+                                <Controller
+                                    name="private_key_pem"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <FileDropTextarea
+                                            value={field.value || ""}
+                                            onChange={field.onChange}
+                                            placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+                                            disabled={isSubmitting || isLoading}
+                                            rows={6}
+                                            dropLabel="Drop private key file here"
+                                            acceptedExtensions={[".key", ".pem", ".txt"]}
+                                            className="font-mono text-xs"
+                                        />
+                                    )}
                                 />
                                 {errors.private_key_pem && (
                                     <p className="text-sm text-red-600 dark:text-red-400">
@@ -193,13 +211,21 @@ export function ImportCertificate() {
                                 <Label htmlFor="cert_chain_pem">
                                     Certificate Chain (Optional)
                                 </Label>
-                                <Textarea
-                                    id="cert_chain_pem"
-                                    placeholder="Additional certificates if part of a chain"
-                                    disabled={isSubmitting || isLoading}
-                                    rows={4}
-                                    {...register("cert_chain_pem")}
-                                    className="font-mono text-xs"
+                                <Controller
+                                    name="cert_chain_pem"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <FileDropTextarea
+                                            value={field.value || ""}
+                                            onChange={field.onChange}
+                                            placeholder="Additional certificates if part of a chain"
+                                            disabled={isSubmitting || isLoading}
+                                            rows={4}
+                                            dropLabel="Drop certificate chain file here"
+                                            acceptedExtensions={[".crt", ".pem", ".cer", ".txt"]}
+                                            className="font-mono text-xs"
+                                        />
+                                    )}
                                 />
                             </div>
 
