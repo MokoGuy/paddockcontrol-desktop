@@ -125,6 +125,7 @@
     }
     html {
         @apply font-sans;
+        overflow-y: scroll; /* Always show scrollbar to prevent width jump */
     }
 }
 
