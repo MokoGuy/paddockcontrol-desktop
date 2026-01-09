@@ -5,8 +5,8 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
-import { Quit } from "../../../wailsjs/runtime/runtime";
+import { Cancel01Icon, ArrowLeft01Icon, MinusSignIcon, SquareIcon } from "@hugeicons/core-free-icons";
+import { Quit, WindowMinimise, WindowToggleMaximise } from "../../../wailsjs/runtime/runtime";
 import { GetBuildInfo } from "../../../wailsjs/go/main/App";
 import { ThemeToggle } from "./ThemeToggle";
 import { EncryptionKeyButton } from "../layout/EncryptionKeyButton";
@@ -29,6 +29,7 @@ interface AppHeaderProps {
     showAdminBadge?: boolean;
     showEncryptionKey?: boolean;
     showThemeToggle?: boolean;
+    showWindowControls?: boolean;
     showCloseButton?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function AppHeader({
     showAdminBadge = false,
     showEncryptionKey = false,
     showThemeToggle = true,
+    showWindowControls = true,
     showCloseButton = true,
 }: AppHeaderProps) {
     const navigate = useNavigate();
@@ -98,6 +100,36 @@ export function AppHeader({
                 }
             >
                 {showThemeToggle && <ThemeToggle />}
+                {showWindowControls && (
+                    <>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => WindowMinimise()}
+                            title="Minimize"
+                            className="text-muted-foreground"
+                        >
+                            <HugeiconsIcon
+                                icon={MinusSignIcon}
+                                className="w-4 h-4"
+                                strokeWidth={2}
+                            />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => WindowToggleMaximise()}
+                            title="Maximize"
+                            className="text-muted-foreground"
+                        >
+                            <HugeiconsIcon
+                                icon={SquareIcon}
+                                className="w-4 h-4"
+                                strokeWidth={2}
+                            />
+                        </Button>
+                    </>
+                )}
                 {showCloseButton && (
                     <Button
                         variant="ghost"
@@ -321,6 +353,36 @@ export function AppHeader({
                         </motion.div>
                     )}
                     {showThemeToggle && <ThemeToggle />}
+                    {showWindowControls && (
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => WindowMinimise()}
+                                title="Minimize"
+                                className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
+                            >
+                                <HugeiconsIcon
+                                    icon={MinusSignIcon}
+                                    className="w-4 h-4"
+                                    strokeWidth={2}
+                                />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => WindowToggleMaximise()}
+                                title="Maximize"
+                                className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
+                            >
+                                <HugeiconsIcon
+                                    icon={SquareIcon}
+                                    className="w-4 h-4"
+                                    strokeWidth={2}
+                                />
+                            </Button>
+                        </>
+                    )}
                     {showCloseButton && (
                         <Button
                             variant="ghost"
