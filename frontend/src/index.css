@@ -120,12 +120,15 @@
     * {
         @apply border-border outline-ring/50;
     }
-    body {
-        @apply font-sans bg-background text-foreground;
-    }
+
     html {
         @apply font-sans;
-        overflow-y: scroll; /* Always show scrollbar to prevent width jump */
+        overflow: hidden; /* Prevent root scrollbar */
+        height: 100%;
+    }
+    body {
+        @apply font-sans bg-background text-foreground;
+        scrollbar-gutter: stable; /* Reserve space for scrollbar to prevent width jump */
     }
 }
 
