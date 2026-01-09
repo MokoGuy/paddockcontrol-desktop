@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useAppStore } from "@/stores/useAppStore";
@@ -44,6 +44,8 @@ export function AppHeader({
     const navigate = useNavigate();
     const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
     const [version, setVersion] = useState<string>("");
+    const [showPulse, setShowPulse] = useState(false);
+    const prevAdminMode = useRef(isAdminModeEnabled);
 
     useEffect(() => {
         if (showTitle) {
@@ -57,6 +59,17 @@ export function AppHeader({
                 });
         }
     }, [showTitle]);
+
+    // Trigger pulse animation when admin mode is enabled
+    useEffect(() => {
+        if (isAdminModeEnabled && !prevAdminMode.current) {
+            // Schedule state update to avoid cascading renders
+            setTimeout(() => setShowPulse(true), 0);
+            const timer = setTimeout(() => setShowPulse(false), 1200);
+            return () => clearTimeout(timer);
+        }
+        prevAdminMode.current = isAdminModeEnabled;
+    }, [isAdminModeEnabled]);
 
     const handleBack = () => {
         if (onBack) {
@@ -195,12 +208,36 @@ export function AppHeader({
                 <AnimatePresence>
                     {showAdminBadge && isAdminModeEnabled && (
                         <motion.span
-                            className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 pl-2 pr-1 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center gap-1"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.2 }}
+                            className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 pl-2 pr-1 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center gap-1 relative"
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{
+                                opacity: 1,
+                                scale: [0, 1.15, 1],
+                            }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{
+                                duration: 0.3,
+                                ease: [0.34, 1.56, 0.64, 1], // Elastic ease
+                            }}
                         >
+                            {/* Pulse and glow effect on enable */}
+                            {showPulse && (
+                                <>
+                                    <motion.span
+                                        className="absolute inset-0 rounded border-2 border-red-500"
+                                        initial={{ opacity: 0.8, scale: 1 }}
+                                        animate={{ opacity: 0, scale: 2 }}
+                                        transition={{ duration: 0.3 }}
+                                    />
+                                    <motion.span
+                                        className="absolute inset-0 rounded bg-red-500"
+                                        initial={{ opacity: 0.4, scale: 1 }}
+                                        animate={{ opacity: 0, scale: 2.5 }}
+                                        transition={{ duration: 1.2 }}
+                                        style={{ filter: "blur(10px)" }}
+                                    />
+                                </>
+                            )}
                             admin mode
                             <button
                                 onClick={() => setIsAdminModeEnabled(false)}
