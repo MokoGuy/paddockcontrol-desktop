@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useBackup } from "@/hooks/useBackup";
 import { useAppStore } from "@/stores/useAppStore";
@@ -28,7 +29,7 @@ import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { CodeBlock } from "@/components/ui/code-block";
-import { Switch } from "@/components/ui/switch";
+import { AnimatedSwitch } from "@/components/ui/animated-switch";
 import { Label } from "@/components/ui/label";
 import { formatDateTime } from "@/lib/theme";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -216,13 +217,13 @@ export function CertificateDetail() {
     };
 
     const handleToggleReadOnly = async (checked: boolean) => {
-        if (!hostname) return;
+        if (!hostname || !certificate) return;
         setIsTogglingReadOnly(true);
+        setCertificate({ ...certificate, read_only: checked });
         try {
             await setCertificateReadOnly(hostname, checked);
-            // Reload certificate to get updated state
-            await loadCertificate();
         } catch (err) {
+            setCertificate({ ...certificate, read_only: !checked });
             setError(
                 err instanceof Error
                     ? err.message
@@ -274,7 +275,7 @@ export function CertificateDetail() {
                 </div>
                 <div className="flex gap-2">
                     <div className="flex items-center gap-2 mr-4 pr-4 border-r border-border">
-                        <Switch
+                        <AnimatedSwitch
                             id="read-only-switch"
                             checked={certificate.read_only}
                             onCheckedChange={handleToggleReadOnly}
@@ -287,47 +288,57 @@ export function CertificateDetail() {
                             Read-only
                         </Label>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            navigate("/certificates/generate", {
-                                state: {
-                                    renewal: certificate.hostname,
-                                },
-                            })
-                        }
-                        disabled={!isEncryptionKeyProvided || certificate.read_only}
-                        title={
-                            certificate.read_only
-                                ? "Certificate is read-only"
-                                : !isEncryptionKeyProvided
-                                  ? "Encryption key required"
-                                  : ""
-                        }
+                    <motion.div
+                        animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
+                        transition={{ duration: 0.2 }}
                     >
-                        <HugeiconsIcon
-                            icon={RefreshIcon}
-                            className="w-4 h-4 mr-1"
-                            strokeWidth={2}
-                        />
-                        Renew
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
-                        onClick={() => setDeleteConfirming(true)}
-                        disabled={certLoading || backupLoading || certificate.read_only}
-                        title={certificate.read_only ? "Certificate is read-only" : ""}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                navigate("/certificates/generate", {
+                                    state: {
+                                        renewal: certificate.hostname,
+                                    },
+                                })
+                            }
+                            disabled={!isEncryptionKeyProvided || certificate.read_only}
+                            title={
+                                certificate.read_only
+                                    ? "Certificate is read-only"
+                                    : !isEncryptionKeyProvided
+                                      ? "Encryption key required"
+                                      : ""
+                            }
+                        >
+                            <HugeiconsIcon
+                                icon={RefreshIcon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            Renew
+                        </Button>
+                    </motion.div>
+                    <motion.div
+                        animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
+                        transition={{ duration: 0.2 }}
                     >
-                        <HugeiconsIcon
-                            icon={Delete02Icon}
-                            className="w-4 h-4 mr-1"
-                            strokeWidth={2}
-                        />
-                        Delete
-                    </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
+                            onClick={() => setDeleteConfirming(true)}
+                            disabled={certLoading || backupLoading || certificate.read_only}
+                            title={certificate.read_only ? "Certificate is read-only" : ""}
+                        >
+                            <HugeiconsIcon
+                                icon={Delete02Icon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            Delete
+                        </Button>
+                    </motion.div>
                     <Button
                         variant="outline"
                         size="sm"
@@ -359,15 +370,33 @@ export function CertificateDetail() {
                                 Current certificate status
                             </CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <StatusBadge
-                                status={certificate.status}
-                                daysUntilExpiration={
-                                    certificate.days_until_expiration
-                                }
-                            />
-                            {certificate.read_only && <ReadOnlyBadge />}
-                        </div>
+                        <motion.div className="flex items-center gap-2" layout>
+                            <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                                <StatusBadge
+                                    status={certificate.status}
+                                    daysUntilExpiration={
+                                        certificate.days_until_expiration
+                                    }
+                                />
+                            </motion.div>
+                            <AnimatePresence mode="popLayout">
+                                {certificate.read_only && (
+                                    <motion.div
+                                        key="read-only-badge"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 500,
+                                            damping: 30,
+                                        }}
+                                    >
+                                        <ReadOnlyBadge />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -530,15 +559,20 @@ export function CertificateDetail() {
                                     />
                                     Download
                                 </Button>
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => setUploadDialogOpen(true)}
-                                    disabled={certificate.read_only}
-                                    title={certificate.read_only ? "Certificate is read-only" : ""}
+                                <motion.div
+                                    animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
+                                    transition={{ duration: 0.2 }}
                                 >
-                                    Upload Signed Certificate
-                                </Button>
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => setUploadDialogOpen(true)}
+                                        disabled={certificate.read_only}
+                                        title={certificate.read_only ? "Certificate is read-only" : ""}
+                                    >
+                                        Upload Signed Certificate
+                                    </Button>
+                                </motion.div>
                             </div>
                         </div>
                     </CardHeader>
