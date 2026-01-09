@@ -1,18 +1,32 @@
-import { create } from 'zustand';
-
-type Theme = 'light' | 'dark' | 'system';
+import { create } from "zustand";
 
 interface ThemeState {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  isDarkMode: boolean;
-  setIsDarkMode: (isDark: boolean) => void;
+    isDarkMode: boolean;
+    setIsDarkMode: (isDark: boolean) => void;
 }
 
-export const useThemeStore = create<ThemeState>((set) => ({
-  theme: 'system',
-  setTheme: (theme) => set({ theme }),
+// Initialize isDarkMode from document state
+const getInitialDarkMode = (): boolean => {
+    if (typeof document !== "undefined") {
+        return document.documentElement.classList.contains("dark");
+    }
+    return false;
+};
 
-  isDarkMode: false,
-  setIsDarkMode: (isDark) => set({ isDarkMode: isDark }),
+export const useThemeStore = create<ThemeState>((set) => ({
+    isDarkMode: getInitialDarkMode(),
+    setIsDarkMode: (isDark) => set({ isDarkMode: isDark }),
 }));
+
+// Watch for DOM class changes to keep store in sync
+if (typeof document !== "undefined") {
+    const observer = new MutationObserver(() => {
+        const isDark = document.documentElement.classList.contains("dark");
+        useThemeStore.setState({ isDarkMode: isDark });
+    });
+
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+    });
+}

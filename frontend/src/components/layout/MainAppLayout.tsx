@@ -33,17 +33,7 @@ export function MainAppLayout() {
     }, [isAdminModeEnabled]);
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950 relative overflow-hidden">
-            {/* Red Matrix rain overlay on admin mode enable */}
-            <AnimatePresence>
-                {showMatrix && (
-                    <MatrixRain
-                        duration={1200}
-                        onComplete={() => setShowMatrix(false)}
-                    />
-                )}
-            </AnimatePresence>
-
+        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
             {/* Header with main app configuration */}
             <AnimatePresence mode="wait">
                 <AppHeader
@@ -57,7 +47,17 @@ export function MainAppLayout() {
             </AnimatePresence>
 
             {/* Main content area with scroll */}
-            <main className="flex-1 overflow-y-auto scrollbar-float">
+            <main className="flex-1 overflow-y-auto scrollbar-float relative overflow-hidden">
+                {/* Red Matrix rain overlay on admin mode enable - only affects content */}
+                <AnimatePresence>
+                    {showMatrix && (
+                        <MatrixRain
+                            duration={1200}
+                            onComplete={() => setShowMatrix(false)}
+                        />
+                    )}
+                </AnimatePresence>
+
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Child routes render here */}
                     <Outlet />

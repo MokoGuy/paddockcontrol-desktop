@@ -1,33 +1,16 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Sun02Icon, Moon02Icon } from "@hugeicons/core-free-icons";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { getTheme, setTheme, applyTheme } from "@/lib/theme";
+import { setTheme } from "@/lib/theme";
 
 export function ThemeToggle() {
-    const {
-        isDarkMode,
-        setTheme: setStoreTheme,
-        setIsDarkMode,
-    } = useThemeStore();
-
-    useEffect(() => {
-        const currentTheme = getTheme();
-        setStoreTheme(currentTheme);
-        applyTheme(currentTheme);
-        const isDark =
-            currentTheme === "dark" ||
-            (currentTheme === "system" &&
-                window.matchMedia("(prefers-color-scheme: dark)").matches);
-        setIsDarkMode(isDark);
-    }, [setStoreTheme, setIsDarkMode]);
+    const { isDarkMode, setIsDarkMode } = useThemeStore();
 
     const toggleTheme = () => {
         const newTheme = isDarkMode ? "light" : "dark";
-        setTheme(newTheme);
-        setStoreTheme(newTheme);
-        setIsDarkMode(!isDarkMode);
+        setTheme(newTheme); // Saves to localStorage and applies to DOM
+        setIsDarkMode(!isDarkMode); // Updates store
     };
 
     return (

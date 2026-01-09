@@ -16,9 +16,12 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Set canvas size to window size
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Set canvas size to parent container size
+        const parent = canvas.parentElement;
+        if (!parent) return;
+
+        canvas.width = parent.clientWidth;
+        canvas.height = parent.clientHeight;
 
         // Matrix characters - mix of katakana, latin, numbers, symbols
         const chars =
@@ -100,7 +103,7 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
 
     return (
         <motion.div
-            className="fixed inset-0 z-50 pointer-events-none"
+            className="absolute inset-0 z-50 pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
