@@ -109,7 +109,7 @@ export function GenerateCSR() {
 
     if (!config) {
         return (
-            <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
+            <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
                 <Header />
                 <div className="flex-1 flex items-center justify-center">
                     <LoadingSpinner text="Loading configuration..." />
@@ -119,10 +119,10 @@ export function GenerateCSR() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
             <Header />
 
-            <main className="flex-1 overflow-y-auto scrollbar-float">
+            <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="flex items-center justify-between mb-8">
                         <div>
