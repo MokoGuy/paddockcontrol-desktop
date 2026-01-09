@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { getCssColorAsRgb } from "@/lib/theme";
 
 interface MatrixRainProps {
     duration?: number;
@@ -37,6 +36,12 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
         const resizeObserver = new ResizeObserver(updateCanvasSize);
         resizeObserver.observe(parent);
 
+        // Fade color matches theme background
+        // Light: oklch(1 0 0) = white, Dark: oklch(0.145 0 0) = near-black
+        const fadeColor = isDarkMode
+            ? "rgba(33, 33, 33, 0.08)"
+            : "rgba(255, 255, 255, 0.05)";
+
         // Matrix characters - mix of katakana, latin, numbers, symbols
         const chars =
             "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?";
@@ -59,10 +64,7 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
             const progress = Math.min(elapsed / duration, 1);
 
             // Fade effect - creates the trail (theme-aware)
-            // Use theme background color for natural integration
-            const bgColor = getCssColorAsRgb('--background');
-            const fadeOpacity = isDarkMode ? 0.08 : 0.05;
-            ctx.fillStyle = bgColor.replace('rgb(', 'rgba(').replace(')', `, ${fadeOpacity})`);
+            ctx.fillStyle = fadeColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Red color gradient based on progress
