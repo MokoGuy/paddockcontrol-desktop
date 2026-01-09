@@ -1,6 +1,7 @@
 import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
 import { AnimatedOutlet } from "../shared/AnimatedOutlet";
+import { StarsBackground } from "../animate-ui/backgrounds/stars-background";
 
 /**
  * FloatingSetupLayout - Router-level layout wrapper for setup choice page
@@ -16,9 +17,11 @@ import { AnimatedOutlet } from "../shared/AnimatedOutlet";
  */
 export function FloatingSetupLayout() {
     return (
-        <div
-            className="relative flex flex-col h-screen overflow-hidden bg-background"
+        <StarsBackground
+            className="relative flex flex-col h-screen"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
+            speed={80}
+            factor={0.03}
         >
             {/* Floating header - just theme toggle and close button in top-right */}
             <AnimatePresence mode="wait">
@@ -30,6 +33,6 @@ export function FloatingSetupLayout() {
                 {/* Child routes render here with animation */}
                 <AnimatedOutlet className="w-full" />
             </main>
-        </div>
+        </StarsBackground>
     );
 }

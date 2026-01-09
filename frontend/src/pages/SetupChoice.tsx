@@ -136,7 +136,7 @@ export function SetupChoice() {
                         }}
                     >
                         <Card
-                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group"
+                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group bg-background/90 backdrop-blur-sm"
                             onClick={() => navigate("/setup/wizard")}
                         >
                             <CardHeader>
@@ -176,7 +176,7 @@ export function SetupChoice() {
                         }}
                     >
                         <Card
-                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group"
+                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group bg-background/90 backdrop-blur-sm"
                             onClick={() => navigate("/setup/restore")}
                         >
                             <CardHeader>
