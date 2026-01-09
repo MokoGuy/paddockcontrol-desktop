@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
 
 /**
@@ -20,11 +21,9 @@ export function FloatingSetupLayout() {
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
             {/* Floating header - just theme toggle and close button in top-right */}
-            <AppHeader
-                variant="floating"
-                showThemeToggle
-                showCloseButton
-            />
+            <AnimatePresence mode="wait">
+                <AppHeader variant="floating" showThemeToggle showCloseButton />
+            </AnimatePresence>
 
             {/* Content fills entire screen - child handles own layout */}
             <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float flex items-center justify-center">

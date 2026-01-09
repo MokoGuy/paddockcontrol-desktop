@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
+import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
 
 /**
@@ -24,14 +25,16 @@ export function SetupAppLayout() {
     return (
         <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
             {/* Header with back button for setup pages */}
-            <AppHeader
-                variant="default"
-                showBackButton
-                onBack={handleBack}
-                showTitle
-                showThemeToggle
-                showCloseButton
-            />
+            <AnimatePresence mode="wait">
+                <AppHeader
+                    variant="default"
+                    showBackButton
+                    onBack={handleBack}
+                    showTitle
+                    showThemeToggle
+                    showCloseButton
+                />
+            </AnimatePresence>
 
             {/* Main content area with scroll */}
             <main className="flex-1 overflow-y-auto scrollbar-float">

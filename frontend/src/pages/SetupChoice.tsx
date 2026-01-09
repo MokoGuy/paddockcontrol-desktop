@@ -22,9 +22,9 @@ export function SetupChoice() {
                     src={logo}
                     alt="PaddockControl"
                     className="w-16 h-16 mx-auto"
-                    initial={{ opacity: 0, scale: 0.5 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                 />
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -45,9 +45,9 @@ export function SetupChoice() {
                     </h1>
                     <motion.p
                         className="text-gray-600 dark:text-gray-400 mt-2"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 1.6 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 1.6 }}
                     >
                         Choose how you would like to set up your certificate
                         manager
@@ -63,9 +63,9 @@ export function SetupChoice() {
                         "--wails-draggable": "no-drag",
                     } as React.CSSProperties
                 }
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 1.8 }}
+                transition={{ duration: 0.4, delay: 1.7 }}
             >
                 {/* New Setup */}
                 <motion.div
