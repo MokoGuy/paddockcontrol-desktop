@@ -130,6 +130,10 @@
         @apply font-sans bg-background text-foreground;
         scrollbar-gutter: stable; /* Reserve space for scrollbar to prevent width jump */
     }
+    /* Disable scrollbar-gutter when Radix UI locks scroll (modal open) to prevent double spacing */
+    body[data-scroll-locked] {
+        scrollbar-gutter: auto;
+    }
 }
 
 /* ==========================================
