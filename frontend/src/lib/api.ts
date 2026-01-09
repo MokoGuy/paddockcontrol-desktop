@@ -81,6 +81,8 @@ export const api = {
     getPrivateKeyPEM: (hostname: string) =>
         App.GetPrivateKeyPEM(hostname) as Promise<string>,
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
+    setCertificateReadOnly: (hostname: string, readOnly: boolean) =>
+        App.SetCertificateReadOnly(hostname, readOnly),
 
     // File operations
     saveCSRToFile: (hostname: string) => App.SaveCSRToFile(hostname),

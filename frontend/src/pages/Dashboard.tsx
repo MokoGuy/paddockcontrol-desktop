@@ -17,12 +17,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
+import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { formatDate } from "@/lib/theme";
 import { CertificateFilter } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -365,11 +364,7 @@ export function Dashboard() {
                                                     cert.days_until_expiration
                                                 }
                                             />
-                                            {cert.read_only && (
-                                                <Badge variant="secondary">
-                                                    Read-only
-                                                </Badge>
-                                            )}
+                                            {cert.read_only && <ReadOnlyBadge />}
                                         </div>
 
                                         {cert.sans && cert.sans.length > 0 && (

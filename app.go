@@ -795,6 +795,31 @@ func (a *App) DeleteCertificate(hostname string) error {
 	return nil
 }
 
+// SetCertificateReadOnly sets the read-only status of a certificate
+func (a *App) SetCertificateReadOnly(hostname string, readOnly bool) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	logger.Info("Setting certificate read-only status: %s -> %v", hostname, readOnly)
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	if err := certificateService.SetCertificateReadOnly(a.ctx, hostname, readOnly); err != nil {
+		logger.Error("Set certificate read-only failed: %v", err)
+		return err
+	}
+
+	logger.Info("Certificate read-only status updated: %s -> %v", hostname, readOnly)
+	return nil
+}
+
 // ============================================================================
 // Download Operations (with File Dialogs)
 // ============================================================================

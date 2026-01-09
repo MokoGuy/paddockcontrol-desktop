@@ -25,8 +25,11 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
+import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { CertificatePath } from "@/components/certificate/CertificatePath";
 import { CodeBlock } from "@/components/ui/code-block";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { formatDateTime } from "@/lib/theme";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -46,6 +49,7 @@ export function CertificateDetail() {
         deleteCertificate,
         uploadCertificate,
         downloadPrivateKey,
+        setCertificateReadOnly,
         isLoading: certLoading,
         error: certError,
     } = useCertificates();
@@ -75,6 +79,9 @@ export function CertificateDetail() {
 
     // Encryption key dialog state
     const [showKeyDialog, setShowKeyDialog] = useState(false);
+
+    // Read-only toggle state
+    const [isTogglingReadOnly, setIsTogglingReadOnly] = useState(false);
 
     useEffect(() => {
         loadCertificate();
@@ -208,6 +215,24 @@ export function CertificateDetail() {
         }
     };
 
+    const handleToggleReadOnly = async (checked: boolean) => {
+        if (!hostname) return;
+        setIsTogglingReadOnly(true);
+        try {
+            await setCertificateReadOnly(hostname, checked);
+            // Reload certificate to get updated state
+            await loadCertificate();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to update read-only status",
+            );
+        } finally {
+            setIsTogglingReadOnly(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -248,48 +273,61 @@ export function CertificateDetail() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    {!certificate.read_only && (
-                        <>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                    navigate("/certificates/generate", {
-                                        state: {
-                                            renewal: certificate.hostname,
-                                        },
-                                    })
-                                }
-                                disabled={!isEncryptionKeyProvided}
-                                title={
-                                    !isEncryptionKeyProvided
-                                        ? "Encryption key required"
-                                        : ""
-                                }
-                            >
-                                <HugeiconsIcon
-                                    icon={RefreshIcon}
-                                    className="w-4 h-4 mr-1"
-                                    strokeWidth={2}
-                                />
-                                Renew
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteConfirming(true)}
-                                disabled={certLoading || backupLoading}
-                            >
-                                <HugeiconsIcon
-                                    icon={Delete02Icon}
-                                    className="w-4 h-4 mr-1"
-                                    strokeWidth={2}
-                                />
-                                Delete
-                            </Button>
-                        </>
-                    )}
+                    <div className="flex items-center gap-2 mr-4 pr-4 border-r border-border">
+                        <Switch
+                            id="read-only-switch"
+                            checked={certificate.read_only}
+                            onCheckedChange={handleToggleReadOnly}
+                            disabled={isTogglingReadOnly}
+                        />
+                        <Label
+                            htmlFor="read-only-switch"
+                            className="text-sm text-muted-foreground cursor-pointer"
+                        >
+                            Read-only
+                        </Label>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                            navigate("/certificates/generate", {
+                                state: {
+                                    renewal: certificate.hostname,
+                                },
+                            })
+                        }
+                        disabled={!isEncryptionKeyProvided || certificate.read_only}
+                        title={
+                            certificate.read_only
+                                ? "Certificate is read-only"
+                                : !isEncryptionKeyProvided
+                                  ? "Encryption key required"
+                                  : ""
+                        }
+                    >
+                        <HugeiconsIcon
+                            icon={RefreshIcon}
+                            className="w-4 h-4 mr-1"
+                            strokeWidth={2}
+                        />
+                        Renew
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
+                        onClick={() => setDeleteConfirming(true)}
+                        disabled={certLoading || backupLoading || certificate.read_only}
+                        title={certificate.read_only ? "Certificate is read-only" : ""}
+                    >
+                        <HugeiconsIcon
+                            icon={Delete02Icon}
+                            className="w-4 h-4 mr-1"
+                            strokeWidth={2}
+                        />
+                        Delete
+                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -321,12 +359,15 @@ export function CertificateDetail() {
                                 Current certificate status
                             </CardDescription>
                         </div>
-                        <StatusBadge
-                            status={certificate.status}
-                            daysUntilExpiration={
-                                certificate.days_until_expiration
-                            }
-                        />
+                        <div className="flex items-center gap-2">
+                            <StatusBadge
+                                status={certificate.status}
+                                daysUntilExpiration={
+                                    certificate.days_until_expiration
+                                }
+                            />
+                            {certificate.read_only && <ReadOnlyBadge />}
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -493,6 +534,8 @@ export function CertificateDetail() {
                                     variant="default"
                                     size="sm"
                                     onClick={() => setUploadDialogOpen(true)}
+                                    disabled={certificate.read_only}
+                                    title={certificate.read_only ? "Certificate is read-only" : ""}
                                 >
                                     Upload Signed Certificate
                                 </Button>

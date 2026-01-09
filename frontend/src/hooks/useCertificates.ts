@@ -22,6 +22,7 @@ interface UseCertificatesReturn {
     uploadCertificate: (hostname: string, certPEM: string) => Promise<void>;
     importCertificate: (req: ImportRequest) => Promise<void>;
     deleteCertificate: (hostname: string) => Promise<void>;
+    setCertificateReadOnly: (hostname: string, readOnly: boolean) => Promise<void>;
     downloadCSR: (hostname: string, csr: string) => Promise<void>;
     downloadCertificate: (hostname: string, cert: string) => Promise<void>;
     downloadPrivateKey: (hostname: string) => Promise<void>;
@@ -125,6 +126,18 @@ export function useCertificates(): UseCertificatesReturn {
         }
     };
 
+    const setCertificateReadOnly = async (hostname: string, readOnly: boolean) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await api.setCertificateReadOnly(hostname, readOnly);
+        } catch (err) {
+            handleError(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const downloadCSR = async (hostname: string) => {
         setError(null);
         try {
@@ -166,6 +179,7 @@ export function useCertificates(): UseCertificatesReturn {
         uploadCertificate,
         importCertificate,
         deleteCertificate,
+        setCertificateReadOnly,
         downloadCSR,
         downloadCertificate,
         downloadPrivateKey,

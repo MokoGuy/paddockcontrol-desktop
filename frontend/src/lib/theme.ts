@@ -128,13 +128,13 @@ export function getCssColorAsRgb(cssVar: string): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-success/15 text-success dark:bg-success/25';
+      return 'bg-success text-success-foreground';
     case 'pending':
-      return 'bg-info/15 text-info dark:bg-info/25';
+      return 'bg-info text-info-foreground';
     case 'expiring':
-      return 'bg-warning/15 text-warning dark:bg-warning/25';
+      return 'bg-warning text-warning-foreground';
     case 'expired':
-      return 'bg-destructive/15 text-destructive dark:bg-destructive/25';
+      return 'bg-destructive text-destructive-foreground';
     default:
       return 'bg-muted text-muted-foreground';
   }

@@ -401,6 +401,18 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname str
 	return nil
 }
 
+// SetCertificateReadOnly sets the read-only status of a certificate
+func (s *CertificateService) SetCertificateReadOnly(ctx context.Context, hostname string, readOnly bool) error {
+	readOnlyValue := int64(0)
+	if readOnly {
+		readOnlyValue = 1
+	}
+	return s.db.Queries().UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
+		ReadOnly: readOnlyValue,
+		Hostname: hostname,
+	})
+}
+
 // GetCSRForDownload returns the CSR PEM for download
 func (s *CertificateService) GetCSRForDownload(ctx context.Context, hostname string) (string, error) {
 	cert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
