@@ -302,7 +302,7 @@ export function AppHeader({
                             size="icon"
                             onClick={() => Quit()}
                             title="Close"
-                            className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                            className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-transparent dark:hover:bg-transparent"
                         >
                             <HugeiconsIcon
                                 icon={Cancel01Icon}
