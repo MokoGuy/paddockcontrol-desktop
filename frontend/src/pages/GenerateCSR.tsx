@@ -44,6 +44,16 @@ export function GenerateCSR() {
         reset,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
+        defaultValues: {
+            hostname: "",
+            organization: config?.default_organization ?? "",
+            organizational_unit: config?.default_organizational_unit ?? "",
+            city: config?.default_city ?? "",
+            state: config?.default_state ?? "",
+            country: config?.default_country ?? "",
+            key_size: config?.default_key_size,
+            note: "",
+        },
     });
 
     const hostname = watch("hostname");
