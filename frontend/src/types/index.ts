@@ -11,7 +11,7 @@ export interface Certificate {
     pending_note?: string;
     read_only: boolean;
 
-    // Computed fields
+    // Computed fields (from certificate or CSR when no cert exists)
     status: "pending" | "active" | "expiring" | "expired";
     sans?: string[];
     organization?: string;
@@ -21,6 +21,15 @@ export interface Certificate {
     country?: string;
     key_size?: number;
     days_until_expiration?: number;
+
+    // Computed fields from pending CSR (for regenerate functionality)
+    pending_sans?: string[];
+    pending_organization?: string;
+    pending_organizational_unit?: string;
+    pending_city?: string;
+    pending_state?: string;
+    pending_country?: string;
+    pending_key_size?: number;
 }
 
 export interface CertificateListItem {

@@ -297,9 +297,9 @@ export function CertificateDetail() {
                             size="sm"
                             onClick={() =>
                                 navigate("/certificates/generate", {
-                                    state: {
-                                        renewal: certificate.hostname,
-                                    },
+                                    state: certificate.pending_csr
+                                        ? { regenerate: certificate.hostname }
+                                        : { renewal: certificate.hostname },
                                 })
                             }
                             disabled={!isEncryptionKeyProvided || certificate.read_only}
@@ -316,7 +316,7 @@ export function CertificateDetail() {
                                 className="w-4 h-4 mr-1"
                                 strokeWidth={2}
                             />
-                            Renew
+                            {certificate.pending_csr ? "Regenerate" : "Renew"}
                         </Button>
                     </motion.div>
                     <motion.div

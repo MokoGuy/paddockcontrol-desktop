@@ -24,6 +24,15 @@ type Certificate struct {
 	Country             string   `json:"country,omitempty"`
 	KeySize             int      `json:"key_size,omitempty"`
 	DaysUntilExpiration int      `json:"days_until_expiration,omitempty"`
+
+	// Computed fields from pending CSR (when both cert and CSR exist, for regenerate functionality)
+	PendingSANs               []string `json:"pending_sans,omitempty"`
+	PendingOrganization       string   `json:"pending_organization,omitempty"`
+	PendingOrganizationalUnit string   `json:"pending_organizational_unit,omitempty"`
+	PendingCity               string   `json:"pending_city,omitempty"`
+	PendingState              string   `json:"pending_state,omitempty"`
+	PendingCountry            string   `json:"pending_country,omitempty"`
+	PendingKeySize            int      `json:"pending_key_size,omitempty"`
 }
 
 // CertificateListItem represents a certificate in a list view

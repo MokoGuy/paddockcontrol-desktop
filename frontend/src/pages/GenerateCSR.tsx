@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useConfigStore } from "@/stores/useConfigStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import { csrRequestSchema, type CSRRequestInput } from "@/lib/validation";
+import { Certificate } from "@/types";
 import {
     Card,
     CardContent,
@@ -29,11 +31,31 @@ import {
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 
+interface LocationState {
+    renewal?: string;
+    regenerate?: string;
+}
+
 export function GenerateCSR() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { config, setConfig } = useConfigStore();
-    const { generateCSR, isLoading, error } = useCertificates();
+    const { isEncryptionKeyProvided } = useAppStore();
+    const { generateCSR, getCertificate, isLoading, error } = useCertificates();
     const [sanInputs, setSanInputs] = useState<string[]>([]);
+
+    // Extract mode from navigation state
+    const locationState = location.state as LocationState | null;
+    const renewalHostname = locationState?.renewal;
+    const regenerateHostname = locationState?.regenerate;
+    const isRenewalMode = !!renewalHostname;
+    const isRegenerateMode = !!regenerateHostname;
+    const existingHostname = renewalHostname || regenerateHostname;
+
+    // State for loading existing certificate data
+    const [existingCertificate, setExistingCertificate] =
+        useState<Certificate | null>(null);
+    const [certLoading, setCertLoading] = useState(false);
 
     const {
         register,
@@ -42,6 +64,7 @@ export function GenerateCSR() {
         watch,
         formState: { errors, isSubmitting },
         reset,
+        setValue,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
         defaultValues: {
@@ -51,7 +74,7 @@ export function GenerateCSR() {
             city: config?.default_city ?? "",
             state: config?.default_state ?? "",
             country: config?.default_country ?? "",
-            key_size: config?.default_key_size,
+            key_size: config?.default_key_size ?? 4096,
             note: "",
         },
     });
@@ -73,18 +96,157 @@ export function GenerateCSR() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Load existing certificate data for renewal/regenerate modes
     useEffect(() => {
-        if (config) {
+        const loadExistingCertificate = async () => {
+            if (!existingHostname) return;
+
+            setCertLoading(true);
+            try {
+                const cert = await getCertificate(existingHostname);
+                if (cert) {
+                    setExistingCertificate(cert);
+                }
+            } catch (err) {
+                console.error("Failed to load certificate:", err);
+            } finally {
+                setCertLoading(false);
+            }
+        };
+        loadExistingCertificate();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [existingHostname]);
+
+    // Helper to strip hostname suffix
+    const stripHostnameSuffix = (hostname: string, suffix: string) => {
+        if (suffix && hostname.endsWith(suffix)) {
+            return hostname.slice(0, -suffix.length);
+        }
+        return hostname;
+    };
+
+    // Reset form with appropriate values based on mode
+    useEffect(() => {
+        if (!config) return;
+        // Wait for certificate data in renewal/regenerate modes
+        if ((isRenewalMode || isRegenerateMode) && !existingCertificate) return;
+
+        const suffix = config.hostname_suffix || "";
+
+        if (isRegenerateMode && existingCertificate) {
+            // Use pending CSR data for regenerate
+            const baseHostname = stripHostnameSuffix(
+                existingCertificate.hostname,
+                suffix,
+            );
+            // Extract additional SANs (excluding the primary hostname)
+            const additionalSans = (
+                existingCertificate.pending_sans || []
+            ).filter((san) => san !== existingCertificate.hostname);
+            setSanInputs(
+                additionalSans.map((san) => stripHostnameSuffix(san, suffix)),
+            );
+
+            const formValues = {
+                hostname: baseHostname,
+                organization:
+                    existingCertificate.pending_organization ||
+                    config.default_organization,
+                organizational_unit:
+                    existingCertificate.pending_organizational_unit ||
+                    config.default_organizational_unit ||
+                    "",
+                city:
+                    existingCertificate.pending_city || config.default_city,
+                state:
+                    existingCertificate.pending_state || config.default_state,
+                country:
+                    existingCertificate.pending_country ||
+                    config.default_country,
+                key_size:
+                    existingCertificate.pending_key_size ??
+                    config.default_key_size ??
+                    4096,
+                note: "",
+            };
+            reset(formValues);
+            // Explicitly set key_size after a tick to ensure Controller updates
+            setTimeout(() => setValue("key_size", formValues.key_size), 0);
+        } else if (isRenewalMode && existingCertificate) {
+            // Use certificate data for renewal
+            const baseHostname = stripHostnameSuffix(
+                existingCertificate.hostname,
+                suffix,
+            );
+            // Extract additional SANs (excluding the primary hostname)
+            const additionalSans = (existingCertificate.sans || []).filter(
+                (san) => san !== existingCertificate.hostname,
+            );
+            setSanInputs(
+                additionalSans.map((san) => stripHostnameSuffix(san, suffix)),
+            );
+
+            const formValues = {
+                hostname: baseHostname,
+                organization:
+                    existingCertificate.organization ||
+                    config.default_organization,
+                organizational_unit:
+                    existingCertificate.organizational_unit ||
+                    config.default_organizational_unit ||
+                    "",
+                city: existingCertificate.city || config.default_city,
+                state: existingCertificate.state || config.default_state,
+                country: existingCertificate.country || config.default_country,
+                key_size:
+                    existingCertificate.key_size ??
+                    config.default_key_size ??
+                    4096,
+                note: "",
+            };
+            reset(formValues);
+            // Explicitly set key_size after a tick to ensure Controller updates
+            setTimeout(() => setValue("key_size", formValues.key_size), 0);
+        } else {
+            // Default: use config defaults for new CSR
             reset({
+                hostname: "",
                 organization: config.default_organization,
-                organizational_unit: config.default_organizational_unit || "",
+                organizational_unit: config.default_organizational_unit ?? "",
                 city: config.default_city,
                 state: config.default_state,
                 country: config.default_country,
-                key_size: config.default_key_size,
+                key_size: config.default_key_size ?? 4096,
+                note: "",
             });
         }
-    }, [config, reset]);
+    }, [config, reset, setValue, isRenewalMode, isRegenerateMode, existingCertificate]);
+
+    // Route protection: redirect if encryption key not provided
+    useEffect(() => {
+        if (!isEncryptionKeyProvided) {
+            navigate("/", { replace: true });
+        }
+    }, [isEncryptionKeyProvided, navigate]);
+
+    // Route protection: redirect if certificate is read-only (for renewal/regenerate)
+    useEffect(() => {
+        if (
+            (isRenewalMode || isRegenerateMode) &&
+            existingCertificate &&
+            existingCertificate.read_only
+        ) {
+            navigate(`/certificates/${encodeURIComponent(existingHostname!)}`, {
+                replace: true,
+            });
+        }
+    }, [
+        isRenewalMode,
+        isRegenerateMode,
+        existingCertificate,
+        existingHostname,
+        navigate,
+    ]);
 
     const onSubmit = async (data: CSRRequestInput) => {
         const suffix = config?.hostname_suffix || "";
@@ -106,6 +268,7 @@ export function GenerateCSR() {
                 ...data,
                 hostname: fullHostname,
                 sans: allSans,
+                is_renewal: isRenewalMode || isRegenerateMode,
             });
             if (result) {
                 navigate(
@@ -117,29 +280,59 @@ export function GenerateCSR() {
         }
     };
 
-    if (!config) {
+    // Show loading state while config or certificate is loading, or if redirect is pending
+    if (
+        !config ||
+        certLoading ||
+        !isEncryptionKeyProvided ||
+        ((isRenewalMode || isRegenerateMode) && existingCertificate?.read_only)
+    ) {
         return (
             <div className="flex items-center justify-center py-12">
-                <LoadingSpinner text="Loading configuration..." />
+                <LoadingSpinner
+                    text={
+                        certLoading
+                            ? "Loading certificate data..."
+                            : "Loading configuration..."
+                    }
+                />
             </div>
         );
     }
+
+    // Derive page title and description based on mode
+    const pageTitle = isRegenerateMode
+        ? "Regenerate CSR"
+        : isRenewalMode
+          ? "Renew Certificate"
+          : "Generate CSR";
+    const pageDescription = isRegenerateMode
+        ? "Create a new certificate signing request to replace the current pending CSR"
+        : isRenewalMode
+          ? "Create a new certificate signing request for renewal"
+          : "Create a new certificate signing request";
 
     return (
         <>
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">
-                        Generate CSR
+                        {pageTitle}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Create a new certificate signing request
+                        {pageDescription}
                     </p>
                 </div>
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate("/")}
+                    onClick={() =>
+                        existingHostname
+                            ? navigate(
+                                  `/certificates/${encodeURIComponent(existingHostname)}`,
+                              )
+                            : navigate("/")
+                    }
                 >
                     ← Back
                 </Button>
@@ -171,16 +364,29 @@ export function GenerateCSR() {
                         <div className="space-y-2">
                             <Label htmlFor="hostname">Hostname *</Label>
                             <div className="flex gap-2">
-                                <ButtonGroup className="flex-1">
+                                <ButtonGroup
+                                    className={`flex-1 ${isRenewalMode || isRegenerateMode ? "bg-muted" : ""}`}
+                                >
                                     <InputGroup>
                                         <InputGroupInput
                                             id="hostname"
                                             placeholder="example"
-                                            disabled={isSubmitting || isLoading}
+                                            disabled={
+                                                isSubmitting ||
+                                                isLoading ||
+                                                isRenewalMode ||
+                                                isRegenerateMode
+                                            }
                                             {...register("hostname")}
                                         />
                                     </InputGroup>
-                                    <ButtonGroupText>
+                                    <ButtonGroupText
+                                        className={
+                                            isRenewalMode || isRegenerateMode
+                                                ? "opacity-50"
+                                                : ""
+                                        }
+                                    >
                                         {config?.hostname_suffix}
                                     </ButtonGroupText>
                                 </ButtonGroup>
@@ -429,7 +635,11 @@ export function GenerateCSR() {
                             >
                                 {isSubmitting || isLoading
                                     ? "Generating..."
-                                    : "Generate CSR"}
+                                    : isRegenerateMode
+                                      ? "Regenerate CSR"
+                                      : isRenewalMode
+                                        ? "Generate Renewal CSR"
+                                        : "Generate CSR"}
                             </Button>
                         </div>
                     </form>

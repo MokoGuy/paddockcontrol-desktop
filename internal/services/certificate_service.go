@@ -288,6 +288,7 @@ func (s *CertificateService) GetCertificate(ctx context.Context, hostname string
 			if details != nil {
 				cert.SANs = details.SANs
 				cert.Organization = details.Organization
+				cert.OrganizationalUnit = details.OrganizationalUnit
 				cert.City = details.City
 				cert.State = details.State
 				cert.Country = details.Country
@@ -297,18 +298,35 @@ func (s *CertificateService) GetCertificate(ctx context.Context, hostname string
 				cert.DaysUntilExpiration = s.calculateDaysUntilExpiration(*expiresAt)
 			}
 		}
-	} else if cert.PendingCSR != "" {
-		// Parse CSR for metadata if no cert yet
+	}
+
+	// Always parse pending CSR if present (for regenerate functionality)
+	// When both cert and CSR exist, this populates the Pending* fields
+	// When only CSR exists, this populates both main and Pending* fields
+	if cert.PendingCSR != "" {
 		csrInfo, err := crypto.ParseCSR([]byte(cert.PendingCSR))
 		if err == nil {
 			details, _ := crypto.ExtractCSRDetails(csrInfo)
 			if details != nil {
-				cert.SANs = details.SANs
-				cert.Organization = details.Organization
-				cert.City = details.City
-				cert.State = details.State
-				cert.Country = details.Country
-				cert.KeySize = details.KeySize
+				// Always set pending fields from CSR
+				cert.PendingSANs = details.SANs
+				cert.PendingOrganization = details.Organization
+				cert.PendingOrganizationalUnit = details.OrganizationalUnit
+				cert.PendingCity = details.City
+				cert.PendingState = details.State
+				cert.PendingCountry = details.Country
+				cert.PendingKeySize = details.KeySize
+
+				// If no certificate exists, also set main fields from CSR
+				if cert.CertificatePEM == "" {
+					cert.SANs = details.SANs
+					cert.Organization = details.Organization
+					cert.OrganizationalUnit = details.OrganizationalUnit
+					cert.City = details.City
+					cert.State = details.State
+					cert.Country = details.Country
+					cert.KeySize = details.KeySize
+				}
 			}
 		}
 	}
