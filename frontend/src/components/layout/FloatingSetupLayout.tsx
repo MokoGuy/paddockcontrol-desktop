@@ -17,7 +17,7 @@ import { AnimatedOutlet } from "../shared/AnimatedOutlet";
 export function FloatingSetupLayout() {
     return (
         <div
-            className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950"
+            className="relative flex flex-col h-screen overflow-hidden bg-background"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
             {/* Floating header - just theme toggle and close button in top-right */}

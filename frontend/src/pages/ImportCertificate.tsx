@@ -51,10 +51,10 @@ export function ImportCertificate() {
             <>
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold text-foreground">
                             Confirm Import
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-muted-foreground mt-1">
                             Review the certificate before importing
                         </p>
                     </div>
@@ -67,7 +67,7 @@ export function ImportCertificate() {
                     </Button>
                 </div>
 
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <CardTitle>Certificate Preview</CardTitle>
                         <CardDescription>
@@ -75,13 +75,13 @@ export function ImportCertificate() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700 scrollbar-float">
+                        <pre className="bg-muted text-foreground p-4 rounded-lg text-xs overflow-auto max-h-48 border border-border scrollbar-float">
                             {certificatePem.substring(0, 500)}...
                         </pre>
                     </CardContent>
                 </Card>
 
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <CardTitle>Private Key Preview</CardTitle>
                         <CardDescription>
@@ -89,7 +89,7 @@ export function ImportCertificate() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <pre className="bg-gray-900 dark:bg-gray-950 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border border-gray-700 scrollbar-float">
+                        <pre className="bg-muted text-foreground p-4 rounded-lg text-xs overflow-auto max-h-48 border border-border scrollbar-float">
                             {privateKeyPem.substring(0, 200)}...
                         </pre>
                     </CardContent>
@@ -121,10 +121,10 @@ export function ImportCertificate() {
         <>
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Import Certificate
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Import an existing SSL/TLS certificate with its private
                         key
                     </p>
@@ -139,16 +139,16 @@ export function ImportCertificate() {
             </div>
 
             {error && (
-                <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                <Card className="mb-6 bg-destructive/10 border-destructive/30">
                     <CardContent>
-                        <p className="text-sm text-red-800 dark:text-red-200">
+                        <p className="text-sm text-destructive">
                             {error}
                         </p>
                     </CardContent>
                 </Card>
             )}
 
-            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="shadow-sm border-border">
                 <CardHeader>
                     <CardTitle>Certificate Details</CardTitle>
                     <CardDescription>
@@ -187,7 +187,7 @@ export function ImportCertificate() {
                                 )}
                             />
                             {errors.certificate_pem && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.certificate_pem.message}
                                 </p>
                             )}
@@ -219,7 +219,7 @@ export function ImportCertificate() {
                                 )}
                             />
                             {errors.private_key_pem && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.private_key_pem.message}
                                 </p>
                             )}
@@ -238,8 +238,8 @@ export function ImportCertificate() {
                         </div>
 
                         {/* Info */}
-                        <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg">
-                            <p className="text-xs text-blue-800 dark:text-blue-200">
+                        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                            <p className="text-xs text-primary">
                                 💡 <strong>PEM Format:</strong> Copy and paste
                                 the entire certificate and key blocks, including
                                 the BEGIN and END lines.

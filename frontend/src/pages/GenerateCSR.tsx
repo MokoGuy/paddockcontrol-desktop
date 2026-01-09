@@ -119,10 +119,10 @@ export function GenerateCSR() {
         <>
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Generate CSR
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Create a new certificate signing request
                     </p>
                 </div>
@@ -136,16 +136,16 @@ export function GenerateCSR() {
             </div>
 
             {error && (
-                <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                <Card className="mb-6 bg-destructive/10 border-destructive/30">
                     <CardContent>
-                        <p className="text-sm text-red-800 dark:text-red-200">
+                        <p className="text-sm text-destructive">
                             {error}
                         </p>
                     </CardContent>
                 </Card>
             )}
 
-            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="shadow-sm border-border">
                 <CardHeader>
                     <CardTitle>Request Details</CardTitle>
                     <CardDescription>
@@ -176,7 +176,7 @@ export function GenerateCSR() {
                                 </ButtonGroup>
                             </div>
                             {errors.hostname && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.hostname.message}
                                 </p>
                             )}
@@ -196,7 +196,7 @@ export function GenerateCSR() {
                             <div className="space-y-2">
                                 {/* Show hostname as first SAN */}
                                 <div className="flex gap-2">
-                                    <ButtonGroup className="flex-1 bg-gray-50 dark:bg-gray-900">
+                                    <ButtonGroup className="flex-1 bg-muted">
                                         <InputGroup>
                                             <InputGroupInput
                                                 value={hostname || ""}
@@ -282,7 +282,7 @@ export function GenerateCSR() {
                                 {...register("organization")}
                             />
                             {errors.organization && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.organization.message}
                                 </p>
                             )}
@@ -312,7 +312,7 @@ export function GenerateCSR() {
                                     {...register("city")}
                                 />
                                 {errors.city && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.city.message}
                                     </p>
                                 )}
@@ -327,7 +327,7 @@ export function GenerateCSR() {
                                     {...register("state")}
                                 />
                                 {errors.state && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.state.message}
                                     </p>
                                 )}
@@ -345,7 +345,7 @@ export function GenerateCSR() {
                                 {...register("country")}
                             />
                             {errors.country && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.country.message}
                                 </p>
                             )}
@@ -371,7 +371,7 @@ export function GenerateCSR() {
                                         <SelectTrigger
                                             className={`w-full ${
                                                 errors.key_size
-                                                    ? "border-red-500"
+                                                    ? "border-destructive"
                                                     : ""
                                             }`}
                                         >
@@ -392,7 +392,7 @@ export function GenerateCSR() {
                                 )}
                             />
                             {errors.key_size && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.key_size.message}
                                 </p>
                             )}

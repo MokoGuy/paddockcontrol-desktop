@@ -24,7 +24,7 @@ export function SetupAppLayout() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="flex flex-col h-screen bg-background">
             {/* Header with back button for setup pages */}
             <AnimatePresence mode="wait">
                 <AppHeader

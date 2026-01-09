@@ -88,16 +88,16 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Error display */}
                     {keyValidationError && (
-                        <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
-                            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                            <p className="text-sm font-medium text-destructive">
                                 {keyValidationError.message}
                             </p>
                             {keyValidationError.failedHostnames.length > 0 && (
                                 <div className="mt-2">
-                                    <p className="text-xs text-red-700 dark:text-red-300 mb-1">
+                                    <p className="text-xs text-destructive/80 mb-1">
                                         Failed to decrypt keys for:
                                     </p>
-                                    <ul className="text-xs text-red-600 dark:text-red-400 list-disc list-inside">
+                                    <ul className="text-xs text-destructive/70 list-disc list-inside">
                                         {keyValidationError.failedHostnames.map(
                                             (h) => (
                                                 <li key={h}>{h}</li>
@@ -123,13 +123,13 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 text-sm"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"
                             >
                                 {showPassword ? "Hide" : "Show"}
                             </button>
                         </div>
                         {errors.key && (
-                            <p className="text-sm text-red-600 dark:text-red-400">
+                            <p className="text-sm text-destructive">
                                 {errors.key.message}
                             </p>
                         )}

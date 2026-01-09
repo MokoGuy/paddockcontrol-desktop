@@ -160,9 +160,9 @@ export function Settings() {
 
     if (configError) {
         return (
-            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+            <Card className="bg-destructive/10 border-destructive/30">
                 <CardContent>
-                    <p className="text-sm text-red-800 dark:text-red-200">
+                    <p className="text-sm text-destructive">
                         {configError}
                     </p>
                     <Button onClick={() => navigate("/")} className="mt-4">
@@ -178,10 +178,10 @@ export function Settings() {
             {/* Page Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Settings
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Manage configuration and backups
                     </p>
                 </div>
@@ -192,7 +192,7 @@ export function Settings() {
 
             {/* Configuration */}
             {config && (
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
@@ -212,115 +212,115 @@ export function Settings() {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     CA Name
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.ca_name}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Owner Email
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.owner_email}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Hostname Suffix
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.hostname_suffix}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Validity Period
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.validity_period_days} days
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Default Key Size
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.default_key_size} bits
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Default Country
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {config.default_country}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                        <div className="border-t border-border pt-6">
+                            <h3 className="font-semibold text-foreground mb-4">
                                 Organization Details
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                         Organization
                                     </p>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <p className="text-sm text-muted-foreground">
                                         {config.default_organization}
                                     </p>
                                 </div>
                                 {config.default_organizational_unit && (
                                     <div>
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                        <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                             Organizational Unit
                                         </p>
-                                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        <p className="text-sm text-muted-foreground">
                                             {config.default_organizational_unit}
                                         </p>
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                         City
                                     </p>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <p className="text-sm text-muted-foreground">
                                         {config.default_city}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                         State
                                     </p>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    <p className="text-sm text-muted-foreground">
                                         {config.default_state}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                        <div className="border-t border-border pt-6">
+                            <h3 className="font-semibold text-foreground mb-4">
                                 Configuration History
                             </h3>
                             <div className="grid grid-cols-2 gap-4 text-xs">
                                 <div>
-                                    <p className="text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                    <p className="text-muted-foreground uppercase mb-1">
                                         Created
                                     </p>
-                                    <p className="text-gray-700 dark:text-gray-300">
+                                    <p className="text-muted-foreground">
                                         {formatDateTime(config.created_at)}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                    <p className="text-muted-foreground uppercase mb-1">
                                         Last Modified
                                     </p>
-                                    <p className="text-gray-700 dark:text-gray-300">
+                                    <p className="text-muted-foreground">
                                         {formatDateTime(config.last_modified)}
                                     </p>
                                 </div>
@@ -355,7 +355,7 @@ export function Settings() {
 
             {/* Data Directory */}
             {dataDir && (
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <CardTitle>Data Directory</CardTitle>
                         <CardDescription>
@@ -381,7 +381,7 @@ export function Settings() {
                                     }
                                     className={
                                         isCopied(dataDir)
-                                            ? "text-green-500"
+                                            ? "text-success"
                                             : ""
                                     }
                                     strokeWidth={2}
@@ -407,7 +407,7 @@ export function Settings() {
             )}
 
             {/* Backup Management */}
-            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="shadow-sm border-border">
                 <CardHeader>
                     <CardTitle>Backup Management</CardTitle>
                     <CardDescription>
@@ -416,14 +416,14 @@ export function Settings() {
                 </CardHeader>
                 <CardContent>
                     {backupError && (
-                        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg mb-4">
-                            <p className="text-sm text-red-800 dark:text-red-200">
+                        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg mb-4">
+                            <p className="text-sm text-destructive">
                                 {backupError}
                             </p>
                         </div>
                     )}
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                         Create an encrypted backup of your CA configuration and
                         certificates.
                     </p>
@@ -438,7 +438,7 @@ export function Settings() {
 
             {/* Build Information */}
             {buildInfo && (
-                <Card className="mt-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mt-6 shadow-sm border-border">
                     <CardHeader>
                         <CardTitle>Build Information</CardTitle>
                         <CardDescription>
@@ -448,34 +448,34 @@ export function Settings() {
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Version
                                 </p>
-                                <p className="font-mono text-gray-900 dark:text-white">
+                                <p className="font-mono text-foreground">
                                     {buildInfo.version}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Build Time
                                 </p>
-                                <p className="font-mono text-gray-700 dark:text-gray-300">
+                                <p className="font-mono text-muted-foreground">
                                     {buildInfo.buildTime}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Git Commit
                                 </p>
-                                <p className="font-mono text-gray-700 dark:text-gray-300">
+                                <p className="font-mono text-muted-foreground">
                                     {buildInfo.gitCommit}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                     Go Version
                                 </p>
-                                <p className="font-mono text-gray-700 dark:text-gray-300">
+                                <p className="font-mono text-muted-foreground">
                                     {buildInfo.goVersion}
                                 </p>
                             </div>
@@ -486,14 +486,14 @@ export function Settings() {
 
             {/* Danger Zone - disabled until admin mode enabled via Konami code */}
             <Card
-                className={`mt-6 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 ${!isAdminModeEnabled ? "opacity-60" : ""}`}
+                className={`mt-6 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
             >
                 <CardContent className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        <p className="text-sm font-medium text-destructive">
                             Danger Zone - Reset Database
                         </p>
-                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                        <p className="text-xs text-admin/80 mt-1">
                             Permanently delete all certificates, configuration,
                             and encryption keys.
                         </p>
@@ -501,7 +501,7 @@ export function Settings() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900"
+                        className="border-admin/50 text-admin hover:bg-admin/20"
                         onClick={() => setResetConfirming(true)}
                         disabled={!isAdminModeEnabled || resetLoading}
                     >
@@ -511,7 +511,7 @@ export function Settings() {
             </Card>
 
             {/* Footer */}
-            <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-500">
+            <div className="mt-8 text-center text-sm text-muted-foreground">
                 <p>
                     For support, visit the documentation or contact your
                     administrator

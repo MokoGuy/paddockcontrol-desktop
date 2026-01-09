@@ -60,7 +60,7 @@ export function ConfirmDialog({
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={loading || isLoading}
-            className={isDestructive ? 'bg-red-600 hover:bg-red-700' : ''}
+            className={isDestructive ? 'bg-destructive hover:bg-destructive/90' : ''}
           >
             {loading || isLoading ? 'Processing...' : confirmText}
           </AlertDialogAction>

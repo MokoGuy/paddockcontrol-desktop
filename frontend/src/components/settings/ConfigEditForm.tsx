@@ -111,13 +111,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.owner_email
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.owner_email && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.owner_email.message}
                                         </p>
                                     )}
@@ -153,13 +153,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.ca_name
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.ca_name && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.ca_name.message}
                                         </p>
                                     )}
@@ -187,13 +187,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.hostname_suffix
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.hostname_suffix && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.hostname_suffix.message}
                                         </p>
                                     )}
@@ -227,20 +227,20 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.validity_period_days
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.validity_period_days && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {
                                                 errors.validity_period_days
                                                     .message
                                             }
                                         </p>
                                     )}
-                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                    <p className="text-xs text-warning mt-1">
                                         ⚠️ Changes only affect new certificates
                                     </p>
                                 </div>
@@ -274,13 +274,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.default_organization
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.default_organization && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {
                                                 errors.default_organization
                                                     .message
@@ -307,13 +307,13 @@ export function ConfigEditForm({
                                         )}
                                         className={
                                             errors.default_organizational_unit
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.default_organizational_unit && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {
                                                 errors
                                                     .default_organizational_unit
@@ -337,13 +337,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.default_city
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.default_city && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.default_city.message}
                                         </p>
                                     )}
@@ -366,13 +366,13 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.default_state
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                     />
                                     {errors.default_state && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.default_state.message}
                                         </p>
                                     )}
@@ -396,14 +396,14 @@ export function ConfigEditForm({
                                         })}
                                         className={
                                             errors.default_country
-                                                ? "border-red-500"
+                                                ? "border-destructive"
                                                 : ""
                                         }
                                         disabled={isLoading}
                                         style={{ textTransform: "uppercase" }}
                                     />
                                     {errors.default_country && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.default_country.message}
                                         </p>
                                     )}
@@ -441,7 +441,7 @@ export function ConfigEditForm({
                                                 <SelectTrigger
                                                     className={`w-full ${
                                                         errors.default_key_size
-                                                            ? "border-red-500"
+                                                            ? "border-destructive"
                                                             : ""
                                                     }`}
                                                 >
@@ -462,7 +462,7 @@ export function ConfigEditForm({
                                         )}
                                     />
                                     {errors.default_key_size && (
-                                        <p className="text-sm text-red-600 mt-1">
+                                        <p className="text-sm text-destructive mt-1">
                                             {errors.default_key_size.message}
                                         </p>
                                     )}

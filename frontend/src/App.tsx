@@ -102,7 +102,7 @@ function AppContent() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-background flex items-center justify-center">
                 <LoadingSpinner text="Loading..." />
             </div>
         );

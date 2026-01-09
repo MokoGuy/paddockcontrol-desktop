@@ -44,7 +44,7 @@ export function CodeBlock({
                         icon={isCopied(content) ? Tick02Icon : Copy01Icon}
                         className={cn(
                             "w-3.5 h-3.5",
-                            isCopied(content) && "text-green-500",
+                            isCopied(content) && "text-primary",
                         )}
                         strokeWidth={2}
                     />

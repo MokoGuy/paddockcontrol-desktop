@@ -19,7 +19,7 @@ export function LoadingSpinner({
         <div className="flex flex-col items-center justify-center gap-2">
             <div className={`${sizeClass} animate-spin`}>
                 <svg
-                    className="w-full h-full text-blue-600"
+                    className="w-full h-full text-primary"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -40,7 +40,7 @@ export function LoadingSpinner({
                 </svg>
             </div>
             {text && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                     {text}
                 </p>
             )}
@@ -49,7 +49,7 @@ export function LoadingSpinner({
 
     if (fullScreen) {
         return (
-            <div className="fixed inset-0 bg-white dark:bg-slate-950 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
                 {spinner}
             </div>
         );

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useAppStore } from "@/stores/useAppStore";
@@ -10,6 +10,7 @@ import { Quit } from "../../../wailsjs/runtime/runtime";
 import { GetBuildInfo } from "../../../wailsjs/go/main/App";
 import { ThemeToggle } from "./ThemeToggle";
 import { EncryptionKeyButton } from "../layout/EncryptionKeyButton";
+import { getCssColorAsRgb } from "@/lib/theme";
 import logo from "@/assets/images/logo-universal.png";
 
 interface AppHeaderProps {
@@ -48,6 +49,12 @@ export function AppHeader({
     const [version, setVersion] = useState<string>("");
     const [showPulse, setShowPulse] = useState(false);
     const prevAdminMode = useRef(isAdminModeEnabled);
+
+    // Compute animation colors from CSS variables (handles OKLCH to RGB conversion)
+    const { normalColor, adminColor } = useMemo(() => ({
+        normalColor: getCssColorAsRgb('--foreground'),
+        adminColor: getCssColorAsRgb('--admin'),
+    }), [isDarkMode]);
 
     useEffect(() => {
         if (showTitle) {
@@ -97,7 +104,7 @@ export function AppHeader({
                         size="icon"
                         onClick={() => Quit()}
                         title="Close"
-                        className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        className="text-muted-foreground hover:text-destructive"
                     >
                         <HugeiconsIcon
                             icon={Cancel01Icon}
@@ -113,7 +120,7 @@ export function AppHeader({
     // Default variant - header bar with subtle animations
     return (
         <motion.header
-            className="relative h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm"
+            className="relative h-16 bg-background/80 backdrop-blur-sm border-b border-border/60 shadow-sm"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -121,7 +128,7 @@ export function AppHeader({
         >
             {/* Admin mode animated border - left side */}
             <motion.div
-                className="absolute bottom-0 left-0 w-1/2 h-[2px] bg-red-500 dark:bg-red-600"
+                className="absolute bottom-0 left-0 w-1/2 h-[2px] bg-admin"
                 style={{ transformOrigin: "left" }}
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: isAdminModeEnabled && showAdminBadge ? 1 : 0 }}
@@ -133,7 +140,7 @@ export function AppHeader({
             />
             {/* Admin mode animated border - right side */}
             <motion.div
-                className="absolute bottom-0 right-0 w-1/2 h-[2px] bg-red-500 dark:bg-red-600"
+                className="absolute bottom-0 right-0 w-1/2 h-[2px] bg-admin"
                 style={{ transformOrigin: "right" }}
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: isAdminModeEnabled && showAdminBadge ? 1 : 0 }}
@@ -167,7 +174,7 @@ export function AppHeader({
                                     size="icon"
                                     onClick={handleBack}
                                     title="Back"
-                                    className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    className="text-muted-foreground hover:bg-muted"
                                 >
                                     <HugeiconsIcon
                                         icon={ArrowLeft01Icon}
@@ -189,7 +196,7 @@ export function AppHeader({
                         <motion.img
                             src={logo}
                             alt="PaddockControl"
-                            className="w-8 h-8"
+                            className={`w-8 h-8 ${isDarkMode ? "invert" : ""}`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.4, delay: 0.1 }}
@@ -197,12 +204,6 @@ export function AppHeader({
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-bold">
                                 {title.split("").map((char, index) => {
-                                    const normalColor = isDarkMode
-                                        ? "rgb(255, 255, 255)"
-                                        : "rgb(17, 24, 39)";
-                                    const adminColor = isDarkMode
-                                        ? "rgb(239, 68, 68)"
-                                        : "rgb(220, 38, 38)";
                                     const targetColor =
                                         isAdminModeEnabled && showAdminBadge
                                             ? adminColor
@@ -241,7 +242,7 @@ export function AppHeader({
                             </h1>
                             {version && (
                                 <motion.span
-                                    className="text-sm text-gray-400 dark:text-gray-600"
+                                    className="text-sm text-muted-foreground/60"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ duration: 0.3, delay: 0.65 }}
@@ -265,7 +266,7 @@ export function AppHeader({
                     <AnimatePresence>
                         {showAdminBadge && isAdminModeEnabled && (
                             <motion.span
-                                className="text-xs font-semibold text-red-600 dark:text-red-500 bg-red-50 dark:bg-red-950 pl-2 pr-1 py-0.5 rounded border border-red-200 dark:border-red-800 flex items-center gap-1 relative"
+                                className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative"
                                 initial={{ opacity: 0, scale: 0 }}
                                 animate={{
                                     opacity: 1,
@@ -281,13 +282,13 @@ export function AppHeader({
                                 {showPulse && (
                                     <>
                                         <motion.span
-                                            className="absolute inset-0 rounded border-2 border-red-500"
+                                            className="absolute inset-0 rounded border-2 border-admin"
                                             initial={{ opacity: 0.8, scale: 1 }}
                                             animate={{ opacity: 0, scale: 2 }}
                                             transition={{ duration: 0.3 }}
                                         />
                                         <motion.span
-                                            className="absolute inset-0 rounded bg-red-500"
+                                            className="absolute inset-0 rounded bg-admin"
                                             initial={{ opacity: 0.4, scale: 1 }}
                                             animate={{ opacity: 0, scale: 2.5 }}
                                             transition={{ duration: 1.2 }}
@@ -298,7 +299,7 @@ export function AppHeader({
                                 admin mode
                                 <button
                                     onClick={() => setIsAdminModeEnabled(false)}
-                                    className="hover:bg-red-100 dark:hover:bg-red-900 rounded p-0.5 transition-colors"
+                                    className="hover:bg-admin/20 rounded p-0.5 transition-colors"
                                     title="Disable admin mode"
                                 >
                                     <HugeiconsIcon
@@ -326,7 +327,7 @@ export function AppHeader({
                             size="icon"
                             onClick={() => Quit()}
                             title="Close"
-                            className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-transparent dark:hover:bg-transparent"
+                            className="text-muted-foreground hover:text-destructive hover:bg-transparent dark:hover:bg-transparent"
                         >
                             <HugeiconsIcon
                                 icon={Cancel01Icon}

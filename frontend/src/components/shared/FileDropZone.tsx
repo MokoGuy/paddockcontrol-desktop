@@ -135,8 +135,8 @@ export function FileDropZone({
                     : "cursor-pointer"
             } ${
                 isDragging
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                    : "border-gray-300 dark:border-gray-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/60 hover:bg-primary/10"
             }`}
         >
             <input
@@ -150,23 +150,23 @@ export function FileDropZone({
 
             {isDragging ? (
                 <div className="py-4">
-                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                    <span className="text-primary font-medium">
                         {dropLabel}
                     </span>
                 </div>
             ) : (
                 <>
                     {icon && <div className="mb-2 flex justify-center">{icon}</div>}
-                    <p className="font-semibold text-gray-900 dark:text-white mb-1">
+                    <p className="font-semibold text-foreground mb-1">
                         {label}
                     </p>
                     {sublabel && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                             {sublabel}
                         </p>
                     )}
                     {selectedFile && (
-                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                        <p className="text-sm text-success mt-2">
                             Selected: {selectedFile.name}
                         </p>
                     )}

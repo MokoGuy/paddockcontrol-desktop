@@ -218,9 +218,9 @@ export function CertificateDetail() {
 
     if (error || !certificate) {
         return (
-            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+            <Card className="bg-destructive/10 border-destructive/30">
                 <CardContent>
-                    <p className="text-sm text-red-800 dark:text-red-200">
+                    <p className="text-sm text-destructive">
                         {error || "Certificate not found"}
                     </p>
                     <Button
@@ -240,10 +240,10 @@ export function CertificateDetail() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         {certificate.hostname}
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Certificate details and operations
                     </p>
                 </div>
@@ -277,7 +277,7 @@ export function CertificateDetail() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => setDeleteConfirming(true)}
                                 disabled={certLoading || backupLoading}
                             >
@@ -302,9 +302,9 @@ export function CertificateDetail() {
 
             {/* Error Message */}
             {certError && (
-                <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                <Card className="mb-6 bg-destructive/10 border-destructive/30">
                     <CardContent>
-                        <p className="text-sm text-red-800 dark:text-red-200">
+                        <p className="text-sm text-destructive">
                             {certError}
                         </p>
                     </CardContent>
@@ -312,7 +312,7 @@ export function CertificateDetail() {
             )}
 
             {/* Status and Basic Info */}
-            <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="mb-6 shadow-sm border-border">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
@@ -332,39 +332,39 @@ export function CertificateDetail() {
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <p className="text-xs font-medium text-muted-foreground uppercase">
                                 Created
                             </p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p className="text-sm font-semibold text-foreground">
                                 {formatDateTime(certificate.created_at)}
                             </p>
                         </div>
                         {certificate.expires_at && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Expires
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {formatDateTime(certificate.expires_at)}
                                 </p>
                             </div>
                         )}
                         {certificate.key_size && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Key Size
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {certificate.key_size} bits
                                 </p>
                             </div>
                         )}
                         {certificate.days_until_expiration !== undefined && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Days Until Expiration
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {certificate.days_until_expiration} days
                                 </p>
                             </div>
@@ -374,7 +374,7 @@ export function CertificateDetail() {
             </Card>
 
             {/* Subject Information */}
-            <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="mb-6 shadow-sm border-border">
                 <CardHeader>
                     <CardTitle>Subject Information</CardTitle>
                     <CardDescription>
@@ -385,50 +385,50 @@ export function CertificateDetail() {
                     <div className="grid grid-cols-2 gap-4">
                         {certificate.organization && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Organization
                                 </p>
-                                <p className="text-sm text-gray-900 dark:text-white">
+                                <p className="text-sm text-foreground">
                                     {certificate.organization}
                                 </p>
                             </div>
                         )}
                         {certificate.organizational_unit && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Organizational Unit
                                 </p>
-                                <p className="text-sm text-gray-900 dark:text-white">
+                                <p className="text-sm text-foreground">
                                     {certificate.organizational_unit}
                                 </p>
                             </div>
                         )}
                         {certificate.city && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     City
                                 </p>
-                                <p className="text-sm text-gray-900 dark:text-white">
+                                <p className="text-sm text-foreground">
                                     {certificate.city}
                                 </p>
                             </div>
                         )}
                         {certificate.state && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     State
                                 </p>
-                                <p className="text-sm text-gray-900 dark:text-white">
+                                <p className="text-sm text-foreground">
                                     {certificate.state}
                                 </p>
                             </div>
                         )}
                         {certificate.country && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                <p className="text-xs font-medium text-muted-foreground uppercase">
                                     Country
                                 </p>
-                                <p className="text-sm text-gray-900 dark:text-white">
+                                <p className="text-sm text-foreground">
                                     {certificate.country}
                                 </p>
                             </div>
@@ -437,7 +437,7 @@ export function CertificateDetail() {
 
                     {certificate.sans && certificate.sans.length > 0 && (
                         <div>
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
+                            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">
                                 Subject Alternative Names
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -454,14 +454,14 @@ export function CertificateDetail() {
 
             {/* Pending CSR */}
             {certificate.pending_csr && (
-                <Card className="mb-6 shadow-sm border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950">
+                <Card className="mb-6 shadow-sm border-warning/30 bg-warning-muted">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-yellow-900 dark:text-yellow-100">
+                                <CardTitle className="text-warning-foreground">
                                     Pending Certificate Signing Request
                                 </CardTitle>
-                                <CardDescription className="text-yellow-800 dark:text-yellow-200">
+                                <CardDescription className="text-warning-foreground/80">
                                     This CSR is awaiting a signed certificate
                                 </CardDescription>
                             </div>
@@ -469,7 +469,7 @@ export function CertificateDetail() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-100 dark:hover:bg-yellow-900"
+                                    className="border-warning/50 text-warning-foreground hover:bg-warning/20"
                                     onClick={() => {
                                         const link =
                                             document.createElement("a");
@@ -518,7 +518,7 @@ export function CertificateDetail() {
 
             {/* Certificate Content */}
             {certificate.certificate_pem && (
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
@@ -558,21 +558,21 @@ export function CertificateDetail() {
 
             {/* Private Key (PEM) */}
             <Card
-                className={`mb-6 shadow-sm ${!isEncryptionKeyProvided ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900" : "border-gray-200 dark:border-gray-800"}`}
+                className={`mb-6 shadow-sm ${!isEncryptionKeyProvided ? "bg-warning-muted border-warning/30" : "border-border"}`}
             >
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <HugeiconsIcon
                                 icon={Key01Icon}
-                                className={`w-5 h-5 ${!isEncryptionKeyProvided ? "text-amber-700 dark:text-amber-300" : ""}`}
+                                className={`w-5 h-5 ${!isEncryptionKeyProvided ? "text-warning-foreground" : ""}`}
                                 strokeWidth={2}
                             />
                             <div>
                                 <CardTitle
                                     className={
                                         !isEncryptionKeyProvided
-                                            ? "text-amber-900 dark:text-amber-100"
+                                            ? "text-warning-foreground"
                                             : ""
                                     }
                                 >
@@ -581,7 +581,7 @@ export function CertificateDetail() {
                                 <CardDescription
                                     className={
                                         !isEncryptionKeyProvided
-                                            ? "text-amber-700 dark:text-amber-300"
+                                            ? "text-warning-foreground/80"
                                             : ""
                                     }
                                 >
@@ -595,7 +595,7 @@ export function CertificateDetail() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
+                                className="border-warning/50 text-warning-foreground hover:bg-warning/20"
                                 onClick={() => setShowKeyDialog(true)}
                             >
                                 Unlock
@@ -623,13 +623,13 @@ export function CertificateDetail() {
                         {privateKeyLoading ? (
                             <LoadingSpinner text="Decrypting private key..." />
                         ) : privateKeyError ? (
-                            <p className="text-sm text-red-600 dark:text-red-400">
+                            <p className="text-sm text-destructive">
                                 {privateKeyError}
                             </p>
                         ) : privateKeyPEM ? (
                             <CodeBlock content={privateKeyPEM} />
                         ) : (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                                 No private key available
                             </p>
                         )}
@@ -639,7 +639,7 @@ export function CertificateDetail() {
 
             {/* Notes */}
             {(certificate.note || certificate.pending_note) && (
-                <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="mb-6 shadow-sm border-border">
                     <CardHeader>
                         <CardTitle>Notes</CardTitle>
                         <CardDescription>
@@ -649,20 +649,20 @@ export function CertificateDetail() {
                     <CardContent className="space-y-4">
                         {certificate.note && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">
                                     Note
                                 </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                <p className="text-sm text-muted-foreground">
                                     {certificate.note}
                                 </p>
                             </div>
                         )}
                         {certificate.pending_note && (
                             <div>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">
                                     Pending Note
                                 </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                <p className="text-sm text-muted-foreground">
                                     {certificate.pending_note}
                                 </p>
                             </div>
@@ -696,7 +696,7 @@ export function CertificateDetail() {
                     </DialogHeader>
                     <div className="space-y-4">
                         {uploadError && (
-                            <div className="p-3 text-sm text-red-800 bg-red-50 dark:bg-red-950 dark:text-red-200 rounded-md">
+                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
                                 {uploadError}
                             </div>
                         )}

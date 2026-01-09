@@ -28,7 +28,7 @@ export function SetupChoice() {
             <div className="text-center mb-12 relative h-28">
                 {/* Phase 1: "Welcome to" - types out, then fades */}
                 <motion.h1
-                    className="text-3xl font-bold text-gray-900 dark:text-white absolute inset-x-0 top-1/2 -translate-y-1/2"
+                    className="text-3xl font-bold text-foreground absolute inset-x-0 top-1/2 -translate-y-1/2"
                     initial={{ opacity: 1 }}
                     animate={{ opacity: 0 }}
                     transition={{
@@ -76,7 +76,7 @@ export function SetupChoice() {
                             ease: "easeOut",
                         }}
                     />
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         {part2.split("").map((char, index) => (
                             <motion.span
                                 key={`part2-${char}-${index}`}
@@ -98,7 +98,7 @@ export function SetupChoice() {
             {/* Description + Options */}
             <div className="flex flex-col gap-6 max-w-2xl mx-auto">
                 <motion.p
-                    className="text-gray-600 dark:text-gray-400 text-center"
+                    className="text-muted-foreground text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{
@@ -134,7 +134,7 @@ export function SetupChoice() {
                         }}
                     >
                         <Card
-                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-gray-200 dark:border-gray-800 group"
+                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group"
                             onClick={() => navigate("/setup/wizard")}
                         >
                             <CardHeader>
@@ -155,7 +155,7 @@ export function SetupChoice() {
                                     </div>
                                     <HugeiconsIcon
                                         icon={ArrowRight01Icon}
-                                        className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all shrink-0"
+                                        className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all shrink-0"
                                         strokeWidth={2}
                                     />
                                 </div>
@@ -174,7 +174,7 @@ export function SetupChoice() {
                         }}
                     >
                         <Card
-                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-gray-200 dark:border-gray-800 group"
+                            className="cursor-pointer hover:shadow-lg transition-all shadow-sm border-border group"
                             onClick={() => navigate("/setup/restore")}
                         >
                             <CardHeader>
@@ -195,7 +195,7 @@ export function SetupChoice() {
                                     </div>
                                     <HugeiconsIcon
                                         icon={ArrowRight01Icon}
-                                        className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all shrink-0"
+                                        className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all shrink-0"
                                         strokeWidth={2}
                                     />
                                 </div>

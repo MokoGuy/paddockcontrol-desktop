@@ -96,10 +96,10 @@ export function Dashboard() {
             {/* Page Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Certificates
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Manage your SSL/TLS certificates
                     </p>
                 </div>
@@ -138,9 +138,9 @@ export function Dashboard() {
 
             {/* Error Message */}
             {error && (
-                <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                <Card className="mb-6 bg-destructive/10 border-destructive/30">
                     <CardContent>
-                        <p className="text-sm text-red-800 dark:text-red-200">
+                        <p className="text-sm text-destructive">
                             {error}
                         </p>
                     </CardContent>
@@ -149,13 +149,13 @@ export function Dashboard() {
 
             {/* Limited Mode Notice */}
             {!isEncryptionKeyProvided && (
-                <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-900">
+                <Card className="mb-6 bg-warning-muted border-warning/30">
                     <CardContent className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            <p className="text-sm font-medium text-warning-foreground">
                                 Limited mode - encryption key not provided
                             </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                            <p className="text-xs text-warning-foreground/80 mt-1">
                                 Some features are disabled. Provide your
                                 encryption key to unlock full functionality.
                             </p>
@@ -163,7 +163,7 @@ export function Dashboard() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
+                            className="border-warning/50 text-warning-foreground hover:bg-warning/20"
                             onClick={() => setShowKeyDialog(true)}
                         >
                             Provide Key
@@ -173,7 +173,7 @@ export function Dashboard() {
             )}
 
             {/* Filters Card */}
-            <Card className="mb-6 shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="mb-6 shadow-sm border-border">
                 <CardContent>
                     <div className="space-y-4">
                         {/* Search */}
@@ -196,7 +196,7 @@ export function Dashboard() {
                         <div className="flex flex-wrap gap-4 items-center justify-between w-full">
                             {/* Status Filter */}
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="text-sm font-medium text-muted-foreground">
                                     Status
                                 </label>
                                 <div className="flex gap-2">
@@ -227,11 +227,11 @@ export function Dashboard() {
                             </div>
 
                             {/* Vertical Separator */}
-                            <div className="border-l border-gray-300 dark:border-gray-700 h-8"></div>
+                            <div className="border-l border-border h-8"></div>
 
                             {/* Sort Controls */}
                             <div className="flex items-center gap-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label className="text-sm font-medium text-muted-foreground">
                                     Sort By
                                 </label>
                                 <div className="flex gap-2">
@@ -281,7 +281,7 @@ export function Dashboard() {
                             </div>
 
                             {/* Vertical Separator */}
-                            <div className="border-l border-gray-300 dark:border-gray-700 h-8"></div>
+                            <div className="border-l border-border h-8"></div>
 
                             {/* Reset Filters Button */}
                             <Button
@@ -303,7 +303,7 @@ export function Dashboard() {
                     <LoadingSpinner text="Loading certificates..." />
                 </div>
             ) : filteredCerts.length === 0 ? (
-                <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                <Card className="shadow-sm border-border">
                     <CardContent>
                         <EmptyState
                             icon={
@@ -342,7 +342,7 @@ export function Dashboard() {
                     {filteredCerts.map((cert) => (
                         <Card
                             key={cert.hostname}
-                            className="shadow-sm border-gray-200 dark:border-gray-800 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+                            className="shadow-sm border-border hover:shadow-lg hover:border-border/80 transition-all cursor-pointer group"
                             onClick={() =>
                                 navigate(`/certificates/${cert.hostname}`)
                             }
@@ -353,10 +353,10 @@ export function Dashboard() {
                                         <div className="flex items-center gap-3">
                                             <HugeiconsIcon
                                                 icon={Certificate02Icon}
-                                                className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                                                className="w-5 h-5 text-muted-foreground"
                                                 strokeWidth={2}
                                             />
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            <h3 className="text-lg font-semibold text-foreground">
                                                 {cert.hostname}
                                             </h3>
                                             <StatusBadge
@@ -373,12 +373,12 @@ export function Dashboard() {
                                         </div>
 
                                         {cert.sans && cert.sans.length > 0 && (
-                                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                            <div className="text-sm text-muted-foreground">
                                                 SANs: {cert.sans.join(", ")}
                                             </div>
                                         )}
 
-                                        <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
+                                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                                             <div>
                                                 <span className="font-medium">
                                                     Created:
@@ -409,7 +409,7 @@ export function Dashboard() {
                                     <div className="ml-4 flex items-center">
                                         <HugeiconsIcon
                                             icon={ArrowRight01Icon}
-                                            className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all"
+                                            className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all"
                                             strokeWidth={2}
                                         />
                                     </div>
@@ -421,7 +421,7 @@ export function Dashboard() {
             )}
 
             {/* Certificates Count */}
-            <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-8 text-center text-sm text-muted-foreground">
                 Showing {filteredCerts.length} of {certificates.length}{" "}
                 certificates
             </div>

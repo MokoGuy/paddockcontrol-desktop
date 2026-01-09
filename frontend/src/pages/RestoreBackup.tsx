@@ -216,24 +216,24 @@ export function RestoreBackup() {
     <>
       {/* Page Header */}
       <div className="text-center mb-8 space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-foreground">
           Restore from Backup
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Restore your configuration and certificates from a backup file
         </p>
       </div>
 
-      <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+      <Card className="shadow-sm border-border">
           {/* Step Indicator */}
-          <div className="border-b border-gray-200 dark:border-gray-800 px-6 pb-4">
+          <div className="border-b border-border px-6 pb-4">
             <div className="flex items-center gap-2 text-sm">
               {/* Step 1: Select File */}
               <div
                 className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
                   step === "file" || step === "key" || step === "confirm"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step === "key" || step === "confirm" ? "✓" : "1"}
@@ -241,20 +241,20 @@ export function RestoreBackup() {
               <span
                 className={`transition-colors duration-200 ${
                   step === "file"
-                    ? "font-semibold text-gray-900 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400"
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 Select File
               </span>
-              <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700 transition-colors duration-200" />
+              <div className="flex-1 h-0.5 mx-2 bg-muted transition-colors duration-200" />
 
               {/* Step 2: Encryption Key */}
               <div
                 className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
                   step === "key" || step === "confirm"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step === "confirm" ? "✓" : "2"}
@@ -262,20 +262,20 @@ export function RestoreBackup() {
               <span
                 className={`transition-colors duration-200 ${
                   step === "key"
-                    ? "font-semibold text-gray-900 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400"
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 Encryption Key
               </span>
-              <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700 transition-colors duration-200" />
+              <div className="flex-1 h-0.5 mx-2 bg-muted transition-colors duration-200" />
 
               {/* Step 3: Confirm */}
               <div
                 className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
                   step === "confirm"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 3
@@ -283,8 +283,8 @@ export function RestoreBackup() {
               <span
                 className={`transition-colors duration-200 ${
                   step === "confirm"
-                    ? "font-semibold text-gray-900 dark:text-white"
-                    : "text-gray-600 dark:text-gray-400"
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 Confirm
@@ -316,7 +316,7 @@ export function RestoreBackup() {
                       icon={
                         <HugeiconsIcon
                           icon={Package01Icon}
-                          className="w-8 h-8 text-gray-400"
+                          className="w-8 h-8 text-muted-foreground"
                           strokeWidth={1.5}
                         />
                       }
@@ -380,13 +380,13 @@ export function RestoreBackup() {
                           >
                             <HugeiconsIcon
                               icon={keyCopied ? Tick02Icon : Copy01Icon}
-                              className={`w-4 h-4 ${keyCopied ? "text-green-500" : ""}`}
+                              className={`w-4 h-4 ${keyCopied ? "text-success" : ""}`}
                               strokeWidth={2}
                             />
                           </Button>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         Key included in backup file
                       </p>
                     </div>
@@ -445,7 +445,7 @@ export function RestoreBackup() {
                         </Button>
                       </div>
                       {errors.key && (
-                        <p className="text-sm text-red-600 dark:text-red-400">
+                        <p className="text-sm text-destructive">
                           {errors.key.message}
                         </p>
                       )}
@@ -484,7 +484,7 @@ export function RestoreBackup() {
                 >
                   {/* Version Badge */}
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-muted-foreground">
                       Backup Version
                     </span>
                     <Badge variant="secondary">{backupData.version}</Badge>
@@ -571,7 +571,7 @@ export function RestoreBackup() {
                         handleRestore();
                       }}
                       disabled={isLoading}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      className="flex-1"
                     >
                       {isLoading ? "Restoring..." : "Restore Now"}
                     </Button>
@@ -582,9 +582,9 @@ export function RestoreBackup() {
 
             {/* Error Message */}
             {error && (
-              <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+              <Card className="bg-destructive/10 border-destructive/30">
                 <CardContent className="p-4">
-                  <p className="text-sm text-red-800 dark:text-red-200">
+                  <p className="text-sm text-destructive">
                     {error}
                   </p>
                 </CardContent>

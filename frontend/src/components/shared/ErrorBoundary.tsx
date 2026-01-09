@@ -37,10 +37,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md border-red-200 dark:border-red-900">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md border-destructive/30">
             <CardHeader>
-              <CardTitle className="text-red-700 dark:text-red-400">
+              <CardTitle className="text-destructive">
                 Something went wrong
               </CardTitle>
               <CardDescription>
@@ -48,8 +48,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
-                <p className="text-sm font-mono text-red-800 dark:text-red-200 break-words">
+              <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30">
+                <p className="text-sm font-mono text-destructive break-words">
                   {this.state.error.message}
                 </p>
               </div>

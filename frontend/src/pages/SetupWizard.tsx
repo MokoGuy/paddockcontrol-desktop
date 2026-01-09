@@ -65,15 +65,15 @@ export function SetupWizard() {
         <>
             {/* Page Header */}
             <div className="text-center mb-8 space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-3xl font-bold text-foreground">
                     Configure Your CA
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-muted-foreground">
                     Set up your certificate authority with basic information
                 </p>
             </div>
 
-            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+            <Card className="shadow-sm border-border">
                 <CardHeader>
                     <CardTitle>CA Configuration</CardTitle>
                     <CardDescription>
@@ -87,8 +87,8 @@ export function SetupWizard() {
                         className="space-y-6"
                     >
                         {error && (
-                            <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
-                                <p className="text-sm text-red-800 dark:text-red-200">
+                            <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+                                <p className="text-sm text-destructive">
                                     {error}
                                 </p>
                             </div>
@@ -105,7 +105,7 @@ export function SetupWizard() {
                                 {...register("owner_email")}
                             />
                             {errors.owner_email && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.owner_email.message}
                                 </p>
                             )}
@@ -121,7 +121,7 @@ export function SetupWizard() {
                                 {...register("ca_name")}
                             />
                             {errors.ca_name && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.ca_name.message}
                                 </p>
                             )}
@@ -139,7 +139,7 @@ export function SetupWizard() {
                                 {...register("hostname_suffix")}
                             />
                             {errors.hostname_suffix && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.hostname_suffix.message}
                                 </p>
                             )}
@@ -157,7 +157,7 @@ export function SetupWizard() {
                                 {...register("default_organization")}
                             />
                             {errors.default_organization && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.default_organization.message}
                                 </p>
                             )}
@@ -175,7 +175,7 @@ export function SetupWizard() {
                                 {...register("default_organizational_unit")}
                             />
                             {errors.default_organizational_unit && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.default_organizational_unit.message}
                                 </p>
                             )}
@@ -193,7 +193,7 @@ export function SetupWizard() {
                                     {...register("default_city")}
                                 />
                                 {errors.default_city && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.default_city.message}
                                     </p>
                                 )}
@@ -209,7 +209,7 @@ export function SetupWizard() {
                                     {...register("default_state")}
                                 />
                                 {errors.default_state && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.default_state.message}
                                     </p>
                                 )}
@@ -229,7 +229,7 @@ export function SetupWizard() {
                                 {...register("default_country")}
                             />
                             {errors.default_country && (
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                                <p className="text-sm text-destructive">
                                     {errors.default_country.message}
                                 </p>
                             )}
@@ -252,7 +252,7 @@ export function SetupWizard() {
                                     })}
                                 />
                                 {errors.validity_period_days && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.validity_period_days.message}
                                     </p>
                                 )}
@@ -273,7 +273,7 @@ export function SetupWizard() {
                                     })}
                                 />
                                 {errors.default_key_size && (
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <p className="text-sm text-destructive">
                                         {errors.default_key_size.message}
                                     </p>
                                 )}
@@ -281,8 +281,8 @@ export function SetupWizard() {
                         </div>
 
                         {/* Key Size Info */}
-                        <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg">
-                            <p className="text-xs text-blue-800 dark:text-blue-200">
+                        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                            <p className="text-xs text-primary">
                                 💡 Current key size:{" "}
                                 <strong>{keySize} bits</strong>. Larger keys
                                 (4096+) are more secure but slower to generate.

@@ -40,8 +40,8 @@ export function EncryptionKeyButton() {
                 }
                 className={`${
                     isEncryptionKeyProvided
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-amber-600 dark:text-amber-400"
+                        ? "text-success"
+                        : "text-warning"
                 } hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent`}
             >
                 <HugeiconsIcon

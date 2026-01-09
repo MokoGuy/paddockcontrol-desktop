@@ -38,6 +38,22 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* Semantic status colors */
+    --success: oklch(0.627 0.194 145.071);
+    --success-foreground: oklch(0.982 0.018 155.826);
+    --warning: oklch(0.769 0.188 70.08);
+    --warning-foreground: oklch(0.344 0.091 83.8);
+    --info: oklch(0.623 0.214 259.815);
+    --info-foreground: oklch(0.97 0.014 254.604);
+    --admin: oklch(0.577 0.245 27.325);
+    --admin-foreground: oklch(0.971 0.013 17.38);
+
+    /* Muted variants for badges/pills */
+    --success-muted: oklch(0.912 0.044 155.995);
+    --warning-muted: oklch(0.945 0.088 95.85);
+    --info-muted: oklch(0.932 0.032 255.508);
+    --admin-muted: oklch(0.936 0.032 17.717);
 }
 
 .dark {
@@ -72,6 +88,22 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+
+    /* Semantic status colors - dark mode */
+    --success: oklch(0.527 0.154 150.069);
+    --success-foreground: oklch(0.899 0.076 155.066);
+    --warning: oklch(0.702 0.183 54.95);
+    --warning-foreground: oklch(0.28 0.077 45.635);
+    --info: oklch(0.546 0.245 262.881);
+    --info-foreground: oklch(0.97 0.014 254.604);
+    --admin: oklch(0.704 0.191 22.216);
+    --admin-foreground: oklch(0.971 0.013 17.38);
+
+    /* Muted variants for badges/pills - dark mode */
+    --success-muted: oklch(0.266 0.065 152.934);
+    --warning-muted: oklch(0.268 0.063 53.813);
+    --info-muted: oklch(0.268 0.069 264.695);
+    --admin-muted: oklch(0.258 0.061 22.216);
 }
 
 @theme inline {
@@ -114,6 +146,20 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
+
+    /* Semantic status color mappings */
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-success-muted: var(--success-muted);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-warning-muted: var(--warning-muted);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-info-muted: var(--info-muted);
+    --color-admin: var(--admin);
+    --color-admin-foreground: var(--admin-foreground);
+    --color-admin-muted: var(--admin-muted);
 }
 
 @layer base {

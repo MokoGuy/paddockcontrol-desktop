@@ -105,18 +105,38 @@ export function getRelativeTime(timestamp: number | null | undefined): string {
 /**
  * Get status color for certificate status
  */
+/**
+ * Get computed RGB color from CSS variable
+ * Works with OKLCH values by using browser's color computation
+ */
+export function getCssColorAsRgb(cssVar: string): string {
+  // Create temporary element to compute color
+  const temp = document.createElement('div');
+  temp.style.color = `var(${cssVar})`;
+  temp.style.display = 'none';
+  document.body.appendChild(temp);
+
+  const computed = getComputedStyle(temp).color;
+  document.body.removeChild(temp);
+
+  return computed; // Returns rgb(r, g, b) format
+}
+
+/**
+ * Get status color for certificate status
+ */
 export function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      return 'bg-success/15 text-success dark:bg-success/25';
     case 'pending':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      return 'bg-info/15 text-info dark:bg-info/25';
     case 'expiring':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      return 'bg-warning/15 text-warning dark:bg-warning/25';
     case 'expired':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      return 'bg-destructive/15 text-destructive dark:bg-destructive/25';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+      return 'bg-muted text-muted-foreground';
   }
 }
 

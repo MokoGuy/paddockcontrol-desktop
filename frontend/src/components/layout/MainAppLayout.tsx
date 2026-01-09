@@ -33,7 +33,7 @@ export function MainAppLayout() {
     }, [isAdminModeEnabled]);
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="flex flex-col h-screen bg-background">
             {/* Header with main app configuration */}
             <AnimatePresence mode="wait">
                 <AppHeader

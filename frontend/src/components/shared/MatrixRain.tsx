@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useThemeStore } from "@/stores/useThemeStore";
+import { getCssColorAsRgb } from "@/lib/theme";
 
 interface MatrixRainProps {
     duration?: number;
@@ -58,10 +59,10 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
             const progress = Math.min(elapsed / duration, 1);
 
             // Fade effect - creates the trail (theme-aware)
-            // Use theme background colors for natural integration
-            ctx.fillStyle = isDarkMode
-                ? "rgba(2, 6, 23, 0.08)" // slate-950 with opacity
-                : "rgba(249, 250, 251, 0.05)"; // gray-50 with opacity
+            // Use theme background color for natural integration
+            const bgColor = getCssColorAsRgb('--background');
+            const fadeOpacity = isDarkMode ? 0.08 : 0.05;
+            ctx.fillStyle = bgColor.replace('rgb(', 'rgba(').replace(')', `, ${fadeOpacity})`);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Red color gradient based on progress
@@ -128,7 +129,7 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
         >
             <canvas
                 ref={canvasRef}
-                className="w-full h-full bg-gray-50/80 dark:bg-slate-950/80"
+                className="w-full h-full bg-background/80"
             />
         </motion.div>
     );
