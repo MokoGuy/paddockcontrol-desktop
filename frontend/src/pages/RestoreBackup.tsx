@@ -220,8 +220,8 @@ export function RestoreBackup() {
     };
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-12 px-4">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl">
                 {/* Header */}
                 <div className="text-center mb-8 space-y-4">
                     <img
@@ -234,7 +234,8 @@ export function RestoreBackup() {
                             Restore from Backup
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-2">
-                            Restore your CA and certificates from a backup file
+                            Restore your configuration and certificates from a
+                            backup file
                         </p>
                     </div>
                 </div>
@@ -246,12 +247,16 @@ export function RestoreBackup() {
                             {/* Step 1: Select File */}
                             <div
                                 className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
-                                    step === "file" || step === "key" || step === "confirm"
+                                    step === "file" ||
+                                    step === "key" ||
+                                    step === "confirm"
                                         ? "bg-blue-600 text-white"
                                         : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                                 }`}
                             >
-                                {step === "key" || step === "confirm" ? "✓" : "1"}
+                                {step === "key" || step === "confirm"
+                                    ? "✓"
+                                    : "1"}
                             </div>
                             <span
                                 className={
@@ -343,16 +348,26 @@ export function RestoreBackup() {
                         )}
 
                         {/* Step 2: Encryption Key */}
-                        {step === "key" && backupData && (
-                            hasEmbeddedKey ? (
+                        {step === "key" &&
+                            backupData &&
+                            (hasEmbeddedKey ? (
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="embedded-key">Encryption Key</Label>
+                                        <Label htmlFor="embedded-key">
+                                            Encryption Key
+                                        </Label>
                                         <div className="relative">
                                             <Input
                                                 id="embedded-key"
-                                                type={showPassword ? "text" : "password"}
-                                                value={backupData.encryption_key || ""}
+                                                type={
+                                                    showPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
+                                                value={
+                                                    backupData.encryption_key ||
+                                                    ""
+                                                }
                                                 disabled
                                                 className="pr-20 font-mono"
                                             />
@@ -361,11 +376,23 @@ export function RestoreBackup() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon-xs"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    title={showPassword ? "Hide key" : "Show key"}
+                                                    onClick={() =>
+                                                        setShowPassword(
+                                                            !showPassword,
+                                                        )
+                                                    }
+                                                    title={
+                                                        showPassword
+                                                            ? "Hide key"
+                                                            : "Show key"
+                                                    }
                                                 >
                                                     <HugeiconsIcon
-                                                        icon={showPassword ? ViewOffIcon : EyeIcon}
+                                                        icon={
+                                                            showPassword
+                                                                ? ViewOffIcon
+                                                                : EyeIcon
+                                                        }
                                                         className="w-4 h-4"
                                                         strokeWidth={2}
                                                     />
@@ -374,11 +401,17 @@ export function RestoreBackup() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon-xs"
-                                                    onClick={handleCopyEncryptionKey}
+                                                    onClick={
+                                                        handleCopyEncryptionKey
+                                                    }
                                                     title="Copy to clipboard"
                                                 >
                                                     <HugeiconsIcon
-                                                        icon={keyCopied ? Tick02Icon : Copy01Icon}
+                                                        icon={
+                                                            keyCopied
+                                                                ? Tick02Icon
+                                                                : Copy01Icon
+                                                        }
                                                         className={`w-4 h-4 ${keyCopied ? "text-green-500" : ""}`}
                                                         strokeWidth={2}
                                                     />
@@ -414,11 +447,17 @@ export function RestoreBackup() {
                                     className="space-y-6"
                                 >
                                     <div className="space-y-2">
-                                        <Label htmlFor="key">Encryption Key</Label>
+                                        <Label htmlFor="key">
+                                            Encryption Key
+                                        </Label>
                                         <div className="relative">
                                             <Input
                                                 id="key"
-                                                type={showPassword ? "text" : "password"}
+                                                type={
+                                                    showPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
                                                 placeholder="Enter the backup encryption key"
                                                 disabled={isLoading}
                                                 {...register("key")}
@@ -428,11 +467,19 @@ export function RestoreBackup() {
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon-xs"
-                                                onClick={() => setShowPassword(!showPassword)}
+                                                onClick={() =>
+                                                    setShowPassword(
+                                                        !showPassword,
+                                                    )
+                                                }
                                                 className="absolute right-3 top-1/2 -translate-y-1/2"
                                             >
                                                 <HugeiconsIcon
-                                                    icon={showPassword ? ViewOffIcon : EyeIcon}
+                                                    icon={
+                                                        showPassword
+                                                            ? ViewOffIcon
+                                                            : EyeIcon
+                                                    }
                                                     className="w-4 h-4"
                                                     strokeWidth={2}
                                                 />
@@ -460,12 +507,13 @@ export function RestoreBackup() {
                                             disabled={isLoading}
                                             className="flex-1"
                                         >
-                                            {isLoading ? "Validating..." : "Continue"}
+                                            {isLoading
+                                                ? "Validating..."
+                                                : "Continue"}
                                         </Button>
                                     </div>
                                 </form>
-                            )
-                        )}
+                            ))}
 
                         {/* Step 3: Confirmation */}
                         {step === "confirm" && backupData && (
@@ -496,34 +544,53 @@ export function RestoreBackup() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead>Hostname</TableHead>
-                                                    <TableHead className="text-right">Includes</TableHead>
+                                                    <TableHead>
+                                                        Hostname
+                                                    </TableHead>
+                                                    <TableHead className="text-right">
+                                                        Includes
+                                                    </TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {backupData.certificates.map((cert) => (
-                                                    <TableRow key={cert.hostname}>
-                                                        <TableCell>
-                                                            <Badge variant="secondary" className="font-mono">
-                                                                {cert.hostname}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                {cert.certificate_pem && (
-                                                                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                                                                        cert
-                                                                    </Badge>
-                                                                )}
-                                                                {cert.pending_csr_pem && (
-                                                                    <Badge variant="outline" className="text-xs px-1.5 py-0">
-                                                                        pending
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
+                                                {backupData.certificates.map(
+                                                    (cert) => (
+                                                        <TableRow
+                                                            key={cert.hostname}
+                                                        >
+                                                            <TableCell>
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="font-mono"
+                                                                >
+                                                                    {
+                                                                        cert.hostname
+                                                                    }
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    {cert.certificate_pem && (
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="text-xs px-1.5 py-0"
+                                                                        >
+                                                                            cert
+                                                                        </Badge>
+                                                                    )}
+                                                                    {cert.pending_csr_pem && (
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="text-xs px-1.5 py-0"
+                                                                        >
+                                                                            pending
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ),
+                                                )}
                                             </TableBody>
                                         </Table>
                                     ) : (

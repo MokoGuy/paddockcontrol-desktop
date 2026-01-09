@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
     Card,
-    CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
@@ -103,7 +102,7 @@ export function SetupChoice() {
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-2">
                             Choose how you would like to set up your certificate
-                            authority
+                            manager
                         </p>
                     </div>
                 </div>
@@ -111,7 +110,10 @@ export function SetupChoice() {
                 {/* Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* New Setup */}
-                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800 flex flex-col">
+                    <Card
+                        className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800"
+                        onClick={() => navigate("/setup/wizard")}
+                    >
                         <CardHeader>
                             <div className="flex items-start justify-between">
                                 <div>
@@ -120,42 +122,19 @@ export function SetupChoice() {
                                     </CardTitle>
                                     <CardDescription>
                                         Start fresh with a new certificate
-                                        authority
+                                        manager
                                     </CardDescription>
                                 </div>
                                 <span className="text-3xl">✨</span>
                             </div>
                         </CardHeader>
-                        <CardContent className="flex flex-col flex-1">
-                            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>Configure your CA from scratch</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>Set up organization details</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>
-                                        Define default certificate settings
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="mt-auto pt-4">
-                                <Button
-                                    onClick={() => navigate("/setup/wizard")}
-                                    className="w-full"
-                                >
-                                    Continue with New Setup
-                                </Button>
-                            </div>
-                        </CardContent>
                     </Card>
 
                     {/* Restore from Backup */}
-                    <Card className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800 flex flex-col">
+                    <Card
+                        className="cursor-pointer hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all border-slate-200 dark:border-slate-800"
+                        onClick={() => navigate("/setup/restore")}
+                    >
                         <CardHeader>
                             <div className="flex items-start justify-between">
                                 <div>
@@ -170,53 +149,8 @@ export function SetupChoice() {
                                 <span className="text-3xl">📦</span>
                             </div>
                         </CardHeader>
-                        <CardContent className="flex flex-col flex-1">
-                            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>Load existing CA configuration</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>Restore all your certificates</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <span className="text-green-600">✓</span>
-                                    <span>Recover from a previous backup</span>
-                                </div>
-                            </div>
-                            <div className="mt-auto pt-4">
-                                <Button
-                                    onClick={() => navigate("/setup/restore")}
-                                    variant="outline"
-                                    className="w-full"
-                                >
-                                    Restore from Backup
-                                </Button>
-                            </div>
-                        </CardContent>
                     </Card>
                 </div>
-
-                {/* Info Box */}
-                <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-900">
-                    <CardContent>
-                        <div className="flex gap-3">
-                            <span className="text-xl">ℹ️</span>
-                            <div className="text-sm text-blue-800 dark:text-blue-200">
-                                <p className="font-semibold mb-1">
-                                    What is a backup?
-                                </p>
-                                <p>
-                                    A backup file contains your CA
-                                    configuration, all certificates, and
-                                    encrypted private keys. You can safely store
-                                    and restore it anytime.
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     );
