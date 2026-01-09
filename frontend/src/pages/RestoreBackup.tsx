@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { SetupHeader } from "@/components/shared/SetupHeader";
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -220,158 +221,262 @@ export function RestoreBackup() {
     };
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl">
-                {/* Header */}
-                <div className="text-center mb-8 space-y-4">
-                    <img
-                        src={logo}
-                        alt="PaddockControl"
-                        className="w-12 h-12 mx-auto"
-                    />
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Restore from Backup
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
-                            Restore your configuration and certificates from a
-                            backup file
-                        </p>
-                    </div>
-                </div>
+        <div
+            className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950"
+            style={{ "--wails-draggable": "drag" } as React.CSSProperties}
+        >
+            <SetupHeader showBackButton />
 
-                <Card className="shadow-xl border-slate-200 dark:border-slate-800">
-                    {/* Step Indicator */}
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm">
-                            {/* Step 1: Select File */}
-                            <div
-                                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
-                                    step === "file" ||
-                                    step === "key" ||
-                                    step === "confirm"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                }`}
-                            >
-                                {step === "key" || step === "confirm"
-                                    ? "✓"
-                                    : "1"}
-                            </div>
-                            <span
-                                className={
-                                    step === "file"
-                                        ? "font-semibold text-gray-900 dark:text-white"
-                                        : "text-gray-600 dark:text-gray-400"
-                                }
-                            >
-                                Select File
-                            </span>
-                            <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700" />
-
-                            {/* Step 2: Encryption Key */}
-                            <div
-                                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
-                                    step === "key" || step === "confirm"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                }`}
-                            >
-                                {step === "confirm" ? "✓" : "2"}
-                            </div>
-                            <span
-                                className={
-                                    step === "key"
-                                        ? "font-semibold text-gray-900 dark:text-white"
-                                        : "text-gray-600 dark:text-gray-400"
-                                }
-                            >
-                                Encryption Key
-                            </span>
-                            <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700" />
-
-                            {/* Step 3: Confirm */}
-                            <div
-                                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
-                                    step === "confirm"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                }`}
-                            >
-                                3
-                            </div>
-                            <span
-                                className={
-                                    step === "confirm"
-                                        ? "font-semibold text-gray-900 dark:text-white"
-                                        : "text-gray-600 dark:text-gray-400"
-                                }
-                            >
-                                Confirm
-                            </span>
+            <main
+                className="flex-1 min-h-0 overflow-y-auto scrollbar-float"
+                style={
+                    { "--wails-draggable": "no-drag" } as React.CSSProperties
+                }
+            >
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* Header */}
+                    <div className="text-center mb-8 space-y-4">
+                        <img
+                            src={logo}
+                            alt="PaddockControl"
+                            className="w-12 h-12 mx-auto"
+                        />
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                Restore from Backup
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">
+                                Restore your configuration and certificates from
+                                a backup file
+                            </p>
                         </div>
                     </div>
 
-                    <CardContent>
-                        {/* Step 1: File Selection */}
-                        {step === "file" && (
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label>Select Backup File</Label>
-                                    <FileDropZone
-                                        onFileSelect={handleFileSelect}
-                                        accept=".json"
-                                        acceptedExtensions={[".json"]}
-                                        label="Click to select or drag and drop"
-                                        sublabel="JSON backup file (.json)"
-                                        dropLabel="Drop backup file here"
-                                        icon={
-                                            <HugeiconsIcon
-                                                icon={Package01Icon}
-                                                className="w-8 h-8 text-gray-400"
-                                                strokeWidth={1.5}
-                                            />
-                                        }
-                                        selectedFile={selectedFile}
-                                    />
-                                </div>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleBack}
-                                    className="w-full"
+                    <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                        {/* Step Indicator */}
+                        <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+                            <div className="flex items-center gap-2 text-sm">
+                                {/* Step 1: Select File */}
+                                <div
+                                    className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
+                                        step === "file" ||
+                                        step === "key" ||
+                                        step === "confirm"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                    }`}
                                 >
-                                    Back
-                                </Button>
-                            </div>
-                        )}
+                                    {step === "key" || step === "confirm"
+                                        ? "✓"
+                                        : "1"}
+                                </div>
+                                <span
+                                    className={
+                                        step === "file"
+                                            ? "font-semibold text-gray-900 dark:text-white"
+                                            : "text-gray-600 dark:text-gray-400"
+                                    }
+                                >
+                                    Select File
+                                </span>
+                                <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700" />
 
-                        {/* Step 2: Encryption Key */}
-                        {step === "key" &&
-                            backupData &&
-                            (hasEmbeddedKey ? (
+                                {/* Step 2: Encryption Key */}
+                                <div
+                                    className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
+                                        step === "key" || step === "confirm"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                    }`}
+                                >
+                                    {step === "confirm" ? "✓" : "2"}
+                                </div>
+                                <span
+                                    className={
+                                        step === "key"
+                                            ? "font-semibold text-gray-900 dark:text-white"
+                                            : "text-gray-600 dark:text-gray-400"
+                                    }
+                                >
+                                    Encryption Key
+                                </span>
+                                <div className="flex-1 h-0.5 mx-2 bg-gray-200 dark:bg-gray-700" />
+
+                                {/* Step 3: Confirm */}
+                                <div
+                                    className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold ${
+                                        step === "confirm"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                    }`}
+                                >
+                                    3
+                                </div>
+                                <span
+                                    className={
+                                        step === "confirm"
+                                            ? "font-semibold text-gray-900 dark:text-white"
+                                            : "text-gray-600 dark:text-gray-400"
+                                    }
+                                >
+                                    Confirm
+                                </span>
+                            </div>
+                        </div>
+
+                        <CardContent>
+                            {/* Step 1: File Selection */}
+                            {step === "file" && (
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="embedded-key">
-                                            Encryption Key
-                                        </Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="embedded-key"
-                                                type={
-                                                    showPassword
-                                                        ? "text"
-                                                        : "password"
+                                        <Label>Select Backup File</Label>
+                                        <FileDropZone
+                                            onFileSelect={handleFileSelect}
+                                            accept=".json"
+                                            acceptedExtensions={[".json"]}
+                                            label="Click to select or drag and drop"
+                                            sublabel="JSON backup file (.json)"
+                                            dropLabel="Drop backup file here"
+                                            icon={
+                                                <HugeiconsIcon
+                                                    icon={Package01Icon}
+                                                    className="w-8 h-8 text-gray-400"
+                                                    strokeWidth={1.5}
+                                                />
+                                            }
+                                            selectedFile={selectedFile}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleBack}
+                                        className="w-full"
+                                    >
+                                        Back
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Step 2: Encryption Key */}
+                            {step === "key" &&
+                                backupData &&
+                                (hasEmbeddedKey ? (
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="embedded-key">
+                                                Encryption Key
+                                            </Label>
+                                            <div className="relative">
+                                                <Input
+                                                    id="embedded-key"
+                                                    type={
+                                                        showPassword
+                                                            ? "text"
+                                                            : "password"
+                                                    }
+                                                    value={
+                                                        backupData.encryption_key ||
+                                                        ""
+                                                    }
+                                                    disabled
+                                                    className="pr-20 font-mono"
+                                                />
+                                                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        onClick={() =>
+                                                            setShowPassword(
+                                                                !showPassword,
+                                                            )
+                                                        }
+                                                        title={
+                                                            showPassword
+                                                                ? "Hide key"
+                                                                : "Show key"
+                                                        }
+                                                    >
+                                                        <HugeiconsIcon
+                                                            icon={
+                                                                showPassword
+                                                                    ? ViewOffIcon
+                                                                    : EyeIcon
+                                                            }
+                                                            className="w-4 h-4"
+                                                            strokeWidth={2}
+                                                        />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        onClick={
+                                                            handleCopyEncryptionKey
+                                                        }
+                                                        title="Copy to clipboard"
+                                                    >
+                                                        <HugeiconsIcon
+                                                            icon={
+                                                                keyCopied
+                                                                    ? Tick02Icon
+                                                                    : Copy01Icon
+                                                            }
+                                                            className={`w-4 h-4 ${keyCopied ? "text-green-500" : ""}`}
+                                                            strokeWidth={2}
+                                                        />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                Key included in backup file
+                                            </p>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleBack}
+                                                className="flex-1"
+                                            >
+                                                Back
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                onClick={() =>
+                                                    setStep("confirm")
                                                 }
-                                                value={
-                                                    backupData.encryption_key ||
-                                                    ""
-                                                }
-                                                disabled
-                                                className="pr-20 font-mono"
-                                            />
-                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                                className="flex-1"
+                                            >
+                                                Continue
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <form
+                                        onSubmit={handleSubmit(handleKeySubmit)}
+                                        className="space-y-6"
+                                    >
+                                        <div className="space-y-2">
+                                            <Label htmlFor="key">
+                                                Encryption Key
+                                            </Label>
+                                            <div className="relative">
+                                                <Input
+                                                    id="key"
+                                                    type={
+                                                        showPassword
+                                                            ? "text"
+                                                            : "password"
+                                                    }
+                                                    placeholder="Enter the backup encryption key"
+                                                    disabled={isLoading}
+                                                    {...register("key")}
+                                                    className="pr-10"
+                                                />
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
@@ -381,11 +486,7 @@ export function RestoreBackup() {
                                                             !showPassword,
                                                         )
                                                     }
-                                                    title={
-                                                        showPassword
-                                                            ? "Hide key"
-                                                            : "Show key"
-                                                    }
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2"
                                                 >
                                                     <HugeiconsIcon
                                                         icon={
@@ -397,98 +498,123 @@ export function RestoreBackup() {
                                                         strokeWidth={2}
                                                     />
                                                 </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon-xs"
-                                                    onClick={
-                                                        handleCopyEncryptionKey
-                                                    }
-                                                    title="Copy to clipboard"
-                                                >
-                                                    <HugeiconsIcon
-                                                        icon={
-                                                            keyCopied
-                                                                ? Tick02Icon
-                                                                : Copy01Icon
-                                                        }
-                                                        className={`w-4 h-4 ${keyCopied ? "text-green-500" : ""}`}
-                                                        strokeWidth={2}
-                                                    />
-                                                </Button>
                                             </div>
+                                            {errors.key && (
+                                                <p className="text-sm text-red-600 dark:text-red-400">
+                                                    {errors.key.message}
+                                                </p>
+                                            )}
                                         </div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            Key included in backup file
-                                        </p>
-                                    </div>
 
-                                    <div className="flex gap-3">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={handleBack}
-                                            className="flex-1"
-                                        >
-                                            Back
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            onClick={() => setStep("confirm")}
-                                            className="flex-1"
-                                        >
-                                            Continue
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <form
-                                    onSubmit={handleSubmit(handleKeySubmit)}
-                                    className="space-y-6"
-                                >
-                                    <div className="space-y-2">
-                                        <Label htmlFor="key">
-                                            Encryption Key
-                                        </Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="key"
-                                                type={
-                                                    showPassword
-                                                        ? "text"
-                                                        : "password"
-                                                }
-                                                placeholder="Enter the backup encryption key"
-                                                disabled={isLoading}
-                                                {...register("key")}
-                                                className="pr-10"
-                                            />
+                                        <div className="flex gap-3">
                                             <Button
                                                 type="button"
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                onClick={() =>
-                                                    setShowPassword(
-                                                        !showPassword,
-                                                    )
-                                                }
-                                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                                                variant="outline"
+                                                onClick={handleBack}
+                                                disabled={isLoading}
+                                                className="flex-1"
                                             >
-                                                <HugeiconsIcon
-                                                    icon={
-                                                        showPassword
-                                                            ? ViewOffIcon
-                                                            : EyeIcon
-                                                    }
-                                                    className="w-4 h-4"
-                                                    strokeWidth={2}
-                                                />
+                                                Back
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="flex-1"
+                                            >
+                                                {isLoading
+                                                    ? "Validating..."
+                                                    : "Continue"}
                                             </Button>
                                         </div>
-                                        {errors.key && (
-                                            <p className="text-sm text-red-600 dark:text-red-400">
-                                                {errors.key.message}
-                                            </p>
+                                    </form>
+                                ))}
+
+                            {/* Step 3: Confirmation */}
+                            {step === "confirm" && backupData && (
+                                <div className="space-y-6">
+                                    {/* Version Badge */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                            Backup Version
+                                        </span>
+                                        <Badge variant="secondary">
+                                            {backupData.version}
+                                        </Badge>
+                                    </div>
+
+                                    {/* Certificate List */}
+                                    <div className="space-y-3">
+                                        <Label className="flex items-center gap-1.5">
+                                            <HugeiconsIcon
+                                                icon={Certificate02Icon}
+                                                className="w-4 h-4"
+                                                strokeWidth={2}
+                                            />
+                                            Certificates to Import (
+                                            {backupData.certificates?.length ||
+                                                0}
+                                            )
+                                        </Label>
+                                        {backupData.certificates &&
+                                        backupData.certificates.length > 0 ? (
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>
+                                                            Hostname
+                                                        </TableHead>
+                                                        <TableHead className="text-right">
+                                                            Includes
+                                                        </TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {backupData.certificates.map(
+                                                        (cert) => (
+                                                            <TableRow
+                                                                key={
+                                                                    cert.hostname
+                                                                }
+                                                            >
+                                                                <TableCell>
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className="font-mono"
+                                                                    >
+                                                                        {
+                                                                            cert.hostname
+                                                                        }
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        {cert.certificate_pem && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-xs px-1.5 py-0"
+                                                                            >
+                                                                                cert
+                                                                            </Badge>
+                                                                        )}
+                                                                        {cert.pending_csr_pem && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-xs px-1.5 py-0"
+                                                                            >
+                                                                                pending
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ),
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        ) : (
+                                            <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-border rounded-lg">
+                                                No certificates in backup
+                                            </div>
                                         )}
                                     </div>
 
@@ -503,152 +629,45 @@ export function RestoreBackup() {
                                             Back
                                         </Button>
                                         <Button
-                                            type="submit"
+                                            type="button"
+                                            onClick={() => {
+                                                console.log(
+                                                    "🚀 Restore button clicked",
+                                                );
+                                                handleRestore();
+                                            }}
                                             disabled={isLoading}
-                                            className="flex-1"
+                                            className="flex-1 bg-green-600 hover:bg-green-700"
                                         >
                                             {isLoading
-                                                ? "Validating..."
-                                                : "Continue"}
+                                                ? "Restoring..."
+                                                : "Restore Now"}
                                         </Button>
                                     </div>
-                                </form>
-                            ))}
-
-                        {/* Step 3: Confirmation */}
-                        {step === "confirm" && backupData && (
-                            <div className="space-y-6">
-                                {/* Version Badge */}
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                        Backup Version
-                                    </span>
-                                    <Badge variant="secondary">
-                                        {backupData.version}
-                                    </Badge>
                                 </div>
+                            )}
 
-                                {/* Certificate List */}
-                                <div className="space-y-3">
-                                    <Label className="flex items-center gap-1.5">
-                                        <HugeiconsIcon
-                                            icon={Certificate02Icon}
-                                            className="w-4 h-4"
-                                            strokeWidth={2}
-                                        />
-                                        Certificates to Import (
-                                        {backupData.certificates?.length || 0})
-                                    </Label>
-                                    {backupData.certificates &&
-                                    backupData.certificates.length > 0 ? (
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>
-                                                        Hostname
-                                                    </TableHead>
-                                                    <TableHead className="text-right">
-                                                        Includes
-                                                    </TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {backupData.certificates.map(
-                                                    (cert) => (
-                                                        <TableRow
-                                                            key={cert.hostname}
-                                                        >
-                                                            <TableCell>
-                                                                <Badge
-                                                                    variant="secondary"
-                                                                    className="font-mono"
-                                                                >
-                                                                    {
-                                                                        cert.hostname
-                                                                    }
-                                                                </Badge>
-                                                            </TableCell>
-                                                            <TableCell className="text-right">
-                                                                <div className="flex items-center justify-end gap-1">
-                                                                    {cert.certificate_pem && (
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className="text-xs px-1.5 py-0"
-                                                                        >
-                                                                            cert
-                                                                        </Badge>
-                                                                    )}
-                                                                    {cert.pending_csr_pem && (
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className="text-xs px-1.5 py-0"
-                                                                        >
-                                                                            pending
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ),
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    ) : (
-                                        <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-border rounded-lg">
-                                            No certificates in backup
-                                        </div>
-                                    )}
+                            {/* Error Message */}
+                            {error && (
+                                <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                                    <CardContent className="p-4">
+                                        <p className="text-sm text-red-800 dark:text-red-200">
+                                            {error}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Loading State */}
+                            {isLoading && step !== "file" && (
+                                <div className="flex items-center justify-center py-8">
+                                    <LoadingSpinner text="Processing..." />
                                 </div>
-
-                                <div className="flex gap-3">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleBack}
-                                        disabled={isLoading}
-                                        className="flex-1"
-                                    >
-                                        Back
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        onClick={() => {
-                                            console.log(
-                                                "🚀 Restore button clicked",
-                                            );
-                                            handleRestore();
-                                        }}
-                                        disabled={isLoading}
-                                        className="flex-1 bg-green-600 hover:bg-green-700"
-                                    >
-                                        {isLoading
-                                            ? "Restoring..."
-                                            : "Restore Now"}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Error Message */}
-                        {error && (
-                            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-red-800 dark:text-red-200">
-                                        {error}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Loading State */}
-                        {isLoading && step !== "file" && (
-                            <div className="flex items-center justify-center py-8">
-                                <LoadingSpinner text="Processing..." />
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
         </div>
     );
 }
