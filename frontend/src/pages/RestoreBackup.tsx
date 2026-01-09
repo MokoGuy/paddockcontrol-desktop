@@ -234,7 +234,7 @@ export function RestoreBackup() {
 
             <Card className="shadow-sm border-gray-200 dark:border-gray-800">
                 {/* Step Indicator */}
-                <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+                <div className="border-b border-gray-200 dark:border-gray-800 px-6 pb-4">
                     <div className="flex items-center gap-2 text-sm">
                         {/* Step 1: Select File */}
                         <div
