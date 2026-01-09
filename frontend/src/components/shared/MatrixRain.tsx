@@ -37,9 +37,9 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
         resizeObserver.observe(parent);
 
         // Fade color matches theme background
-        // Light: oklch(1 0 0) = white, Dark: oklch(0.145 0 0) = near-black
+        // Light: oklch(1 0 0) = white, Dark: oklch(0.145 0 0) = rgb(9, 9, 9)
         const fadeColor = isDarkMode
-            ? "rgba(33, 33, 33, 0.08)"
+            ? "rgba(9, 9, 9, 0.08)"
             : "rgba(255, 255, 255, 0.05)";
 
         // Matrix characters - mix of katakana, latin, numbers, symbols
