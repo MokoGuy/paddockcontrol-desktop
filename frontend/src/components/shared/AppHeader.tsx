@@ -113,12 +113,36 @@ export function AppHeader({
     // Default variant - header bar with subtle animations
     return (
         <motion.header
-            className="h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm"
+            className="relative h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
         >
+            {/* Admin mode animated border - left side */}
+            <motion.div
+                className="absolute bottom-0 left-0 w-1/2 h-[2px] bg-red-500 dark:bg-red-600"
+                style={{ transformOrigin: "left" }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: isAdminModeEnabled && showAdminBadge ? 1 : 0 }}
+                transition={{
+                    duration: 0.4,
+                    ease: isAdminModeEnabled ? [0.34, 1.56, 0.64, 1] : "easeInOut",
+                    delay: isAdminModeEnabled ? 0.1 : 0,
+                }}
+            />
+            {/* Admin mode animated border - right side */}
+            <motion.div
+                className="absolute bottom-0 right-0 w-1/2 h-[2px] bg-red-500 dark:bg-red-600"
+                style={{ transformOrigin: "right" }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: isAdminModeEnabled && showAdminBadge ? 1 : 0 }}
+                transition={{
+                    duration: 0.4,
+                    ease: isAdminModeEnabled ? [0.34, 1.56, 0.64, 1] : "easeInOut",
+                    delay: isAdminModeEnabled ? 0.1 : 0,
+                }}
+            />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-1">
                 {/* Left side - Back button */}
                 <div
