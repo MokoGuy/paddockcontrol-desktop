@@ -94,7 +94,7 @@ function ChainCertificateCard({
             <div className="flex items-center justify-between mb-3">
                 <Badge className={config.badge}>{config.label}</Badge>
                 {cert.pem && cert.cert_type !== "leaf" && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 mr-3">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -103,7 +103,9 @@ function ChainCertificateCard({
                             title="Copy PEM"
                         >
                             <HugeiconsIcon
-                                icon={isCopied(cert.pem) ? Tick02Icon : Copy01Icon}
+                                icon={
+                                    isCopied(cert.pem) ? Tick02Icon : Copy01Icon
+                                }
                                 className={`w-4 h-4 ${isCopied(cert.pem) ? "text-success" : ""}`}
                                 strokeWidth={2}
                             />
