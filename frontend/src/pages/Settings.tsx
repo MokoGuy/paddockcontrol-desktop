@@ -162,9 +162,7 @@ export function Settings() {
         return (
             <Card className="bg-destructive/10 border-destructive/30">
                 <CardContent>
-                    <p className="text-sm text-destructive">
-                        {configError}
-                    </p>
+                    <p className="text-sm text-destructive">{configError}</p>
                     <Button onClick={() => navigate("/")} className="mt-4">
                         Back to Dashboard
                     </Button>
@@ -353,59 +351,6 @@ export function Settings() {
                 />
             )}
 
-            {/* Data Directory */}
-            {dataDir && (
-                <Card className="mb-6 shadow-sm border-border">
-                    <CardHeader>
-                        <CardTitle>Data Directory</CardTitle>
-                        <CardDescription>
-                            Where your certificates are stored
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <InputGroup>
-                            <InputGroupInput
-                                value={dataDir}
-                                readOnly
-                                className="font-mono"
-                            />
-                            <InputGroupButton
-                                size="icon-xs"
-                                onClick={() => copy(dataDir)}
-                            >
-                                <HugeiconsIcon
-                                    icon={
-                                        isCopied(dataDir)
-                                            ? Tick02Icon
-                                            : Copy01Icon
-                                    }
-                                    className={
-                                        isCopied(dataDir)
-                                            ? "text-success"
-                                            : ""
-                                    }
-                                    strokeWidth={2}
-                                />
-                            </InputGroupButton>
-                            <InputGroupButton
-                                size="icon-xs"
-                                onClick={handleOpenDataDirectory}
-                                title="Open folder in explorer"
-                            >
-                                <HugeiconsIcon
-                                    icon={FolderLinksIcon}
-                                    strokeWidth={2}
-                                />
-                            </InputGroupButton>
-                        </InputGroup>
-                        <p className="text-xs text-muted-foreground">
-                            All certificate data, backups, and application files
-                            are stored in this directory.
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
-
             {/* Backup Management */}
             <Card className="shadow-sm border-border">
                 <CardHeader>
@@ -435,6 +380,57 @@ export function Settings() {
                     </Button>
                 </CardContent>
             </Card>
+
+            {/* Data Directory */}
+            {dataDir && (
+                <Card className="mt-6 shadow-sm border-border">
+                    <CardHeader>
+                        <CardTitle>Data Directory</CardTitle>
+                        <CardDescription>
+                            Where your certificates are stored
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <InputGroup>
+                            <InputGroupInput
+                                value={dataDir}
+                                readOnly
+                                className="font-mono"
+                            />
+                            <InputGroupButton
+                                size="icon-xs"
+                                onClick={() => copy(dataDir)}
+                            >
+                                <HugeiconsIcon
+                                    icon={
+                                        isCopied(dataDir)
+                                            ? Tick02Icon
+                                            : Copy01Icon
+                                    }
+                                    className={
+                                        isCopied(dataDir) ? "text-success" : ""
+                                    }
+                                    strokeWidth={2}
+                                />
+                            </InputGroupButton>
+                            <InputGroupButton
+                                size="icon-xs"
+                                onClick={handleOpenDataDirectory}
+                                title="Open folder in explorer"
+                            >
+                                <HugeiconsIcon
+                                    icon={FolderLinksIcon}
+                                    strokeWidth={2}
+                                />
+                            </InputGroupButton>
+                        </InputGroup>
+                        <p className="text-xs text-muted-foreground">
+                            All certificate data, backups, and application files
+                            are stored in this directory.
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Build Information */}
             {buildInfo && (
