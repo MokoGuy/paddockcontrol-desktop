@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
-
 export function SetupWizard() {
     const navigate = useNavigate();
     const { defaults, isLoading, error, loadDefaults, saveSetup } = useSetup();
