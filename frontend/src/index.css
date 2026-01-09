@@ -119,16 +119,24 @@
 @layer base {
     * {
         @apply border-border outline-ring/50;
+        transition:
+            background-color 0.3s ease,
+            color 0.3s ease,
+            border-color 0.3s ease;
     }
 
     html {
         @apply font-sans;
         overflow: hidden; /* Prevent root scrollbar */
         height: 100%;
+        transition: background-color 0.3s ease;
     }
     body {
         @apply font-sans bg-background text-foreground;
         scrollbar-gutter: stable; /* Reserve space for scrollbar to prevent width jump */
+        transition:
+            background-color 0.3s ease,
+            color 0.3s ease;
     }
     /* Disable scrollbar-gutter when Radix UI locks scroll (modal open) to prevent double spacing */
     body[data-scroll-locked] {
