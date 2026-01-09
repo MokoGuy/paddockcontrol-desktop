@@ -11,6 +11,9 @@ import { api } from "@/lib/api";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { MainAppLayout } from "@/components/layout/MainAppLayout";
+import { SetupAppLayout } from "@/components/layout/SetupAppLayout";
+import { FloatingSetupLayout } from "@/components/layout/FloatingSetupLayout";
 
 // Wait for Wails bindings to be available
 const waitForWails = (timeout = 5000): Promise<void> => {
@@ -42,7 +45,6 @@ const waitForWails = (timeout = 5000): Promise<void> => {
 };
 
 // Pages
-import { EncryptionKeyPrompt } from "@/pages/EncryptionKeyPrompt";
 import { SetupChoice } from "@/pages/SetupChoice";
 import { SetupWizard } from "@/pages/SetupWizard";
 import { RestoreBackup } from "@/pages/RestoreBackup";
@@ -54,8 +56,6 @@ import { Settings } from "@/pages/Settings";
 
 function AppContent() {
     const {
-        isWaitingForEncryptionKey,
-        setIsWaitingForEncryptionKey,
         setIsEncryptionKeyProvided,
         isSetupComplete,
         setIsSetupComplete,
@@ -74,16 +74,10 @@ function AppContent() {
                 const setupComplete = await api.isSetupComplete();
                 setIsSetupComplete(setupComplete);
 
-                // Only check for encryption key state if setup IS complete
+                // Check if encryption key is provided
                 if (setupComplete) {
-                    const waiting = await api.isWaitingForEncryptionKey();
-                    setIsWaitingForEncryptionKey(waiting);
-
-                    // If not waiting, also check if key was actually provided
-                    if (!waiting) {
-                        const keyProvided = await api.isEncryptionKeyProvided();
-                        setIsEncryptionKeyProvided(keyProvided);
-                    }
+                    const keyProvided = await api.isEncryptionKeyProvided();
+                    setIsEncryptionKeyProvided(keyProvided);
                 }
             } catch (error) {
                 console.error("Failed to check initial state:", error);
@@ -102,12 +96,7 @@ function AppContent() {
         };
 
         checkInitialState();
-    }, [
-        setIsWaitingForEncryptionKey,
-        setIsEncryptionKeyProvided,
-        setIsSetupComplete,
-        setIsLoading,
-    ]);
+    }, [setIsEncryptionKeyProvided, setIsSetupComplete, setIsLoading]);
 
     if (isLoading) {
         return (
@@ -119,101 +108,90 @@ function AppContent() {
 
     return (
         <Routes>
-            {/* Encryption Key Prompt - Only when setup complete and waiting for key */}
-            <Route
-                path="/key"
-                element={
-                    isSetupComplete && isWaitingForEncryptionKey ? (
-                        <EncryptionKeyPrompt />
-                    ) : (
-                        <Navigate
-                            to={isSetupComplete ? "/" : "/setup"}
-                            replace
-                        />
-                    )
-                }
-            />
+            {/* Setup Routes - Using router-level layouts */}
+            {!isSetupComplete ? (
+                <>
+                    {/* Setup choice page with floating header */}
+                    <Route element={<FloatingSetupLayout />}>
+                        <Route path="/setup" element={<SetupChoice />} />
+                    </Route>
 
-            {/* Setup Routes - For first-time setup or restore, no encryption key needed */}
-            <Route
-                path="/setup"
-                element={
-                    isSetupComplete ? (
-                        <Navigate to="/" replace />
-                    ) : (
-                        <SetupChoice />
-                    )
-                }
-            />
-            <Route
-                path="/setup/wizard"
-                element={
-                    isSetupComplete ? (
-                        <Navigate to="/" replace />
-                    ) : (
-                        <SetupWizard />
-                    )
-                }
-            />
-            <Route
-                path="/setup/restore"
-                element={
-                    isSetupComplete ? (
-                        <Navigate to="/" replace />
-                    ) : (
-                        <RestoreBackup />
-                    )
-                }
-            />
+                    {/* Setup wizard and restore with standard header + back button */}
+                    <Route element={<SetupAppLayout />}>
+                        <Route path="/setup/wizard" element={<SetupWizard />} />
+                        <Route
+                            path="/setup/restore"
+                            element={<RestoreBackup />}
+                        />
+                    </Route>
+                </>
+            ) : (
+                <>
+                    <Route
+                        path="/setup"
+                        element={<Navigate to="/" replace />}
+                    />
+                    <Route
+                        path="/setup/wizard"
+                        element={<Navigate to="/" replace />}
+                    />
+                    <Route
+                        path="/setup/restore"
+                        element={<Navigate to="/" replace />}
+                    />
+                </>
+            )}
 
             {/* Backwards compatibility redirect */}
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
-            <Route
-                path="/certificates/:hostname"
-                element={
-                    <ProtectedRoute>
-                        <CertificateDetail />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/certificates/generate"
-                element={
-                    <ProtectedRoute requireEncryptionKey>
-                        <GenerateCSR />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/certificates/import"
-                element={
-                    <ProtectedRoute requireEncryptionKey>
-                        <ImportCertificate />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/settings"
-                element={
-                    <ProtectedRoute>
-                        <Settings />
-                    </ProtectedRoute>
-                }
-            />
 
-            {/* Dashboard at root */}
-            <Route
-                path="/"
-                element={
-                    !isSetupComplete ? (
-                        <Navigate to="/setup" replace />
-                    ) : (
-                        <ProtectedRoute>
-                            <Dashboard />
-                        </ProtectedRoute>
-                    )
-                }
-            />
+            {/* Main app routes - Using router-level layout */}
+            {!isSetupComplete ? (
+                <Route path="/" element={<Navigate to="/setup" replace />} />
+            ) : (
+                <Route element={<MainAppLayout />}>
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/settings"
+                        element={
+                            <ProtectedRoute>
+                                <Settings />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/certificates/:hostname"
+                        element={
+                            <ProtectedRoute>
+                                <CertificateDetail />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/certificates/generate"
+                        element={
+                            <ProtectedRoute requireEncryptionKey>
+                                <GenerateCSR />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/certificates/import"
+                        element={
+                            <ProtectedRoute requireEncryptionKey>
+                                <ImportCertificate />
+                            </ProtectedRoute>
+                        }
+                    />
+                </Route>
+            )}
         </Routes>
     );
 }

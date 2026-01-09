@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 
 export function SetupWizard() {
     const navigate = useNavigate();
@@ -54,16 +54,16 @@ export function SetupWizard() {
 
     if (isLoading || !defaults) {
         return (
-            <AppLayout showBackButton showTitle>
+            <>
                 <div className="flex items-center justify-center py-12">
                     <LoadingSpinner text="Loading defaults..." />
                 </div>
-            </AppLayout>
+            </>
         );
     }
 
     return (
-        <AppLayout showBackButton showTitle>
+        <>
             {/* Page Header */}
             <div className="text-center mb-8 space-y-2">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -317,6 +317,6 @@ export function SetupWizard() {
                     </form>
                 </CardContent>
             </Card>
-        </AppLayout>
+        </>
     );
 }

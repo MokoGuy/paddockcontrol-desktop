@@ -17,7 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
@@ -86,7 +86,7 @@ export function Dashboard() {
     );
 
     return (
-        <AppLayout showTitle showAdminBadge showEncryptionKey>
+        <>
             {/* Page Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
@@ -425,6 +425,6 @@ export function Dashboard() {
                 open={showKeyDialog}
                 onClose={() => setShowKeyDialog(false)}
             />
-        </AppLayout>
+        </>
     );
 }

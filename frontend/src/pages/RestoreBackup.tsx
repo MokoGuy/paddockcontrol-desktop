@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { FileDropZone } from "@/components/shared/FileDropZone";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -220,7 +220,7 @@ export function RestoreBackup() {
     };
 
     return (
-        <AppLayout showBackButton showTitle>
+        <>
             {/* Page Header */}
             <div className="text-center mb-8 space-y-2">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -627,6 +627,6 @@ export function RestoreBackup() {
                     )}
                 </CardContent>
             </Card>
-        </AppLayout>
+        </>
     );
 }

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AppHeader } from "@/components/shared/AppHeader";
+
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
     Select,
@@ -109,370 +109,322 @@ export function GenerateCSR() {
 
     if (!config) {
         return (
-            <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-                <AppHeader
-                    showBackButton
-                    showTitle
-                    showAdminBadge
-                    showEncryptionKey
-                />
-                <div className="flex-1 flex items-center justify-center">
-                    <LoadingSpinner text="Loading configuration..." />
-                </div>
+            <div className="flex items-center justify-center py-12">
+                <LoadingSpinner text="Loading configuration..." />
             </div>
         );
     }
 
     return (
-        <div className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
-            <AppHeader
-                showBackButton
-                showTitle
-                showAdminBadge
-                showEncryptionKey
-            />
+        <>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Generate CSR
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                        Create a new certificate signing request
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/")}
+                >
+                    ← Back
+                </Button>
+            </div>
 
-            <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                Generate CSR
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                Create a new certificate signing request
-                            </p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate("/")}
-                        >
-                            ← Back
-                        </Button>
-                    </div>
+            {error && (
+                <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+                    <CardContent>
+                        <p className="text-sm text-red-800 dark:text-red-200">
+                            {error}
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
-                    {error && (
-                        <Card className="mb-6 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
-                            <CardContent>
-                                <p className="text-sm text-red-800 dark:text-red-200">
-                                    {error}
+            <Card className="shadow-sm border-gray-200 dark:border-gray-800">
+                <CardHeader>
+                    <CardTitle>Request Details</CardTitle>
+                    <CardDescription>
+                        Fill in the certificate information
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="space-y-6"
+                    >
+                        {/* Hostname */}
+                        <div className="space-y-2">
+                            <Label htmlFor="hostname">Hostname *</Label>
+                            <div className="flex gap-2">
+                                <ButtonGroup className="flex-1">
+                                    <InputGroup>
+                                        <InputGroupInput
+                                            id="hostname"
+                                            placeholder="example"
+                                            disabled={isSubmitting || isLoading}
+                                            {...register("hostname")}
+                                        />
+                                    </InputGroup>
+                                    <ButtonGroupText>
+                                        {config?.hostname_suffix}
+                                    </ButtonGroupText>
+                                </ButtonGroup>
+                            </div>
+                            {errors.hostname && (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {errors.hostname.message}
                                 </p>
-                            </CardContent>
-                        </Card>
-                    )}
+                            )}
+                        </div>
 
-                    <Card className="shadow-sm border-gray-200 dark:border-gray-800">
-                        <CardHeader>
-                            <CardTitle>Request Details</CardTitle>
-                            <CardDescription>
-                                Fill in the certificate information
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form
-                                onSubmit={handleSubmit(onSubmit)}
-                                className="space-y-6"
-                            >
-                                {/* Hostname */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="hostname">Hostname *</Label>
-                                    <div className="flex gap-2">
+                        {/* SANs */}
+                        <div className="space-y-2">
+                            <Label>Subject Alternative Names (SANs)</Label>
+                            <p className="text-xs text-muted-foreground">
+                                The hostname will be automatically included as
+                                the first SAN entry.
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                This is required for browser validation of
+                                server certificates.
+                            </p>
+                            <div className="space-y-2">
+                                {/* Show hostname as first SAN */}
+                                <div className="flex gap-2">
+                                    <ButtonGroup className="flex-1 bg-gray-50 dark:bg-gray-900">
+                                        <InputGroup>
+                                            <InputGroupInput
+                                                value={hostname || ""}
+                                                placeholder="Enter hostname first"
+                                                disabled
+                                            />
+                                        </InputGroup>
+                                        <ButtonGroupText className="opacity-50">
+                                            {config?.hostname_suffix}
+                                        </ButtonGroupText>
+                                    </ButtonGroup>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled
+                                        className="opacity-50 w-24"
+                                    >
+                                        Primary
+                                    </Button>
+                                </div>
+                                {sanInputs.map((_, index) => (
+                                    <div key={index} className="flex gap-2">
                                         <ButtonGroup className="flex-1">
                                             <InputGroup>
                                                 <InputGroupInput
-                                                    id="hostname"
                                                     placeholder="example"
                                                     disabled={
                                                         isSubmitting ||
                                                         isLoading
                                                     }
-                                                    {...register("hostname")}
+                                                    value={sanInputs[index]}
+                                                    onChange={(e) => {
+                                                        const newSans = [
+                                                            ...sanInputs,
+                                                        ];
+                                                        newSans[index] =
+                                                            e.target.value;
+                                                        setSanInputs(newSans);
+                                                    }}
                                                 />
                                             </InputGroup>
                                             <ButtonGroupText>
                                                 {config?.hostname_suffix}
                                             </ButtonGroupText>
                                         </ButtonGroup>
-                                    </div>
-                                    {errors.hostname && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
-                                            {errors.hostname.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* SANs */}
-                                <div className="space-y-2">
-                                    <Label>
-                                        Subject Alternative Names (SANs)
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        The hostname will be automatically
-                                        included as the first SAN entry.
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        This is required for browser validation
-                                        of server certificates.
-                                    </p>
-                                    <div className="space-y-2">
-                                        {/* Show hostname as first SAN */}
-                                        <div className="flex gap-2">
-                                            <ButtonGroup className="flex-1 bg-gray-50 dark:bg-gray-900">
-                                                <InputGroup>
-                                                    <InputGroupInput
-                                                        value={hostname || ""}
-                                                        placeholder="Enter hostname first"
-                                                        disabled
-                                                    />
-                                                </InputGroup>
-                                                <ButtonGroupText className="opacity-50">
-                                                    {config?.hostname_suffix}
-                                                </ButtonGroupText>
-                                            </ButtonGroup>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                disabled
-                                                className="opacity-50 w-24"
-                                            >
-                                                Primary
-                                            </Button>
-                                        </div>
-                                        {sanInputs.map((_, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex gap-2"
-                                            >
-                                                <ButtonGroup className="flex-1">
-                                                    <InputGroup>
-                                                        <InputGroupInput
-                                                            placeholder="example"
-                                                            disabled={
-                                                                isSubmitting ||
-                                                                isLoading
-                                                            }
-                                                            value={
-                                                                sanInputs[index]
-                                                            }
-                                                            onChange={(e) => {
-                                                                const newSans =
-                                                                    [
-                                                                        ...sanInputs,
-                                                                    ];
-                                                                newSans[index] =
-                                                                    e.target.value;
-                                                                setSanInputs(
-                                                                    newSans,
-                                                                );
-                                                            }}
-                                                        />
-                                                    </InputGroup>
-                                                    <ButtonGroupText>
-                                                        {
-                                                            config?.hostname_suffix
-                                                        }
-                                                    </ButtonGroupText>
-                                                </ButtonGroup>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setSanInputs(
-                                                            sanInputs.filter(
-                                                                (_, i) =>
-                                                                    i !== index,
-                                                            ),
-                                                        );
-                                                    }}
-                                                    disabled={
-                                                        isSubmitting ||
-                                                        isLoading
-                                                    }
-                                                    className="w-24"
-                                                >
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        ))}
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            onClick={() =>
-                                                setSanInputs([...sanInputs, ""])
-                                            }
+                                            onClick={() => {
+                                                setSanInputs(
+                                                    sanInputs.filter(
+                                                        (_, i) => i !== index,
+                                                    ),
+                                                );
+                                            }}
                                             disabled={isSubmitting || isLoading}
+                                            className="w-24"
                                         >
-                                            Add SAN
+                                            Remove
                                         </Button>
                                     </div>
-                                </div>
+                                ))}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        setSanInputs([...sanInputs, ""])
+                                    }
+                                    disabled={isSubmitting || isLoading}
+                                >
+                                    Add SAN
+                                </Button>
+                            </div>
+                        </div>
 
-                                {/* Organization */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="organization">
-                                        Organization *
-                                    </Label>
-                                    <Input
-                                        id="organization"
-                                        placeholder="Your Organization"
+                        {/* Organization */}
+                        <div className="space-y-2">
+                            <Label htmlFor="organization">Organization *</Label>
+                            <Input
+                                id="organization"
+                                placeholder="Your Organization"
+                                disabled={isSubmitting || isLoading}
+                                {...register("organization")}
+                            />
+                            {errors.organization && (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {errors.organization.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Organizational Unit */}
+                        <div className="space-y-2">
+                            <Label htmlFor="organizational_unit">
+                                Organizational Unit
+                            </Label>
+                            <Input
+                                id="organizational_unit"
+                                placeholder="IT Department"
+                                disabled={isSubmitting || isLoading}
+                                {...register("organizational_unit")}
+                            />
+                        </div>
+
+                        {/* Two Column Layout */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="city">City *</Label>
+                                <Input
+                                    id="city"
+                                    placeholder="San Francisco"
+                                    disabled={isSubmitting || isLoading}
+                                    {...register("city")}
+                                />
+                                {errors.city && (
+                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                        {errors.city.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="state">State *</Label>
+                                <Input
+                                    id="state"
+                                    placeholder="California"
+                                    disabled={isSubmitting || isLoading}
+                                    {...register("state")}
+                                />
+                                {errors.state && (
+                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                        {errors.state.message}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Country */}
+                        <div className="space-y-2">
+                            <Label htmlFor="country">Country Code *</Label>
+                            <Input
+                                id="country"
+                                placeholder="US"
+                                maxLength={2}
+                                disabled={isSubmitting || isLoading}
+                                {...register("country")}
+                            />
+                            {errors.country && (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {errors.country.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Key Size */}
+                        <div className="space-y-2">
+                            <Label htmlFor="key_size">Key Size (bits) *</Label>
+                            <Controller
+                                name="key_size"
+                                control={control}
+                                rules={{
+                                    required: "Key size is required",
+                                }}
+                                render={({ field }) => (
+                                    <Select
+                                        value={field.value?.toString()}
+                                        onValueChange={(value) =>
+                                            field.onChange(parseInt(value))
+                                        }
                                         disabled={isSubmitting || isLoading}
-                                        {...register("organization")}
-                                    />
-                                    {errors.organization && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
-                                            {errors.organization.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Organizational Unit */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="organizational_unit">
-                                        Organizational Unit
-                                    </Label>
-                                    <Input
-                                        id="organizational_unit"
-                                        placeholder="IT Department"
-                                        disabled={isSubmitting || isLoading}
-                                        {...register("organizational_unit")}
-                                    />
-                                </div>
-
-                                {/* Two Column Layout */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="city">City *</Label>
-                                        <Input
-                                            id="city"
-                                            placeholder="San Francisco"
-                                            disabled={isSubmitting || isLoading}
-                                            {...register("city")}
-                                        />
-                                        {errors.city && (
-                                            <p className="text-sm text-red-600 dark:text-red-400">
-                                                {errors.city.message}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="state">State *</Label>
-                                        <Input
-                                            id="state"
-                                            placeholder="California"
-                                            disabled={isSubmitting || isLoading}
-                                            {...register("state")}
-                                        />
-                                        {errors.state && (
-                                            <p className="text-sm text-red-600 dark:text-red-400">
-                                                {errors.state.message}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Country */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="country">
-                                        Country Code *
-                                    </Label>
-                                    <Input
-                                        id="country"
-                                        placeholder="US"
-                                        maxLength={2}
-                                        disabled={isSubmitting || isLoading}
-                                        {...register("country")}
-                                    />
-                                    {errors.country && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
-                                            {errors.country.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Key Size */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="key_size">
-                                        Key Size (bits) *
-                                    </Label>
-                                    <Controller
-                                        name="key_size"
-                                        control={control}
-                                        rules={{
-                                            required: "Key size is required",
-                                        }}
-                                        render={({ field }) => (
-                                            <Select
-                                                value={field.value?.toString()}
-                                                onValueChange={(value) =>
-                                                    field.onChange(
-                                                        parseInt(value),
-                                                    )
-                                                }
-                                                disabled={
-                                                    isSubmitting || isLoading
-                                                }
-                                            >
-                                                <SelectTrigger
-                                                    className={`w-full ${
-                                                        errors.key_size
-                                                            ? "border-red-500"
-                                                            : ""
-                                                    }`}
-                                                >
-                                                    <SelectValue placeholder="Select key size" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="2048">
-                                                        2048 bits
-                                                    </SelectItem>
-                                                    <SelectItem value="3072">
-                                                        3072 bits
-                                                    </SelectItem>
-                                                    <SelectItem value="4096">
-                                                        4096 bits (Recommended)
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    />
-                                    {errors.key_size && (
-                                        <p className="text-sm text-red-600 dark:text-red-400">
-                                            {errors.key_size.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Note */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="note">Note</Label>
-                                    <Textarea
-                                        id="note"
-                                        placeholder="Add any notes for this certificate..."
-                                        disabled={isSubmitting || isLoading}
-                                        rows={3}
-                                        {...register("note")}
-                                    />
-                                </div>
-
-                                {/* Buttons */}
-                                <div className="flex gap-3">
-                                    <Button
-                                        type="submit"
-                                        disabled={isSubmitting || isLoading}
-                                        className="w-full"
                                     >
-                                        {isSubmitting || isLoading
-                                            ? "Generating..."
-                                            : "Generate CSR"}
-                                    </Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </div>
-            </main>
-        </div>
+                                        <SelectTrigger
+                                            className={`w-full ${
+                                                errors.key_size
+                                                    ? "border-red-500"
+                                                    : ""
+                                            }`}
+                                        >
+                                            <SelectValue placeholder="Select key size" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="2048">
+                                                2048 bits
+                                            </SelectItem>
+                                            <SelectItem value="3072">
+                                                3072 bits
+                                            </SelectItem>
+                                            <SelectItem value="4096">
+                                                4096 bits (Recommended)
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.key_size && (
+                                <p className="text-sm text-red-600 dark:text-red-400">
+                                    {errors.key_size.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Note */}
+                        <div className="space-y-2">
+                            <Label htmlFor="note">Note</Label>
+                            <Textarea
+                                id="note"
+                                placeholder="Add any notes for this certificate..."
+                                disabled={isSubmitting || isLoading}
+                                rows={3}
+                                {...register("note")}
+                            />
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3">
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting || isLoading}
+                                className="w-full"
+                            >
+                                {isSubmitting || isLoading
+                                    ? "Generating..."
+                                    : "Generate CSR"}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+        </>
     );
 }
