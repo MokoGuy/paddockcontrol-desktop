@@ -1,6 +1,7 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
+import { AnimatedOutlet } from "../shared/AnimatedOutlet";
 
 /**
  * SetupAppLayout - Router-level layout wrapper for setup/restore pages
@@ -38,10 +39,8 @@ export function SetupAppLayout() {
 
             {/* Main content area with scroll */}
             <main className="flex-1 overflow-y-auto scrollbar-float">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Child routes render here */}
-                    <Outlet />
-                </div>
+                {/* Child routes render here with animation */}
+                <AnimatedOutlet className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" />
             </main>
         </div>
     );

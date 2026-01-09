@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Outlet } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
 import { MatrixRain } from "../shared/MatrixRain";
+import { AnimatedOutlet } from "../shared/AnimatedOutlet";
 import { useAppStore } from "@/stores/useAppStore";
 
 /**
@@ -47,7 +47,7 @@ export function MainAppLayout() {
             </AnimatePresence>
 
             {/* Main content area with scroll */}
-            <main className="flex-1 overflow-y-auto scrollbar-float relative overflow-hidden">
+            <main className="flex-1 overflow-y-auto scrollbar-float relative">
                 {/* Red Matrix rain overlay on admin mode enable - only affects content */}
                 <AnimatePresence>
                     {showMatrix && (
@@ -58,10 +58,8 @@ export function MainAppLayout() {
                     )}
                 </AnimatePresence>
 
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Child routes render here */}
-                    <Outlet />
-                </div>
+                {/* Child routes render here with animation */}
+                <AnimatedOutlet className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" />
             </main>
         </div>
     );

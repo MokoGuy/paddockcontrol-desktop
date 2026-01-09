@@ -1,6 +1,6 @@
-import { Outlet } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
+import { AnimatedOutlet } from "../shared/AnimatedOutlet";
 
 /**
  * FloatingSetupLayout - Router-level layout wrapper for setup choice page
@@ -27,7 +27,8 @@ export function FloatingSetupLayout() {
 
             {/* Content fills entire screen - child handles own layout */}
             <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float flex items-center justify-center">
-                <Outlet />
+                {/* Child routes render here with animation */}
+                <AnimatedOutlet className="w-full" />
             </main>
         </div>
     );

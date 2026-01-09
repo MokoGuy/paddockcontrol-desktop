@@ -22,8 +22,19 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
         const parent = canvas.parentElement;
         if (!parent) return;
 
-        canvas.width = parent.clientWidth;
-        canvas.height = parent.clientHeight;
+        // Function to update canvas size
+        const updateCanvasSize = () => {
+            const rect = parent.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        };
+
+        // Set initial size
+        updateCanvasSize();
+
+        // Watch for resize
+        const resizeObserver = new ResizeObserver(updateCanvasSize);
+        resizeObserver.observe(parent);
 
         // Matrix characters - mix of katakana, latin, numbers, symbols
         const chars =
@@ -102,12 +113,14 @@ export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
+            resizeObserver.disconnect();
         };
     }, [duration, onComplete, isDarkMode]);
 
     return (
         <motion.div
-            className="absolute inset-0 z-50 pointer-events-none"
+            className="fixed inset-0 z-50 pointer-events-none"
+            style={{ top: "64px" }} // Start below header (h-16 = 64px)
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
