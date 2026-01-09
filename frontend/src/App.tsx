@@ -4,7 +4,9 @@ import {
     Routes,
     Route,
     Navigate,
+    useLocation,
 } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 import { Toaster } from "sonner";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
@@ -106,26 +108,44 @@ function AppContent() {
         );
     }
 
-    return (
-        <Routes>
-            {/* Setup Routes - Using router-level layouts */}
-            {!isSetupComplete ? (
-                <>
-                    {/* Setup choice page with floating header */}
-                    <Route element={<FloatingSetupLayout />}>
-                        <Route path="/setup" element={<SetupChoice />} />
-                    </Route>
+    const location = useLocation();
+    // Determine layout group for exit animations
+    const isSetupSubPage =
+        location.pathname === "/setup/wizard" ||
+        location.pathname === "/setup/restore";
 
-                    {/* Setup wizard and restore with standard header + back button */}
-                    <Route element={<SetupAppLayout />}>
-                        <Route path="/setup/wizard" element={<SetupWizard />} />
+    return (
+        <AnimatePresence mode="wait">
+            <Routes location={location} key={isSetupSubPage ? "setup-sub" : "setup-main"}>
+                {/* Setup Routes - Using router-level layouts */}
+                {!isSetupComplete ? (
+                    <>
+                        {/* Setup choice page with floating header */}
+                        <Route element={<FloatingSetupLayout />}>
+                            <Route path="/setup" element={<SetupChoice />} />
+                        </Route>
+
+                        {/* Setup wizard and restore with standard header + back button */}
                         <Route
-                            path="/setup/restore"
-                            element={<RestoreBackup />}
-                        />
-                    </Route>
-                </>
-            ) : (
+                            element={
+                                <motion.div
+                                    className="h-screen"
+                                    initial={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <SetupAppLayout />
+                                </motion.div>
+                            }
+                        >
+                            <Route path="/setup/wizard" element={<SetupWizard />} />
+                            <Route
+                                path="/setup/restore"
+                                element={<RestoreBackup />}
+                            />
+                        </Route>
+                    </>
+                ) : (
                 <>
                     <Route
                         path="/setup"
@@ -192,7 +212,8 @@ function AppContent() {
                     />
                 </Route>
             )}
-        </Routes>
+            </Routes>
+        </AnimatePresence>
     );
 }
 
