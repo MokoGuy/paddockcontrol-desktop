@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/card";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { useThemeStore } from "@/stores/useThemeStore";
 import logo from "@/assets/images/logo-universal.png";
 
 export function SetupChoice() {
     const navigate = useNavigate();
+    const { isDarkMode } = useThemeStore();
     const part1 = "Welcome to";
     const part2 = "PaddockControl";
     const part1Delay = 0.3;
@@ -67,7 +69,7 @@ export function SetupChoice() {
                     <motion.img
                         src={logo}
                         alt="PaddockControl"
-                        className="w-16 h-16 mx-auto"
+                        className={`w-16 h-16 mx-auto ${isDarkMode ? "invert" : ""}`}
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         transition={{
