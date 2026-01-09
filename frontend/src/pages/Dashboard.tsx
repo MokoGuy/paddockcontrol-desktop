@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
@@ -198,31 +199,21 @@ export function Dashboard() {
                                 <label className="text-sm font-medium text-muted-foreground">
                                     Status
                                 </label>
-                                <div className="flex gap-2">
-                                    {[
-                                        "all",
-                                        "pending",
-                                        "active",
-                                        "expiring",
-                                        "expired",
-                                    ].map((status) => (
-                                        <Button
-                                            key={status}
-                                            variant={
-                                                statusFilter === status
-                                                    ? "default"
-                                                    : "outline"
-                                            }
-                                            size="sm"
-                                            onClick={() =>
-                                                handleStatusFilterChange(status)
-                                            }
-                                        >
-                                            {status.charAt(0).toUpperCase() +
-                                                status.slice(1)}
-                                        </Button>
+                                <ToggleGroup
+                                    type="single"
+                                    value={statusFilter}
+                                    onValueChange={(value) => {
+                                        if (value) handleStatusFilterChange(value);
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    {["all", "pending", "active", "expiring", "expired"].map((status) => (
+                                        <ToggleGroupItem key={status} value={status}>
+                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </ToggleGroupItem>
                                     ))}
-                                </div>
+                                </ToggleGroup>
                             </div>
 
                             {/* Vertical Separator */}
