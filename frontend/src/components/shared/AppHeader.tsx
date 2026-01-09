@@ -97,7 +97,7 @@ export function AppHeader({
     // Default variant - header bar
     return (
         <header
-            className="flex items-center justify-between px-4 py-4 gap-1 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm"
+            className="flex items-center justify-between px-4 h-16 gap-1 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
             {/* Left side - Back button */}
