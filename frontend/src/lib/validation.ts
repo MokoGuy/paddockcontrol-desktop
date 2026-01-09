@@ -54,9 +54,35 @@ export const setupRequestSchema = z.object({
     .int('Must be a whole number')
     .min(2048, 'Key size must be at least 2048 bits')
     .max(8192, 'Key size cannot exceed 8192 bits'),
+  encryption_key: z
+    .string()
+    .min(16, 'Encryption key must be at least 16 characters')
+    .max(256, 'Encryption key is too long'),
+  encryption_key_confirm: z
+    .string()
+    .min(1, 'Please confirm your encryption key'),
+}).refine((data) => data.encryption_key === data.encryption_key_confirm, {
+  message: "Encryption keys do not match",
+  path: ["encryption_key_confirm"],
 });
 
 export type SetupRequestInput = z.infer<typeof setupRequestSchema>;
+
+// Field groups for per-step validation in setup wizard
+export const setupStepFields = {
+  email: ["owner_email"],
+  "ca-config": ["ca_name", "hostname_suffix"],
+  organization: [
+    "default_organization",
+    "default_organizational_unit",
+    "default_city",
+    "default_state",
+    "default_country",
+  ],
+  "cert-defaults": ["validity_period_days", "default_key_size"],
+  "encryption-key": ["encryption_key", "encryption_key_confirm"],
+  review: [],
+} as const;
 
 // CSR Request
 export const csrRequestSchema = z.object({
