@@ -16,7 +16,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Header } from "@/components/layout/Header";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
@@ -154,7 +154,7 @@ export function Settings() {
     if (configLoading && !config) {
         return (
             <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-                <Header />
+                <AppHeader showTitle showAdminBadge showEncryptionKey />
                 <div className="flex-1 flex items-center justify-center">
                     <LoadingSpinner text="Loading settings..." />
                 </div>
@@ -165,7 +165,7 @@ export function Settings() {
     if (configError) {
         return (
             <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-                <Header />
+                <AppHeader showTitle showAdminBadge showEncryptionKey />
                 <main className="flex-1 overflow-y-auto scrollbar-float">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
@@ -189,7 +189,7 @@ export function Settings() {
 
     return (
         <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-            <Header />
+            <AppHeader showTitle showAdminBadge showEncryptionKey />
 
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

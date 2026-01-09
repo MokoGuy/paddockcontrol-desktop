@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Header } from "@/components/layout/Header";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 
 export function ImportCertificate() {
@@ -50,7 +50,12 @@ export function ImportCertificate() {
     if (step === "confirm" && certificatePem && privateKeyPem) {
         return (
             <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-                <Header />
+                <AppHeader
+                    showBackButton
+                    showTitle
+                    showAdminBadge
+                    showEncryptionKey
+                />
                 <main className="flex-1 overflow-y-auto scrollbar-float">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         <div className="flex items-center justify-between mb-8">
@@ -125,7 +130,12 @@ export function ImportCertificate() {
 
     return (
         <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-            <Header />
+            <AppHeader
+                showBackButton
+                showTitle
+                showAdminBadge
+                showEncryptionKey
+            />
 
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

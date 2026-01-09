@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { SetupHeader } from "@/components/shared/SetupHeader";
+import { AppHeader } from "@/components/shared/AppHeader";
 import logo from "@/assets/images/logo-universal.png";
 
 export function SetupChoice() {
@@ -18,7 +18,7 @@ export function SetupChoice() {
             className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
-            <SetupHeader variant="floating" />
+            <AppHeader variant="floating" />
 
             <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float flex items-center justify-center">
                 <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -17,7 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Header } from "@/components/layout/Header";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
@@ -87,7 +87,7 @@ export function Dashboard() {
 
     return (
         <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
-            <Header />
+            <AppHeader showTitle showAdminBadge showEncryptionKey />
 
             <main className="flex-1 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

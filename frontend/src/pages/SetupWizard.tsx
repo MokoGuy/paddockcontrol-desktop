@@ -15,8 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { SetupHeader } from "@/components/shared/SetupHeader";
-import logo from "@/assets/images/logo-universal.png";
+import { AppHeader } from "@/components/shared/AppHeader";
 
 export function SetupWizard() {
     const navigate = useNavigate();
@@ -68,7 +67,7 @@ export function SetupWizard() {
             className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
-            <SetupHeader showBackButton />
+            <AppHeader showBackButton showTitle />
 
             <main
                 className="flex-1 min-h-0 overflow-y-auto scrollbar-float"
@@ -77,22 +76,15 @@ export function SetupWizard() {
                 }
             >
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Header */}
-                    <div className="text-center mb-8 space-y-4">
-                        <img
-                            src={logo}
-                            alt="PaddockControl"
-                            className="w-12 h-12 mx-auto"
-                        />
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                Configure Your CA
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-2">
-                                Set up your certificate authority with basic
-                                information
-                            </p>
-                        </div>
+                    {/* Page Header */}
+                    <div className="text-center mb-8 space-y-2">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                            Configure Your CA
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Set up your certificate authority with basic
+                            information
+                        </p>
                     </div>
 
                     <Card className="shadow-sm border-gray-200 dark:border-gray-800">

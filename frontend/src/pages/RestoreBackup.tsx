@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { FileDropZone } from "@/components/shared/FileDropZone";
-import { SetupHeader } from "@/components/shared/SetupHeader";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -32,7 +32,6 @@ import {
     Package01Icon,
     Certificate02Icon,
 } from "@hugeicons/core-free-icons";
-import logo from "@/assets/images/logo-universal.png";
 
 export function RestoreBackup() {
     const navigate = useNavigate();
@@ -225,7 +224,7 @@ export function RestoreBackup() {
             className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
         >
-            <SetupHeader showBackButton />
+            <AppHeader showBackButton showTitle />
 
             <main
                 className="flex-1 min-h-0 overflow-y-auto scrollbar-float"
@@ -234,22 +233,15 @@ export function RestoreBackup() {
                 }
             >
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Header */}
-                    <div className="text-center mb-8 space-y-4">
-                        <img
-                            src={logo}
-                            alt="PaddockControl"
-                            className="w-12 h-12 mx-auto"
-                        />
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                Restore from Backup
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-2">
-                                Restore your configuration and certificates from
-                                a backup file
-                            </p>
-                        </div>
+                    {/* Page Header */}
+                    <div className="text-center mb-8 space-y-2">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                            Restore from Backup
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Restore your configuration and certificates from a
+                            backup file
+                        </p>
                     </div>
 
                     <Card className="shadow-sm border-gray-200 dark:border-gray-800">

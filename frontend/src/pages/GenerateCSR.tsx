@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Header } from "@/components/layout/Header";
+import { AppHeader } from "@/components/shared/AppHeader";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import {
     Select,
@@ -109,8 +109,13 @@ export function GenerateCSR() {
 
     if (!config) {
         return (
-            <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
-                <Header />
+            <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-950">
+                <AppHeader
+                    showBackButton
+                    showTitle
+                    showAdminBadge
+                    showEncryptionKey
+                />
                 <div className="flex-1 flex items-center justify-center">
                     <LoadingSpinner text="Loading configuration..." />
                 </div>
@@ -120,7 +125,12 @@ export function GenerateCSR() {
 
     return (
         <div className="relative flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
-            <Header />
+            <AppHeader
+                showBackButton
+                showTitle
+                showAdminBadge
+                showEncryptionKey
+            />
 
             <main className="flex-1 min-h-0 overflow-y-auto scrollbar-float">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
