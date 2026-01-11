@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { getStatusColor } from "@/lib/theme";
+import { CertificateStatus } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Tick02Icon,
@@ -10,7 +11,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 interface StatusBadgeProps {
-    status: "pending" | "active" | "expiring" | "expired";
+    status: CertificateStatus | string;
     daysUntilExpiration?: number;
 }
 
@@ -37,7 +38,7 @@ export function StatusBadge({ status, daysUntilExpiration }: StatusBadgeProps) {
         }
     };
 
-    const icon = statusIcons[status] || HelpCircleIcon;
+    const icon = statusIcons[status as CertificateStatus] || HelpCircleIcon;
 
     return (
         <Badge className={`${getStatusColor(status)} inline-flex items-center gap-1`}>
