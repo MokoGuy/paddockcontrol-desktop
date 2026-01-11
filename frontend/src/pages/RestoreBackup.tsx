@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
+import { formatDateTime } from "@/lib/theme";
 
 import { BackupData } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -31,7 +33,6 @@ import {
   Copy01Icon,
   Tick02Icon,
   Package01Icon,
-  Certificate02Icon,
 } from "@hugeicons/core-free-icons";
 
 export function RestoreBackup() {
@@ -212,6 +213,29 @@ export function RestoreBackup() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Only handle Enter key
+    if (e.key !== "Enter") return;
+
+    // Don't handle if loading
+    if (isLoading) return;
+
+    // Don't handle if in a textarea
+    if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
+
+    // Handle based on current step
+    if (step === "key" && hasEmbeddedKey) {
+      // Embedded key step - advance to confirm
+      e.preventDefault();
+      setStep("confirm");
+    } else if (step === "confirm") {
+      // Confirm step - trigger restore
+      e.preventDefault();
+      handleRestore();
+    }
+    // For manual key entry form, let the form submit naturally
+  };
+
   return (
     <>
       {/* Page Header */}
@@ -224,7 +248,7 @@ export function RestoreBackup() {
         </p>
       </div>
 
-      <Card className="shadow-sm border-border">
+      <Card className="shadow-sm border-border" onKeyDown={handleKeyDown}>
           {/* Step Indicator */}
           <div className="border-b border-border px-6 pb-4">
             <div className="flex items-center gap-2 text-sm">
@@ -480,27 +504,29 @@ export function RestoreBackup() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="space-y-6"
+                  className="space-y-4"
                 >
-                  {/* Version Badge */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Backup Version
-                    </span>
-                    <Badge variant="secondary">{backupData.version}</Badge>
-                  </div>
+                  <ReviewSection title="Backup Info">
+                    <ReviewField label="Version" value={backupData.version} />
+                    <ReviewField label="Export Date" value={formatDateTime(backupData.exported_at)} />
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Encryption Key</span>
+                      <Badge variant={backupData.encryption_key ? "default" : "secondary"}>
+                        {backupData.encryption_key ? "Embedded" : "User Provided"}
+                      </Badge>
+                    </div>
+                  </ReviewSection>
 
-                  {/* Certificate List */}
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-1.5">
-                      <HugeiconsIcon
-                        icon={Certificate02Icon}
-                        className="w-4 h-4"
-                        strokeWidth={2}
-                      />
-                      Certificates to Import (
-                      {backupData.certificates?.length || 0})
-                    </Label>
+                  {backupData.config && (
+                    <ReviewSection title="Configuration to Restore">
+                      <ReviewField label="CA Name" value={backupData.config.ca_name} />
+                      <ReviewField label="Owner Email" value={backupData.config.owner_email} />
+                      <ReviewField label="Hostname Suffix" value={backupData.config.hostname_suffix} />
+                      <ReviewField label="Organization" value={backupData.config.default_organization} />
+                    </ReviewSection>
+                  )}
+
+                  <ReviewSection title={`Certificates (${backupData.certificates?.length || 0})`}>
                     {backupData.certificates &&
                     backupData.certificates.length > 0 ? (
                       <Table>
@@ -552,7 +578,7 @@ export function RestoreBackup() {
                         No certificates in backup
                       </div>
                     )}
-                  </div>
+                  </ReviewSection>
 
                   <div className="flex gap-3">
                     <Button

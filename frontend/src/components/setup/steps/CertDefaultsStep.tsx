@@ -30,6 +30,12 @@ export function CertDefaultsStep({ register, errors, watch, control, isSubmittin
           type="number"
           placeholder="365"
           disabled={isSubmitting}
+          onKeyDown={(e) => {
+            // Allow Enter to propagate to form for step navigation
+            if (e.key === "Enter") {
+              e.currentTarget.blur();
+            }
+          }}
           {...register("validity_period_days", { valueAsNumber: true })}
         />
         {errors.validity_period_days && (

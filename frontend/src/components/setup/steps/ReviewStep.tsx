@@ -1,49 +1,12 @@
 import { UseFormGetValues } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { type SetupRequestInput } from "@/lib/validation";
 import { type WizardStep } from "../SetupWizardSteps";
+import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 interface ReviewStepProps {
   getValues: UseFormGetValues<SetupRequestInput>;
   onEditStep: (step: WizardStep) => void;
-}
-
-interface ReviewSectionProps {
-  title: string;
-  step: WizardStep;
-  onEdit: () => void;
-  children: React.ReactNode;
-}
-
-function ReviewSection({ title, onEdit, children }: ReviewSectionProps) {
-  return (
-    <div className="space-y-3 pb-4 border-b border-border last:border-0 last:pb-0">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-foreground">{title}</h3>
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          Edit
-        </Button>
-      </div>
-      <div className="space-y-2 text-sm">{children}</div>
-    </div>
-  );
-}
-
-interface ReviewFieldProps {
-  label: string;
-  value: string | number | undefined;
-}
-
-function ReviewField({ label, value }: ReviewFieldProps) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground text-right">
-        {value || <span className="text-muted-foreground italic">Not set</span>}
-      </span>
-    </div>
-  );
 }
 
 export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
@@ -60,7 +23,6 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
       <div className="space-y-4">
         <ReviewSection
           title="Owner Email"
-          step="email"
           onEdit={() => onEditStep("email")}
         >
           <ReviewField label="Email" value={values.owner_email} />
@@ -68,7 +30,6 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
         <ReviewSection
           title="CA Configuration"
-          step="ca-config"
           onEdit={() => onEditStep("ca-config")}
         >
           <ReviewField label="CA Name" value={values.ca_name} />
@@ -77,7 +38,6 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
         <ReviewSection
           title="Organization"
-          step="organization"
           onEdit={() => onEditStep("organization")}
         >
           <ReviewField label="Organization" value={values.default_organization} />
@@ -89,7 +49,6 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
         <ReviewSection
           title="Certificate Defaults"
-          step="cert-defaults"
           onEdit={() => onEditStep("cert-defaults")}
         >
           <ReviewField
@@ -104,7 +63,6 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
         <ReviewSection
           title="Security"
-          step="encryption-key"
           onEdit={() => onEditStep("encryption-key")}
         >
           <div className="flex justify-between gap-4">

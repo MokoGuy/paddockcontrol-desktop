@@ -33,6 +33,7 @@ import {
 import { formatDateTime } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
+import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 export function Settings() {
     const navigate = useNavigate();
@@ -200,6 +201,7 @@ export function Settings() {
                                 </CardDescription>
                             </div>
                             <Button
+                                variant="outline"
                                 onClick={() => setIsEditMode(true)}
                                 size="sm"
                             >
@@ -207,123 +209,30 @@ export function Settings() {
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    CA Name
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.ca_name}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Owner Email
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.owner_email}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Hostname Suffix
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.hostname_suffix}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Validity Period
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.validity_period_days} days
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Default Key Size
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.default_key_size} bits
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Default Country
-                                </p>
-                                <p className="text-sm font-semibold text-foreground">
-                                    {config.default_country}
-                                </p>
-                            </div>
-                        </div>
+                    <CardContent className="space-y-4">
+                        <ReviewSection title="CA Configuration">
+                            <ReviewField label="CA Name" value={config.ca_name} />
+                            <ReviewField label="Owner Email" value={config.owner_email} />
+                            <ReviewField label="Hostname Suffix" value={config.hostname_suffix} />
+                        </ReviewSection>
 
-                        <div className="border-t border-border pt-6">
-                            <h3 className="font-semibold text-foreground mb-4">
-                                Organization Details
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                        Organization
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {config.default_organization}
-                                    </p>
-                                </div>
-                                {config.default_organizational_unit && (
-                                    <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                            Organizational Unit
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {config.default_organizational_unit}
-                                        </p>
-                                    </div>
-                                )}
-                                <div>
-                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                        City
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {config.default_city}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                        State
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {config.default_state}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <ReviewSection title="Certificate Defaults">
+                            <ReviewField label="Validity Period" value={`${config.validity_period_days} days`} />
+                            <ReviewField label="Key Size" value={`${config.default_key_size} bits`} />
+                        </ReviewSection>
 
-                        <div className="border-t border-border pt-6">
-                            <h3 className="font-semibold text-foreground mb-4">
-                                Configuration History
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <p className="text-muted-foreground uppercase mb-1">
-                                        Created
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        {formatDateTime(config.created_at)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground uppercase mb-1">
-                                        Last Modified
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        {formatDateTime(config.last_modified)}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <ReviewSection title="Organization">
+                            <ReviewField label="Organization" value={config.default_organization} />
+                            <ReviewField label="Organizational Unit" value={config.default_organizational_unit} />
+                            <ReviewField label="City" value={config.default_city} />
+                            <ReviewField label="State" value={config.default_state} />
+                            <ReviewField label="Country" value={config.default_country} />
+                        </ReviewSection>
+
+                        <ReviewSection title="Configuration History">
+                            <ReviewField label="Created" value={formatDateTime(config.created_at)} />
+                            <ReviewField label="Last Modified" value={formatDateTime(config.last_modified)} />
+                        </ReviewSection>
                     </CardContent>
                 </Card>
             )}

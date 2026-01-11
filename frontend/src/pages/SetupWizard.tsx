@@ -116,6 +116,31 @@ export function SetupWizard() {
         setCurrentStep(step);
     };
 
+    const handleKeyDown = async (e: React.KeyboardEvent) => {
+        // Only handle Enter key
+        if (e.key !== "Enter") return;
+
+        // Don't handle if currently submitting
+        if (isSubmitting) return;
+
+        // Don't handle if in a textarea
+        if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
+
+        // On review step, let the form submit naturally
+        if (currentStep === "review") return;
+
+        // Prevent default form submission
+        e.preventDefault();
+
+        // Validate current step and go to next
+        const fields = [...setupStepFields[currentStep]] as (keyof SetupRequestInput)[];
+        if (fields.length > 0) {
+            const isValid = await trigger(fields);
+            if (!isValid) return;
+        }
+        setCurrentStep(getNextStep(currentStep));
+    };
+
     const onSubmit = async (data: SetupRequestInput) => {
         // Guard: only allow submission from review step
         if (currentStep !== "review") {
@@ -187,7 +212,7 @@ export function SetupWizard() {
                 <SetupWizardSteps currentStep={currentStep} />
 
                 <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown} className="space-y-6">
                         {displayError && (
                             <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
                                 <p className="text-sm text-destructive">{displayError}</p>
