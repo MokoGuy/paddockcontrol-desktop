@@ -1,18 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-// Warmup: First request to Wails takes longer while server initializes
-// This runs once before all tests to ensure the server is ready
-test.beforeAll(async ({ browser }) => {
-  const page = await browser.newPage();
-  await page.goto("/setup");
-  // Wait for Wails to initialize - should be fast if reusing existing server
-  await page.getByText("New Setup").waitFor({ state: "visible", timeout: 15000 });
-  await page.close();
-});
-
 test.describe("Setup Choice Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/setup");
+    await page.goto("/#/setup");
     // Wait for typing animation to complete - "New Setup" appears after all animations
     await page.getByText("New Setup").waitFor({ state: "visible", timeout: 10000 });
   });
@@ -25,13 +15,13 @@ test.describe("Setup Choice Page", () => {
 
   test("New Setup navigates to wizard", async ({ page }) => {
     await page.getByText("New Setup").click();
-    await expect(page).toHaveURL(/\/setup\/wizard/);
+    await expect(page).toHaveURL(/#\/setup\/wizard/);
     await expect(page.getByText("Configure Your CA")).toBeVisible();
   });
 
   test("Restore from Backup navigates to restore page", async ({ page }) => {
     await page.getByText("Restore from Backup").click();
-    await expect(page).toHaveURL(/\/setup\/restore/);
+    await expect(page).toHaveURL(/#\/setup\/restore/);
     await expect(page.getByText("Restore from Backup")).toBeVisible();
   });
 });
@@ -39,7 +29,7 @@ test.describe("Setup Choice Page", () => {
 test.describe("Setup Wizard", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate via setup choice to ensure proper app state
-    await page.goto("/setup");
+    await page.goto("/#/setup");
     // Wait for setup choice animations to complete (includes Wails binding init)
     await page.getByText("New Setup").waitFor({ state: "visible", timeout: 15000 });
     await page.getByText("New Setup").click();

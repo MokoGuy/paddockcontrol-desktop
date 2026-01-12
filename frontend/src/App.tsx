@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import {
-    BrowserRouter as Router,
+    HashRouter as Router,
     Routes,
     Route,
     Navigate,
@@ -17,8 +17,8 @@ import { MainAppLayout } from "@/components/layout/MainAppLayout";
 import { SetupAppLayout } from "@/components/layout/SetupAppLayout";
 import { FloatingSetupLayout } from "@/components/layout/FloatingSetupLayout";
 
-// Wait for Wails bindings to be available
-const waitForWails = (timeout = 5000): Promise<void> => {
+// Wait for Wails bindings to be available (fast with HashRouter)
+const waitForWails = (timeout = 2000): Promise<void> => {
     return new Promise((resolve, reject) => {
         // Check immediately - bindings may already be ready
         if (typeof window !== "undefined" && (window as any).go?.main?.App) {
@@ -62,6 +62,7 @@ function AppContent() {
         isLoading,
         setIsLoading,
     } = useAppStore();
+    const location = useLocation();
 
     useEffect(() => {
         // Check initial state on app load
@@ -81,15 +82,6 @@ function AppContent() {
                 }
             } catch (error) {
                 console.error("Failed to check initial state:", error);
-                // If Wails bindings aren't available (e.g., deep URL navigation),
-                // redirect to root to let Wails properly initialize
-                if (
-                    error instanceof Error &&
-                    error.message.includes("Wails bindings not available")
-                ) {
-                    window.location.href = "/";
-                    return;
-                }
             } finally {
                 setIsLoading(false);
             }
@@ -98,6 +90,11 @@ function AppContent() {
         checkInitialState();
     }, [setIsEncryptionKeyProvided, setIsSetupComplete, setIsLoading]);
 
+    // Determine layout group for exit animations
+    const isSetupSubPage =
+        location.pathname === "/setup/wizard" ||
+        location.pathname === "/setup/restore";
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
@@ -105,12 +102,6 @@ function AppContent() {
             </div>
         );
     }
-
-    const location = useLocation();
-    // Determine layout group for exit animations
-    const isSetupSubPage =
-        location.pathname === "/setup/wizard" ||
-        location.pathname === "/setup/restore";
 
     return (
         <AnimatePresence mode="wait">
