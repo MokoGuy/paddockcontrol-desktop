@@ -5,9 +5,9 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, ArrowLeft01Icon, MinusSignIcon, SquareIcon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, ArrowLeft01Icon, MinusSignIcon, SquareIcon, Bug01Icon } from "@hugeicons/core-free-icons";
 import { Quit, WindowMinimise, WindowToggleMaximise } from "../../../wailsjs/runtime/runtime";
-import { GetBuildInfo } from "../../../wailsjs/go/main/App";
+import { GetBuildInfo, OpenBugReport } from "../../../wailsjs/go/main/App";
 import { ThemeToggle } from "./ThemeToggle";
 import { EncryptionKeyButton } from "../layout/EncryptionKeyButton";
 import { getCssColorAsRgb } from "@/lib/theme";
@@ -352,6 +352,19 @@ export function AppHeader({
                             <EncryptionKeyButton />
                         </motion.div>
                     )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => OpenBugReport()}
+                        title="Report a bug"
+                        className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
+                    >
+                        <HugeiconsIcon
+                            icon={Bug01Icon}
+                            className="w-5 h-5"
+                            strokeWidth={2}
+                        />
+                    </Button>
                     {showThemeToggle && <ThemeToggle />}
                     {showWindowControls && (
                         <>

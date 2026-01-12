@@ -1168,6 +1168,17 @@ func (a *App) GetDataDirectory() string {
 	return a.dataDir
 }
 
+// OpenURL opens a URL in the default browser
+func (a *App) OpenURL(url string) error {
+	wailsruntime.BrowserOpenURL(a.ctx, url)
+	return nil
+}
+
+// OpenBugReport opens the GitLab issues page for bug reporting
+func (a *App) OpenBugReport() error {
+	return a.OpenURL("https://gitlab-erp-pas.dedalus.lan/erp-pas/paddockcontrol/paddockcontrol-desktop/-/issues")
+}
+
 // OpenDataDirectory opens the data directory in the OS file explorer
 func (a *App) OpenDataDirectory() error {
 	a.mu.RLock()
