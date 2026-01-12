@@ -183,9 +183,9 @@ export function AppHeader({
                 }}
             />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-1">
-                {/* Left side - Back button */}
+                {/* Left side - Back button and Admin badge */}
                 <div
-                    className="flex items-center"
+                    className="flex items-center gap-2"
                     style={
                         {
                             "--wails-draggable": "no-drag",
@@ -218,6 +218,54 @@ export function AppHeader({
                         ) : (
                             // Invisible spacer to maintain layout symmetry
                             <div key="spacer" className="w-10 h-10" />
+                        )}
+                    </AnimatePresence>
+                    <AnimatePresence>
+                        {showAdminBadge && isAdminModeEnabled && (
+                            <motion.span
+                                className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative"
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: [0, 1.15, 1],
+                                }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{
+                                    duration: 0.3,
+                                    ease: [0.34, 1.56, 0.64, 1], // Elastic ease
+                                }}
+                            >
+                                {/* Pulse and glow effect on enable */}
+                                {showPulse && (
+                                    <>
+                                        <motion.span
+                                            className="absolute inset-0 rounded border-2 border-admin"
+                                            initial={{ opacity: 0.8, scale: 1 }}
+                                            animate={{ opacity: 0, scale: 2 }}
+                                            transition={{ duration: 0.3 }}
+                                        />
+                                        <motion.span
+                                            className="absolute inset-0 rounded bg-admin"
+                                            initial={{ opacity: 0.4, scale: 1 }}
+                                            animate={{ opacity: 0, scale: 2.5 }}
+                                            transition={{ duration: 1.2 }}
+                                            style={{ filter: "blur(10px)" }}
+                                        />
+                                    </>
+                                )}
+                                admin mode
+                                <button
+                                    onClick={() => setIsAdminModeEnabled(false)}
+                                    className="hover:bg-admin/20 rounded p-0.5 transition-colors"
+                                    title="Disable admin mode"
+                                >
+                                    <HugeiconsIcon
+                                        icon={Cancel01Icon}
+                                        className="w-3 h-3"
+                                        strokeWidth={2}
+                                    />
+                                </button>
+                            </motion.span>
                         )}
                     </AnimatePresence>
                 </div>
@@ -286,7 +334,7 @@ export function AppHeader({
                     </div>
                 )}
 
-                {/* Right side - Admin badge, Encryption key, Theme toggle, Close button */}
+                {/* Right side - Encryption key, Theme toggle, Close button */}
                 <div
                     className="flex items-center gap-1"
                     style={
@@ -295,54 +343,6 @@ export function AppHeader({
                         } as React.CSSProperties
                     }
                 >
-                    <AnimatePresence>
-                        {showAdminBadge && isAdminModeEnabled && (
-                            <motion.span
-                                className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative"
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{
-                                    opacity: 1,
-                                    scale: [0, 1.15, 1],
-                                }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                transition={{
-                                    duration: 0.3,
-                                    ease: [0.34, 1.56, 0.64, 1], // Elastic ease
-                                }}
-                            >
-                                {/* Pulse and glow effect on enable */}
-                                {showPulse && (
-                                    <>
-                                        <motion.span
-                                            className="absolute inset-0 rounded border-2 border-admin"
-                                            initial={{ opacity: 0.8, scale: 1 }}
-                                            animate={{ opacity: 0, scale: 2 }}
-                                            transition={{ duration: 0.3 }}
-                                        />
-                                        <motion.span
-                                            className="absolute inset-0 rounded bg-admin"
-                                            initial={{ opacity: 0.4, scale: 1 }}
-                                            animate={{ opacity: 0, scale: 2.5 }}
-                                            transition={{ duration: 1.2 }}
-                                            style={{ filter: "blur(10px)" }}
-                                        />
-                                    </>
-                                )}
-                                admin mode
-                                <button
-                                    onClick={() => setIsAdminModeEnabled(false)}
-                                    className="hover:bg-admin/20 rounded p-0.5 transition-colors"
-                                    title="Disable admin mode"
-                                >
-                                    <HugeiconsIcon
-                                        icon={Cancel01Icon}
-                                        className="w-3 h-3"
-                                        strokeWidth={2}
-                                    />
-                                </button>
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
                     {showEncryptionKey && (
                         <motion.div
                             initial={{ opacity: 0 }}
