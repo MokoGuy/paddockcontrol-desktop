@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { Toaster } from "sonner";
+import { EventsOnce } from "../wailsjs/runtime/runtime";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -17,7 +18,7 @@ import { MainAppLayout } from "@/components/layout/MainAppLayout";
 import { SetupAppLayout } from "@/components/layout/SetupAppLayout";
 import { FloatingSetupLayout } from "@/components/layout/FloatingSetupLayout";
 
-// Wait for Wails bindings to be available (fast with HashRouter)
+// Wait for Wails bindings to be available using OnDomReady event
 const waitForWails = (timeout = 2000): Promise<void> => {
     return new Promise((resolve, reject) => {
         // Check immediately - bindings may already be ready
@@ -26,21 +27,21 @@ const waitForWails = (timeout = 2000): Promise<void> => {
             return;
         }
 
-        const startTime = Date.now();
-        const check = () => {
-            // Check if Wails bindings are available
-            if (typeof window !== "undefined" && (window as any).go?.main?.App) {
+        // Set up timeout fallback
+        const timer = setTimeout(() => {
+            // Fallback: check if bindings became available during wait
+            if ((window as any).go?.main?.App) {
                 resolve();
-                return;
-            }
-            if (Date.now() - startTime > timeout) {
+            } else {
                 reject(new Error("Wails bindings not available after timeout"));
-                return;
             }
-            // Use requestAnimationFrame for efficient polling (~16ms)
-            requestAnimationFrame(check);
-        };
-        requestAnimationFrame(check);
+        }, timeout);
+
+        // Wait for the ready event from Go backend (OnDomReady)
+        EventsOnce("wails:ready", () => {
+            clearTimeout(timer);
+            resolve();
+        });
     });
 };
 

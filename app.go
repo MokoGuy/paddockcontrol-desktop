@@ -104,6 +104,12 @@ func (a *App) startup(ctx context.Context) {
 	logger.Info("Starting in limited mode (encryption key can be provided via Settings)")
 }
 
+// domReady is called when the frontend DOM is ready
+func (a *App) domReady(ctx context.Context) {
+	logger.Info("DOM ready, emitting wails:ready event")
+	wailsruntime.EventsEmit(ctx, "wails:ready")
+}
+
 // shutdown is called when the app exits
 func (a *App) shutdown(ctx context.Context) {
 	logger.Info("Application shutting down...")
