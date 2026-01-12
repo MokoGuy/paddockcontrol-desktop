@@ -38,7 +38,9 @@ import {
     RefreshIcon,
     Delete02Icon,
     Key01Icon,
+    AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
 
@@ -244,20 +246,23 @@ export function CertificateDetail() {
 
     if (error || !certificate) {
         return (
-            <Card className="bg-destructive/10 border-destructive/30">
-                <CardContent>
-                    <p className="text-sm text-destructive">
-                        {error || "Certificate not found"}
-                    </p>
-                    <Button
-                        onClick={() => navigate("/")}
-                        variant="outline"
-                        className="mt-4"
-                    >
-                        Back to Dashboard
-                    </Button>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                <StatusAlert
+                    variant="destructive"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {error || "Certificate not found"}
+                </StatusAlert>
+                <Button onClick={() => navigate("/")} variant="outline">
+                    Back to Dashboard
+                </Button>
+            </div>
         );
     }
 
@@ -351,13 +356,19 @@ export function CertificateDetail() {
 
             {/* Error Message */}
             {certError && (
-                <Card className="mb-6 bg-destructive/10 border-destructive/30">
-                    <CardContent>
-                        <p className="text-sm text-destructive">
-                            {certError}
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatusAlert
+                    variant="destructive"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {certError}
+                </StatusAlert>
             )}
 
             {/* Status and Basic Info */}
@@ -773,9 +784,18 @@ export function CertificateDetail() {
                     </DialogHeader>
                     <div className="space-y-4">
                         {uploadError && (
-                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                            <StatusAlert
+                                variant="destructive"
+                                icon={
+                                    <HugeiconsIcon
+                                        icon={AlertCircleIcon}
+                                        className="size-4"
+                                        strokeWidth={2}
+                                    />
+                                }
+                            >
                                 {uploadError}
-                            </div>
+                            </StatusAlert>
                         )}
                         <FileDropTextarea
                             value={uploadCertPEM}

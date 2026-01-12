@@ -3,6 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { type SetupRequestInput } from "@/lib/validation";
 import { type WizardStep } from "../SetupWizardSteps";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface ReviewStepProps {
   getValues: UseFormGetValues<SetupRequestInput>;
@@ -14,11 +17,18 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-muted/50 border border-border rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          Please review your configuration before creating the Certificate Authority.
-        </p>
-      </div>
+      <StatusAlert
+        variant="muted"
+        icon={
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+      >
+        Please review your configuration before creating the Certificate Authority.
+      </StatusAlert>
 
       <div className="space-y-4">
         <ReviewSection

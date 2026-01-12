@@ -18,6 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+    AlertCircleIcon,
+    InformationCircleIcon,
+} from "@hugeicons/core-free-icons";
 
 export function ImportCertificate() {
     const navigate = useNavigate();
@@ -139,13 +145,19 @@ export function ImportCertificate() {
             </div>
 
             {error && (
-                <Card className="mb-6 bg-destructive/10 border-destructive/30">
-                    <CardContent>
-                        <p className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatusAlert
+                    variant="destructive"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {error}
+                </StatusAlert>
             )}
 
             <Card className="shadow-sm border-border">
@@ -238,13 +250,20 @@ export function ImportCertificate() {
                         </div>
 
                         {/* Info */}
-                        <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
-                            <p className="text-xs text-primary">
-                                💡 <strong>PEM Format:</strong> Copy and paste
-                                the entire certificate and key blocks, including
-                                the BEGIN and END lines.
-                            </p>
-                        </div>
+                        <StatusAlert
+                            variant="info"
+                            icon={
+                                <HugeiconsIcon
+                                    icon={InformationCircleIcon}
+                                    className="size-4"
+                                    strokeWidth={2}
+                                />
+                            }
+                            title="PEM Format"
+                        >
+                            Copy and paste the entire certificate and key
+                            blocks, including the BEGIN and END lines.
+                        </StatusAlert>
 
                         {/* Buttons */}
                         <div className="pt-4">

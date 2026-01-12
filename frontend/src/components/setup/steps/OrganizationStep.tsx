@@ -2,6 +2,9 @@ import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type SetupRequestInput } from "@/lib/validation";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface OrganizationStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -94,12 +97,19 @@ export function OrganizationStep({ register, errors, isSubmitting }: Organizatio
         </p>
       </div>
 
-      <div className="p-4 bg-muted/50 border border-border rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          These organization details will be used as defaults when generating
-          new certificates. You can override them for individual certificates.
-        </p>
-      </div>
+      <StatusAlert
+        variant="muted"
+        icon={
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+      >
+        These organization details will be used as defaults when generating
+        new certificates. You can override them for individual certificates.
+      </StatusAlert>
     </div>
   );
 }

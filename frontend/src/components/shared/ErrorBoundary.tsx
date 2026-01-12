@@ -1,6 +1,9 @@
 import React, { ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { StatusAlert } from '@/components/shared/StatusAlert';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { AlertCircleIcon } from '@hugeicons/core-free-icons';
 
 interface Props {
   children: ReactNode;
@@ -48,11 +51,20 @@ export class ErrorBoundary extends React.Component<Props, State> {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30">
-                <p className="text-sm font-mono text-destructive break-words">
+              <StatusAlert
+                variant="destructive"
+                icon={
+                  <HugeiconsIcon
+                    icon={AlertCircleIcon}
+                    className="size-4"
+                    strokeWidth={2}
+                  />
+                }
+              >
+                <span className="font-mono break-words">
                   {this.state.error.message}
-                </p>
-              </div>
+                </span>
+              </StatusAlert>
               <Button onClick={this.reset} className="w-full">
                 Try Again
               </Button>

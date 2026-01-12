@@ -21,6 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { formatDate } from "@/lib/theme";
@@ -30,6 +31,8 @@ import {
     Certificate02Icon,
     ArrowRight01Icon,
     Search01Icon,
+    AlertCircleIcon,
+    Alert02Icon,
 } from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
@@ -138,28 +141,35 @@ export function Dashboard() {
 
             {/* Error Message */}
             {error && (
-                <Card className="mb-6 bg-destructive/10 border-destructive/30">
-                    <CardContent>
-                        <p className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatusAlert
+                    variant="destructive"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {error}
+                </StatusAlert>
             )}
 
             {/* Limited Mode Notice */}
             {!isEncryptionKeyProvided && (
-                <Card className="mb-6 bg-warning-muted border-warning/30">
-                    <CardContent className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-warning-foreground">
-                                Limited mode - encryption key not provided
-                            </p>
-                            <p className="text-xs text-warning-foreground/80 mt-1">
-                                Some features are disabled. Provide your
-                                encryption key to unlock full functionality.
-                            </p>
-                        </div>
+                <StatusAlert
+                    variant="warning"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={Alert02Icon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                    title="Limited mode - encryption key not provided"
+                    action={
                         <Button
                             variant="outline"
                             size="sm"
@@ -168,8 +178,11 @@ export function Dashboard() {
                         >
                             Provide Key
                         </Button>
-                    </CardContent>
-                </Card>
+                    }
+                >
+                    Some features are disabled. Provide your encryption key to
+                    unlock full functionality.
+                </StatusAlert>
             )}
 
             {/* Filters Card */}

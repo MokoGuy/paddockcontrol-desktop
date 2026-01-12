@@ -9,6 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type SetupRequestInput } from "@/lib/validation";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface CertDefaultsStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -77,13 +80,20 @@ export function CertDefaultsStep({ register, errors, watch, control, isSubmittin
         )}
       </div>
 
-      <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
-        <p className="text-sm text-primary">
-          Current key size: <strong>{keySize || "Not set"} bits</strong>.
-          Larger keys (4096) are more secure but slower to generate.
-          2048 bits is the minimum recommended for production use.
-        </p>
-      </div>
+      <StatusAlert
+        variant="info"
+        icon={
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+      >
+        Current key size: <strong>{keySize || "Not set"} bits</strong>.
+        Larger keys (4096) are more secure but slower to generate.
+        2048 bits is the minimum recommended for production use.
+      </StatusAlert>
     </div>
   );
 }

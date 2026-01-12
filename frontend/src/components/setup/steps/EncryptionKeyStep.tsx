@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { type SetupRequestInput } from "@/lib/validation";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { EyeIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
+import { EyeIcon, ViewOffIcon, Alert02Icon, Bulb01Icon } from "@hugeicons/core-free-icons";
 
 interface EncryptionKeyStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -103,28 +104,40 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
         )}
       </div>
 
-      <div className="p-4 bg-warning-muted border border-warning/30 rounded-lg space-y-2">
-        <p className="text-sm font-medium text-warning-foreground">
-          Important: Remember this key!
-        </p>
-        <p className="text-sm text-warning-foreground/80">
-          This encryption key protects all your certificate private keys. You will need
-          to enter it each time you open the application. If you lose this key, you will
-          not be able to access your private keys.
-        </p>
-      </div>
+      <StatusAlert
+        variant="warning"
+        icon={
+          <HugeiconsIcon
+            icon={Alert02Icon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+        title="Important: Remember this key!"
+      >
+        This encryption key protects all your certificate private keys. You will need
+        to enter it each time you open the application. If you lose this key, you will
+        not be able to access your private keys.
+      </StatusAlert>
 
-      <div className="p-4 bg-muted/50 border border-border rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          <strong>Tips for a strong key:</strong>
-        </p>
-        <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside space-y-1">
+      <StatusAlert
+        variant="muted"
+        icon={
+          <HugeiconsIcon
+            icon={Bulb01Icon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+        title="Tips for a strong key"
+      >
+        <ul className="mt-2 list-disc list-inside space-y-1">
           <li>Use at least 16 characters</li>
           <li>Mix uppercase, lowercase, numbers, and symbols</li>
           <li>Consider using a passphrase (e.g., "correct-horse-battery-staple")</li>
           <li>Store it securely in a password manager</li>
         </ul>
-      </div>
+      </StatusAlert>
     </div>
   );
 }

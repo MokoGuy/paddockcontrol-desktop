@@ -2,6 +2,9 @@ import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type SetupRequestInput } from "@/lib/validation";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface CAConfigStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -48,13 +51,20 @@ export function CAConfigStep({ register, errors, isSubmitting }: CAConfigStepPro
         </p>
       </div>
 
-      <div className="p-4 bg-muted/50 border border-border rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          The hostname suffix enforces consistent naming across all certificates.
-          For example, with suffix ".example.com", a certificate for "server1"
-          will have the full hostname "server1.example.com".
-        </p>
-      </div>
+      <StatusAlert
+        variant="muted"
+        icon={
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-4"
+            strokeWidth={2}
+          />
+        }
+      >
+        The hostname suffix enforces consistent naming across all certificates.
+        For example, with suffix ".example.com", a certificate for "server1"
+        will have the full hostname "server1.example.com".
+      </StatusAlert>
     </div>
   );
 }

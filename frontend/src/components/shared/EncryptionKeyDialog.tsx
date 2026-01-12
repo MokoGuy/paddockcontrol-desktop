@@ -18,6 +18,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
 interface EncryptionKeyDialogProps {
     open: boolean;
@@ -88,25 +91,32 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Error display */}
                     {keyValidationError && (
-                        <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
-                            <p className="text-sm font-medium text-destructive">
-                                {keyValidationError.message}
-                            </p>
+                        <StatusAlert
+                            variant="destructive"
+                            icon={
+                                <HugeiconsIcon
+                                    icon={AlertCircleIcon}
+                                    className="size-4"
+                                    strokeWidth={2}
+                                />
+                            }
+                            title={keyValidationError.message}
+                        >
                             {keyValidationError.failedHostnames.length > 0 && (
-                                <div className="mt-2">
-                                    <p className="text-xs text-destructive/80 mb-1">
+                                <>
+                                    <p className="text-xs opacity-80 mb-1">
                                         Failed to decrypt keys for:
                                     </p>
-                                    <ul className="text-xs text-destructive/70 list-disc list-inside">
+                                    <ul className="text-xs opacity-70 list-disc list-inside">
                                         {keyValidationError.failedHostnames.map(
                                             (h) => (
                                                 <li key={h}>{h}</li>
                                             ),
                                         )}
                                     </ul>
-                                </div>
+                                </>
                             )}
-                        </div>
+                        </StatusAlert>
                     )}
 
                     <div className="space-y-2">

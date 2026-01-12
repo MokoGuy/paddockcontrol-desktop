@@ -33,7 +33,9 @@ import {
   Copy01Icon,
   Tick02Icon,
   Package01Icon,
+  AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 
 export function RestoreBackup() {
   const navigate = useNavigate();
@@ -608,13 +610,19 @@ export function RestoreBackup() {
 
             {/* Error Message */}
             {error && (
-              <Card className="bg-destructive/10 border-destructive/30">
-                <CardContent className="p-4">
-                  <p className="text-sm text-destructive">
-                    {error}
-                  </p>
-                </CardContent>
-              </Card>
+              <StatusAlert
+                variant="destructive"
+                className="mt-4"
+                icon={
+                  <HugeiconsIcon
+                    icon={AlertCircleIcon}
+                    className="size-4"
+                    strokeWidth={2}
+                  />
+                }
+              >
+                {error}
+              </StatusAlert>
             )}
 
             {/* Loading State */}

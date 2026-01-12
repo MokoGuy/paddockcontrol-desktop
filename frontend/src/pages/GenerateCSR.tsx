@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 import {
     Select,
     SelectContent,
@@ -30,6 +31,8 @@ import {
 } from "@/components/ui/select";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
 interface LocationState {
     renewal?: string;
@@ -339,13 +342,19 @@ export function GenerateCSR() {
             </div>
 
             {error && (
-                <Card className="mb-6 bg-destructive/10 border-destructive/30">
-                    <CardContent>
-                        <p className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    </CardContent>
-                </Card>
+                <StatusAlert
+                    variant="destructive"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {error}
+                </StatusAlert>
             )}
 
             <Card className="shadow-sm border-border">

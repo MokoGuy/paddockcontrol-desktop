@@ -26,6 +26,9 @@ import { OrganizationStep } from "@/components/setup/steps/OrganizationStep";
 import { CertDefaultsStep } from "@/components/setup/steps/CertDefaultsStep";
 import { EncryptionKeyStep } from "@/components/setup/steps/EncryptionKeyStep";
 import { ReviewStep } from "@/components/setup/steps/ReviewStep";
+import { StatusAlert } from "@/components/shared/StatusAlert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
 const stepAnimations = {
     initial: { opacity: 0, x: 20 },
@@ -214,9 +217,18 @@ export function SetupWizard() {
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyDown} className="space-y-6">
                         {displayError && (
-                            <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
-                                <p className="text-sm text-destructive">{displayError}</p>
-                            </div>
+                            <StatusAlert
+                                variant="destructive"
+                                icon={
+                                    <HugeiconsIcon
+                                        icon={AlertCircleIcon}
+                                        className="size-4"
+                                        strokeWidth={2}
+                                    />
+                                }
+                            >
+                                {displayError}
+                            </StatusAlert>
                         )}
 
                         <AnimatePresence mode="wait">

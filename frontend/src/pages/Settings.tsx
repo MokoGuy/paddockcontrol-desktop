@@ -29,7 +29,9 @@ import {
     Copy01Icon,
     Tick02Icon,
     FolderLinksIcon,
+    AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
+import { StatusAlert } from "@/components/shared/StatusAlert";
 import { formatDateTime } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
@@ -161,14 +163,21 @@ export function Settings() {
 
     if (configError) {
         return (
-            <Card className="bg-destructive/10 border-destructive/30">
-                <CardContent>
-                    <p className="text-sm text-destructive">{configError}</p>
-                    <Button onClick={() => navigate("/")} className="mt-4">
-                        Back to Dashboard
-                    </Button>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                <StatusAlert
+                    variant="destructive"
+                    icon={
+                        <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                >
+                    {configError}
+                </StatusAlert>
+                <Button onClick={() => navigate("/")}>Back to Dashboard</Button>
+            </div>
         );
     }
 
@@ -270,11 +279,19 @@ export function Settings() {
                 </CardHeader>
                 <CardContent>
                     {backupError && (
-                        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg mb-4">
-                            <p className="text-sm text-destructive">
-                                {backupError}
-                            </p>
-                        </div>
+                        <StatusAlert
+                            variant="destructive"
+                            className="mb-4"
+                            icon={
+                                <HugeiconsIcon
+                                    icon={AlertCircleIcon}
+                                    className="size-4"
+                                    strokeWidth={2}
+                                />
+                            }
+                        >
+                            {backupError}
+                        </StatusAlert>
                     )}
 
                     <p className="text-sm text-muted-foreground mb-4">
