@@ -33,3 +33,5 @@ tracked_tasks/
 
 # But keep the root CLAUDE.md if you want
 !/CLAUDE.md
+frontend/playwright-report/
+frontend/test-results/

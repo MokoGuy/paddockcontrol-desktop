@@ -129,7 +129,16 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 // getDataDirectory returns the platform-specific data directory
+// Supports PADDOCKCONTROL_DATA_DIR env var override for testing
 func (a *App) getDataDirectory() (string, error) {
+	// Check for environment variable override (useful for testing)
+	if envDir := os.Getenv("PADDOCKCONTROL_DATA_DIR"); envDir != "" {
+		if err := os.MkdirAll(envDir, 0700); err != nil {
+			return "", fmt.Errorf("failed to create data directory: %w", err)
+		}
+		return envDir, nil
+	}
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)

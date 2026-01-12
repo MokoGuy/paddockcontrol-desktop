@@ -28,3 +28,18 @@ tasks:
         cmds:
             - |
                 if [ -d "$HOME/.local/share/paddockcontrol" ]; then rm -rf "$HOME/.local/share/paddockcontrol" && echo "Cleaned: $HOME/.local/share/paddockcontrol"; else echo "No data found to clean"; fi
+
+    test:e2e:
+        desc: Run Playwright e2e tests (headless)
+        dir: frontend
+        cmd: npm run test:e2e
+
+    test:e2e:ui:
+        desc: Run Playwright e2e tests with interactive UI
+        dir: frontend
+        cmd: npm run test:e2e:ui
+
+    test:e2e:headed:
+        desc: Run Playwright e2e tests with visible browser (headed mode)
+        dir: frontend
+        cmd: npx playwright test --headed
