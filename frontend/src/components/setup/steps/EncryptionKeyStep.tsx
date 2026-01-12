@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { type SetupRequestInput } from "@/lib/validation";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { EyeIcon, ViewOffIcon, Alert02Icon, Bulb01Icon } from "@hugeicons/core-free-icons";
+import { EyeIcon, ViewOffIcon, Alert02Icon, BulbIcon } from "@hugeicons/core-free-icons";
 
 interface EncryptionKeyStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -124,7 +124,7 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
         variant="muted"
         icon={
           <HugeiconsIcon
-            icon={Bulb01Icon}
+            icon={BulbIcon}
             className="size-4"
             strokeWidth={2}
           />
