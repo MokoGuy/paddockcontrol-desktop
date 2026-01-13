@@ -374,7 +374,7 @@ export function RestoreBackup() {
                     className="space-y-6"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="embedded-key">Encryption Key</Label>
+                      <Label htmlFor="embedded-key">Encryption Key *</Label>
                       <div className="relative">
                         <Input
                           id="embedded-key"
@@ -446,7 +446,7 @@ export function RestoreBackup() {
                     className="space-y-6"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="key">Encryption Key</Label>
+                      <Label htmlFor="key">Encryption Key *</Label>
                       <div className="relative">
                         <Input
                           id="key"

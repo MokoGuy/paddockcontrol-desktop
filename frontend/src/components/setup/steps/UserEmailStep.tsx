@@ -2,9 +2,6 @@ import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type SetupRequestInput } from "@/lib/validation";
-import { StatusAlert } from "@/components/shared/StatusAlert";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface UserEmailStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -29,21 +26,10 @@ export function UserEmailStep({ register, errors, isSubmitting }: UserEmailStepP
             {errors.owner_email.message}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Will be included in certificate signing requests (CSR)
+        </p>
       </div>
-
-      <StatusAlert
-        variant="muted"
-        icon={
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            className="size-4"
-            strokeWidth={2}
-          />
-        }
-      >
-        This email will be used as the owner contact for your Certificate Authority.
-        It may be included in certificates and used for administrative notifications.
-      </StatusAlert>
     </div>
   );
 }

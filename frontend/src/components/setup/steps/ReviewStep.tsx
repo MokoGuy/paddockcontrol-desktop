@@ -3,9 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { type SetupRequestInput } from "@/lib/validation";
 import { type WizardStep } from "../SetupWizardSteps";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
-import { StatusAlert } from "@/components/shared/StatusAlert";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface ReviewStepProps {
   getValues: UseFormGetValues<SetupRequestInput>;
@@ -16,21 +13,7 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
   const values = getValues();
 
   return (
-    <div className="space-y-6">
-      <StatusAlert
-        variant="muted"
-        icon={
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            className="size-4"
-            strokeWidth={2}
-          />
-        }
-      >
-        Please review your configuration before creating the Certificate Authority.
-      </StatusAlert>
-
-      <div className="space-y-4">
+    <div className="space-y-4">
         <ReviewSection
           title="Owner Email"
           onEdit={() => onEditStep("email")}
@@ -81,14 +64,7 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
               {values.encryption_key ? "Set" : "Not Set"}
             </Badge>
           </div>
-          {values.encryption_key && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Your encryption key is {values.encryption_key.length} characters long.
-              Make sure to remember it - you'll need it to unlock the app.
-            </p>
-          )}
         </ReviewSection>
-      </div>
     </div>
   );
 }

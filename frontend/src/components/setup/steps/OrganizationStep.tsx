@@ -2,9 +2,6 @@ import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type SetupRequestInput } from "@/lib/validation";
-import { StatusAlert } from "@/components/shared/StatusAlert";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface OrganizationStepProps {
   register: UseFormRegister<SetupRequestInput>;
@@ -28,6 +25,9 @@ export function OrganizationStep({ register, errors, isSubmitting }: Organizatio
             {errors.default_organization.message}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Default values for CSR, ensuring consistency across certificates
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -96,20 +96,6 @@ export function OrganizationStep({ register, errors, isSubmitting }: Organizatio
           Two-letter ISO country code (e.g., US, FR, DE)
         </p>
       </div>
-
-      <StatusAlert
-        variant="muted"
-        icon={
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            className="size-4"
-            strokeWidth={2}
-          />
-        }
-      >
-        These organization details will be used as defaults when generating
-        new certificates. You can override them for individual certificates.
-      </StatusAlert>
     </div>
   );
 }

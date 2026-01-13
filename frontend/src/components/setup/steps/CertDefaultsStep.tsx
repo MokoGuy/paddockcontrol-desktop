@@ -1,4 +1,4 @@
-import { UseFormRegister, FieldErrors, UseFormWatch, Control, Controller } from "react-hook-form";
+import { UseFormRegister, FieldErrors, Control, Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,21 +9,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type SetupRequestInput } from "@/lib/validation";
-import { StatusAlert } from "@/components/shared/StatusAlert";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface CertDefaultsStepProps {
   register: UseFormRegister<SetupRequestInput>;
   errors: FieldErrors<SetupRequestInput>;
-  watch: UseFormWatch<SetupRequestInput>;
   control: Control<SetupRequestInput>;
   isSubmitting: boolean;
 }
 
-export function CertDefaultsStep({ register, errors, watch, control, isSubmitting }: CertDefaultsStepProps) {
-  const keySize = watch("default_key_size");
-
+export function CertDefaultsStep({ register, errors, control, isSubmitting }: CertDefaultsStepProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -47,7 +41,7 @@ export function CertDefaultsStep({ register, errors, watch, control, isSubmittin
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          Default certificate validity period (1-3650 days)
+          Default validity for CSR, ensuring consistency (1-3650 days)
         </p>
       </div>
 
@@ -78,22 +72,10 @@ export function CertDefaultsStep({ register, errors, watch, control, isSubmittin
             {errors.default_key_size.message}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Default key size for CSR. 4096 bits recommended, 2048 bits minimum.
+        </p>
       </div>
-
-      <StatusAlert
-        variant="info"
-        icon={
-          <HugeiconsIcon
-            icon={InformationCircleIcon}
-            className="size-4"
-            strokeWidth={2}
-          />
-        }
-      >
-        Current key size: <strong>{keySize || "Not set"} bits</strong>.
-        Larger keys (4096) are more secure but slower to generate.
-        2048 bits is the minimum recommended for production use.
-      </StatusAlert>
     </div>
   );
 }

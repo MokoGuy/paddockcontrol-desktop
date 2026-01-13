@@ -279,7 +279,6 @@ export function SetupWizard() {
                                     <CertDefaultsStep
                                         register={register}
                                         errors={errors}
-                                        watch={watch}
                                         control={control}
                                         isSubmitting={isSubmitting}
                                     />
