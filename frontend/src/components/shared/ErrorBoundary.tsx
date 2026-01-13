@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { StatusAlert } from '@/components/shared/StatusAlert';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { AlertCircleIcon } from '@hugeicons/core-free-icons';
+import { AlertCircleIcon, Bug01Icon } from '@hugeicons/core-free-icons';
+import { OpenBugReport } from '../../../wailsjs/go/main/App';
 
 interface Props {
   children: ReactNode;
@@ -65,9 +66,23 @@ export class ErrorBoundary extends React.Component<Props, State> {
                   {this.state.error.message}
                 </span>
               </StatusAlert>
-              <Button onClick={this.reset} className="w-full">
-                Try Again
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={this.reset} className="flex-1">
+                  Try Again
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => OpenBugReport()}
+                  className="flex-1"
+                >
+                  <HugeiconsIcon
+                    icon={Bug01Icon}
+                    className="size-4 mr-2"
+                    strokeWidth={2}
+                  />
+                  Report Bug
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
