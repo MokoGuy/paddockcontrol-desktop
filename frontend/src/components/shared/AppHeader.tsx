@@ -4,8 +4,8 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, MinusSignIcon, SquareIcon, Bug01Icon } from "@hugeicons/core-free-icons";
-import { Quit, WindowMinimise, WindowToggleMaximise } from "../../../wailsjs/runtime/runtime";
+import { Cancel01Icon, MinusSignIcon, SquareIcon, Bug01Icon, Copy01Icon } from "@hugeicons/core-free-icons";
+import { Quit, WindowMinimise, WindowToggleMaximise, WindowIsMaximised } from "../../../wailsjs/runtime/runtime";
 import { GetBuildInfo, OpenBugReport } from "../../../wailsjs/go/main/App";
 import { ThemeToggle } from "./ThemeToggle";
 import { EncryptionKeyButton } from "../layout/EncryptionKeyButton";
@@ -44,7 +44,21 @@ export function AppHeader({
     const { isDarkMode } = useThemeStore();
     const [version, setVersion] = useState<string>("");
     const [showPulse, setShowPulse] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
     const prevAdminMode = useRef(isAdminModeEnabled);
+
+    // Check initial maximized state and listen for changes
+    useEffect(() => {
+        const checkMaximized = async () => {
+            const maximized = await WindowIsMaximised();
+            setIsMaximized(maximized);
+        };
+        checkMaximized();
+
+        // Poll for changes (Wails doesn't provide events for window state)
+        const interval = setInterval(checkMaximized, 500);
+        return () => clearInterval(interval);
+    }, []);
 
     // Compute animation colors from CSS variables (handles OKLCH to RGB conversion)
     const { normalColor, adminColor } = useMemo(() => ({
@@ -79,59 +93,70 @@ export function AppHeader({
     // Floating variant for SetupChoice page
     if (variant === "floating") {
         return (
-            <div
-                className="absolute top-4 right-4 flex items-center gap-1 z-10"
-                style={
-                    { "--wails-draggable": "no-drag" } as React.CSSProperties
-                }
-            >
-                {showThemeToggle && <ThemeToggle />}
-                {showWindowControls && (
-                    <>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => WindowMinimise()}
-                            title="Minimize"
-                            className="text-muted-foreground"
-                        >
-                            <HugeiconsIcon
-                                icon={MinusSignIcon}
-                                className="w-4 h-4"
-                                strokeWidth={2}
-                            />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => WindowToggleMaximise()}
-                            title="Maximize"
-                            className="text-muted-foreground"
-                        >
-                            <HugeiconsIcon
-                                icon={SquareIcon}
-                                className="w-4 h-4"
-                                strokeWidth={2}
-                            />
-                        </Button>
-                    </>
-                )}
-                {showCloseButton && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => Quit()}
-                        title="Close"
-                        className="text-muted-foreground hover:text-destructive"
+            <>
+                {/* Left side - Theme toggle */}
+                {showThemeToggle && (
+                    <div
+                        className="absolute top-4 left-4 z-10"
+                        style={{ "--wails-draggable": "no-drag" } as React.CSSProperties}
                     >
-                        <HugeiconsIcon
-                            icon={Cancel01Icon}
-                            className="w-5 h-5"
-                            strokeWidth={2}
+                        <ThemeToggle />
+                    </div>
+                )}
+                {/* Right side - Window controls */}
+                <div
+                    className="absolute top-4 right-4 flex items-center gap-1 z-10"
+                    style={
+                        { "--wails-draggable": "no-drag" } as React.CSSProperties
+                    }
+                >
+                    {showWindowControls && (
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => WindowMinimise()}
+                                title="Minimize"
+                                className="text-muted-foreground"
+                            >
+                                <HugeiconsIcon
+                                    icon={MinusSignIcon}
+                                    className="w-4 h-4"
+                                    strokeWidth={2}
+                                />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => WindowToggleMaximise()}
+                                title={isMaximized ? "Restore" : "Maximize"}
+                                className="text-muted-foreground"
+                            >
+                                <HugeiconsIcon
+                                    icon={isMaximized ? Copy01Icon : SquareIcon}
+                                    className="w-4 h-4"
+                                    strokeWidth={2}
+                                />
+                            </Button>
+                        </>
+                    )}
+                    {showCloseButton && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => Quit()}
+                            title="Close"
+                            className="text-muted-foreground hover:text-destructive"
+                        >
+                            <HugeiconsIcon
+                                icon={Cancel01Icon}
+                                className="w-5 h-5"
+                                strokeWidth={2}
                         />
                     </Button>
                 )}
-            </div>
+                </div>
+            </>
         );
     }
 
@@ -295,11 +320,11 @@ export function AppHeader({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => WindowToggleMaximise()}
-                                title="Maximize"
+                                title={isMaximized ? "Restore" : "Maximize"}
                                 className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
                             >
                                 <HugeiconsIcon
-                                    icon={SquareIcon}
+                                    icon={isMaximized ? Copy01Icon : SquareIcon}
                                     className="w-4 h-4"
                                     strokeWidth={2}
                                 />
