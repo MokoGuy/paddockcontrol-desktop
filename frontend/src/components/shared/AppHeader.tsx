@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useAppStore } from "@/stores/useAppStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, ArrowLeft01Icon, MinusSignIcon, SquareIcon, Bug01Icon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, MinusSignIcon, SquareIcon, Bug01Icon } from "@hugeicons/core-free-icons";
 import { Quit, WindowMinimise, WindowToggleMaximise } from "../../../wailsjs/runtime/runtime";
 import { GetBuildInfo, OpenBugReport } from "../../../wailsjs/go/main/App";
 import { ThemeToggle } from "./ThemeToggle";
@@ -17,35 +16,30 @@ interface AppHeaderProps {
     // Variant
     variant?: "default" | "floating";
 
-    // Left side
-    showBackButton?: boolean;
-    onBack?: () => void;
-
     // Center
     showTitle?: boolean;
     title?: string;
 
-    // Right side
-    showAdminBadge?: boolean;
+    // Left side
     showEncryptionKey?: boolean;
     showThemeToggle?: boolean;
+
+    // Right side
+    showAdminBadge?: boolean;
     showWindowControls?: boolean;
     showCloseButton?: boolean;
 }
 
 export function AppHeader({
     variant = "default",
-    showBackButton = false,
-    onBack,
     showTitle = false,
     title = "PaddockControl",
-    showAdminBadge = false,
     showEncryptionKey = false,
     showThemeToggle = true,
+    showAdminBadge = false,
     showWindowControls = true,
     showCloseButton = true,
 }: AppHeaderProps) {
-    const navigate = useNavigate();
     const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
     const { isDarkMode } = useThemeStore();
     const [version, setVersion] = useState<string>("");
@@ -81,14 +75,6 @@ export function AppHeader({
         }
         prevAdminMode.current = isAdminModeEnabled;
     }, [isAdminModeEnabled]);
-
-    const handleBack = () => {
-        if (onBack) {
-            onBack();
-        } else {
-            navigate("/setup", { replace: true });
-        }
-    };
 
     // Floating variant for SetupChoice page
     if (variant === "floating") {
@@ -152,7 +138,7 @@ export function AppHeader({
     // Default variant - header bar with subtle animations
     return (
         <motion.header
-            className="relative h-16 bg-background/80 backdrop-blur-sm border-b border-border/60 shadow-sm"
+            className="relative z-[60] h-16 bg-background/80 backdrop-blur-sm border-b border-border/60 shadow-sm"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -183,91 +169,38 @@ export function AppHeader({
                 }}
             />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-1">
-                {/* Left side - Back button and Admin badge */}
+                {/* Left side - Action buttons */}
                 <div
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1"
                     style={
                         {
                             "--wails-draggable": "no-drag",
                         } as React.CSSProperties
                     }
                 >
-                    <AnimatePresence mode="wait">
-                        {showBackButton ? (
-                            <motion.div
-                                key="back-button"
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={handleBack}
-                                    title="Back"
-                                    className="text-muted-foreground hover:bg-muted"
-                                >
-                                    <HugeiconsIcon
-                                        icon={ArrowLeft01Icon}
-                                        className="w-5 h-5"
-                                        strokeWidth={2}
-                                    />
-                                </Button>
-                            </motion.div>
-                        ) : (
-                            // Invisible spacer to maintain layout symmetry
-                            <div key="spacer" className="w-10 h-10" />
-                        )}
-                    </AnimatePresence>
-                    <AnimatePresence>
-                        {showAdminBadge && isAdminModeEnabled && (
-                            <motion.span
-                                className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative"
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{
-                                    opacity: 1,
-                                    scale: [0, 1.15, 1],
-                                }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                transition={{
-                                    duration: 0.3,
-                                    ease: [0.34, 1.56, 0.64, 1], // Elastic ease
-                                }}
-                            >
-                                {/* Pulse and glow effect on enable */}
-                                {showPulse && (
-                                    <>
-                                        <motion.span
-                                            className="absolute inset-0 rounded border-2 border-admin"
-                                            initial={{ opacity: 0.8, scale: 1 }}
-                                            animate={{ opacity: 0, scale: 2 }}
-                                            transition={{ duration: 0.3 }}
-                                        />
-                                        <motion.span
-                                            className="absolute inset-0 rounded bg-admin"
-                                            initial={{ opacity: 0.4, scale: 1 }}
-                                            animate={{ opacity: 0, scale: 2.5 }}
-                                            transition={{ duration: 1.2 }}
-                                            style={{ filter: "blur(10px)" }}
-                                        />
-                                    </>
-                                )}
-                                admin mode
-                                <button
-                                    onClick={() => setIsAdminModeEnabled(false)}
-                                    className="hover:bg-admin/20 rounded p-0.5 transition-colors"
-                                    title="Disable admin mode"
-                                >
-                                    <HugeiconsIcon
-                                        icon={Cancel01Icon}
-                                        className="w-3 h-3"
-                                        strokeWidth={2}
-                                    />
-                                </button>
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
+                    {showThemeToggle && <ThemeToggle />}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => OpenBugReport()}
+                        title="Report a bug"
+                        className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
+                    >
+                        <HugeiconsIcon
+                            icon={Bug01Icon}
+                            className="w-5 h-5"
+                            strokeWidth={2}
+                        />
+                    </Button>
+                    {showEncryptionKey && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                        >
+                            <EncryptionKeyButton />
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* Center - Logo, Title and Version */}
@@ -334,7 +267,7 @@ export function AppHeader({
                     </div>
                 )}
 
-                {/* Right side - Encryption key, Theme toggle, Close button */}
+                {/* Right side - Window controls */}
                 <div
                     className="flex items-center gap-1"
                     style={
@@ -343,29 +276,6 @@ export function AppHeader({
                         } as React.CSSProperties
                     }
                 >
-                    {showEncryptionKey && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                            <EncryptionKeyButton />
-                        </motion.div>
-                    )}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => OpenBugReport()}
-                        title="Report a bug"
-                        className="text-muted-foreground hover:bg-transparent dark:hover:bg-transparent"
-                    >
-                        <HugeiconsIcon
-                            icon={Bug01Icon}
-                            className="w-5 h-5"
-                            strokeWidth={2}
-                        />
-                    </Button>
-                    {showThemeToggle && <ThemeToggle />}
                     {showWindowControls && (
                         <>
                             <Button
@@ -413,6 +323,56 @@ export function AppHeader({
                     )}
                 </div>
             </div>
+
+            {/* Floating admin badge - centered below header */}
+            <AnimatePresence>
+                {showAdminBadge && isAdminModeEnabled && (
+                    <motion.div
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50"
+                        style={{ "--wails-draggable": "no-drag" } as React.CSSProperties}
+                        initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                        transition={{
+                            duration: 0.3,
+                            ease: [0.34, 1.56, 0.64, 1],
+                        }}
+                    >
+                        <span className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative shadow-sm">
+                            {/* Pulse and glow effect on enable */}
+                            {showPulse && (
+                                <>
+                                    <motion.span
+                                        className="absolute inset-0 rounded border-2 border-admin"
+                                        initial={{ opacity: 0.8, scale: 1 }}
+                                        animate={{ opacity: 0, scale: 2 }}
+                                        transition={{ duration: 0.3 }}
+                                    />
+                                    <motion.span
+                                        className="absolute inset-0 rounded bg-admin"
+                                        initial={{ opacity: 0.4, scale: 1 }}
+                                        animate={{ opacity: 0, scale: 2.5 }}
+                                        transition={{ duration: 1.2 }}
+                                        style={{ filter: "blur(10px)" }}
+                                    />
+                                </>
+                            )}
+                            admin mode
+                            <button
+                                onClick={() => setIsAdminModeEnabled(false)}
+                                className="hover:bg-admin/20 rounded p-0.5 transition-colors"
+                                title="Disable admin mode"
+                            >
+                                <HugeiconsIcon
+                                    icon={Cancel01Icon}
+                                    className="w-3 h-3"
+                                    strokeWidth={2}
+                                />
+                            </button>
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.header>
     );
 }

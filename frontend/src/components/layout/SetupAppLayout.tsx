@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { AppHeader } from "../shared/AppHeader";
 import { AnimatedOutlet } from "../shared/AnimatedOutlet";
@@ -7,8 +6,7 @@ import { AnimatedOutlet } from "../shared/AnimatedOutlet";
  * SetupAppLayout - Router-level layout wrapper for setup/restore pages
  *
  * This component uses React Router's Outlet pattern to wrap all setup routes
- * with a consistent header and layout structure. Setup pages have a back button
- * in the header that navigates to the setup choice page.
+ * with a consistent header and layout structure.
  *
  * Usage in App.tsx:
  * <Route element={<SetupAppLayout />}>
@@ -17,20 +15,12 @@ import { AnimatedOutlet } from "../shared/AnimatedOutlet";
  * </Route>
  */
 export function SetupAppLayout() {
-    const navigate = useNavigate();
-
-    const handleBack = () => {
-        navigate("/setup", { replace: true });
-    };
-
     return (
         <div className="flex flex-col h-screen bg-background">
-            {/* Header with back button for setup pages */}
+            {/* Header for setup pages */}
             <AnimatePresence mode="wait">
                 <AppHeader
                     variant="default"
-                    showBackButton
-                    onBack={handleBack}
                     showTitle
                     showThemeToggle
                     showCloseButton
