@@ -22,6 +22,7 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusAlert } from "@/components/shared/StatusAlert";
+import { LimitedModeNotice } from "@/components/shared/LimitedModeNotice";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { formatDate } from "@/lib/theme";
@@ -32,7 +33,6 @@ import {
     ArrowRight01Icon,
     Search01Icon,
     AlertCircleIcon,
-    Alert02Icon,
 } from "@hugeicons/core-free-icons";
 
 export function Dashboard() {
@@ -158,31 +158,10 @@ export function Dashboard() {
 
             {/* Limited Mode Notice */}
             {!isEncryptionKeyProvided && (
-                <StatusAlert
-                    variant="warning"
+                <LimitedModeNotice
                     className="mb-6"
-                    icon={
-                        <HugeiconsIcon
-                            icon={Alert02Icon}
-                            className="size-4"
-                            strokeWidth={2}
-                        />
-                    }
-                    title="Limited mode - encryption key not provided"
-                    action={
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-warning/50 text-warning-foreground hover:bg-warning/20"
-                            onClick={() => setShowKeyDialog(true)}
-                        >
-                            Provide Key
-                        </Button>
-                    }
-                >
-                    Some features are disabled. Provide your encryption key to
-                    unlock full functionality.
-                </StatusAlert>
+                    onProvideKey={() => setShowKeyDialog(true)}
+                />
             )}
 
             {/* Filters Card */}

@@ -20,10 +20,7 @@ import { Label } from "@/components/ui/label";
 import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-    AlertCircleIcon,
-    InformationCircleIcon,
-} from "@hugeicons/core-free-icons";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
 export function ImportCertificate() {
     const navigate = useNavigate();
@@ -198,6 +195,9 @@ export function ImportCertificate() {
                                     />
                                 )}
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Paste the full PEM block including BEGIN/END lines
+                            </p>
                             {errors.certificate_pem && (
                                 <p className="text-sm text-destructive">
                                     {errors.certificate_pem.message}
@@ -230,6 +230,9 @@ export function ImportCertificate() {
                                     />
                                 )}
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Paste the full PEM block including BEGIN/END lines
+                            </p>
                             {errors.private_key_pem && (
                                 <p className="text-sm text-destructive">
                                     {errors.private_key_pem.message}
@@ -248,22 +251,6 @@ export function ImportCertificate() {
                                 {...register("note")}
                             />
                         </div>
-
-                        {/* Info */}
-                        <StatusAlert
-                            variant="info"
-                            icon={
-                                <HugeiconsIcon
-                                    icon={InformationCircleIcon}
-                                    className="size-4"
-                                    strokeWidth={2}
-                                />
-                            }
-                            title="PEM Format"
-                        >
-                            Copy and paste the entire certificate and key
-                            blocks, including the BEGIN and END lines.
-                        </StatusAlert>
 
                         {/* Buttons */}
                         <div className="pt-4">

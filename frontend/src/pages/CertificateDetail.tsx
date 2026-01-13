@@ -41,6 +41,7 @@ import {
     AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
+import { LimitedModeNotice } from "@/components/shared/LimitedModeNotice";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
 
@@ -371,6 +372,14 @@ export function CertificateDetail() {
                 </StatusAlert>
             )}
 
+            {/* Limited Mode Notice */}
+            {!isEncryptionKeyProvided && (
+                <LimitedModeNotice
+                    className="mb-6"
+                    onProvideKey={() => setShowKeyDialog(true)}
+                />
+            )}
+
             {/* Status and Basic Info */}
             <Card className="mb-6 shadow-sm border-border">
                 <CardHeader>
@@ -645,68 +654,66 @@ export function CertificateDetail() {
             )}
 
             {/* Private Key (PEM) */}
-            <Card
-                className={`mb-6 shadow-sm ${!isEncryptionKeyProvided ? "bg-warning-muted border-warning/30" : "border-border"}`}
-            >
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <HugeiconsIcon
-                                icon={Key01Icon}
-                                className={`w-5 h-5 ${!isEncryptionKeyProvided ? "text-warning-foreground" : ""}`}
-                                strokeWidth={2}
-                            />
-                            <div>
-                                <CardTitle
-                                    className={
-                                        !isEncryptionKeyProvided
-                                            ? "text-warning-foreground"
-                                            : ""
-                                    }
-                                >
-                                    Private Key (PEM)
-                                </CardTitle>
-                                <CardDescription
-                                    className={
-                                        !isEncryptionKeyProvided
-                                            ? "text-warning-foreground/80"
-                                            : ""
-                                    }
-                                >
-                                    {!isEncryptionKeyProvided
-                                        ? "Provide your encryption key to view and download the private key"
-                                        : "RSA private key in PEM format"}
-                                </CardDescription>
-                            </div>
-                        </div>
-                        {!isEncryptionKeyProvided ? (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-warning/50 text-warning-foreground hover:bg-warning/20"
-                                onClick={() => setShowKeyDialog(true)}
-                            >
-                                Unlock
-                            </Button>
-                        ) : privateKeyPEM ? (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                    downloadPrivateKey(certificate.hostname)
-                                }
-                            >
+            {!isEncryptionKeyProvided ? (
+                <StatusAlert
+                    variant="warning"
+                    className="mb-6"
+                    icon={
+                        <HugeiconsIcon
+                            icon={Key01Icon}
+                            className="size-4"
+                            strokeWidth={2}
+                        />
+                    }
+                    title="Private Key (PEM)"
+                    action={
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-warning/50 text-warning-foreground hover:bg-warning/20"
+                            onClick={() => setShowKeyDialog(true)}
+                        >
+                            Unlock
+                        </Button>
+                    }
+                >
+                    Provide your encryption key to view and download the private key
+                </StatusAlert>
+            ) : (
+                <Card className="mb-6 shadow-sm border-border">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
                                 <HugeiconsIcon
-                                    icon={Download04Icon}
-                                    className="w-4 h-4 mr-1"
+                                    icon={Key01Icon}
+                                    className="w-5 h-5"
                                     strokeWidth={2}
                                 />
-                                Download
-                            </Button>
-                        ) : null}
-                    </div>
-                </CardHeader>
-                {isEncryptionKeyProvided && (
+                                <div>
+                                    <CardTitle>Private Key (PEM)</CardTitle>
+                                    <CardDescription>
+                                        RSA private key in PEM format
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            {privateKeyPEM && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        downloadPrivateKey(certificate.hostname)
+                                    }
+                                >
+                                    <HugeiconsIcon
+                                        icon={Download04Icon}
+                                        className="w-4 h-4 mr-1"
+                                        strokeWidth={2}
+                                    />
+                                    Download
+                                </Button>
+                            )}
+                        </div>
+                    </CardHeader>
                     <CardContent>
                         {privateKeyLoading ? (
                             <LoadingSpinner text="Decrypting private key..." />
@@ -722,8 +729,8 @@ export function CertificateDetail() {
                             </p>
                         )}
                     </CardContent>
-                )}
-            </Card>
+                </Card>
+            )}
 
             {/* Notes */}
             {(certificate.note || certificate.pending_note) && (

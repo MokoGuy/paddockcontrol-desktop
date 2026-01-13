@@ -15,14 +15,10 @@ const statusAlertVariants = cva("rounded-none", {
                 "bg-destructive/10 border-destructive/30 text-destructive *:data-[slot=alert-description]:text-destructive/80",
             warning:
                 "bg-warning-muted border-warning/30 text-warning-foreground *:data-[slot=alert-description]:text-warning-foreground/80",
-            info: "bg-info-muted border-info/30 text-info-foreground *:data-[slot=alert-description]:text-info-foreground/80",
-            success:
-                "bg-success-muted border-success/30 text-success-foreground *:data-[slot=alert-description]:text-success-foreground/80",
-            muted: "bg-muted/50 border-border text-muted-foreground *:data-[slot=alert-description]:text-muted-foreground/80",
         },
     },
     defaultVariants: {
-        variant: "info",
+        variant: "destructive",
     },
 });
 
