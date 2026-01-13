@@ -283,6 +283,7 @@ export function CertificateDetail() {
                     <div className="flex items-center gap-2 mr-4 pr-4 border-r border-border">
                         <AnimatedSwitch
                             id="read-only-switch"
+                            size="sm"
                             checked={certificate.read_only}
                             onCheckedChange={handleToggleReadOnly}
                             disabled={isTogglingReadOnly}
