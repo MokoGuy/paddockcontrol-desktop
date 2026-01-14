@@ -18,6 +18,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
@@ -107,29 +112,37 @@ export function Dashboard() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        onClick={() => navigate("/certificates/generate")}
-                        disabled={!isEncryptionKeyProvided}
-                        title={
-                            !isEncryptionKeyProvided
-                                ? "Encryption key required"
-                                : ""
-                        }
-                    >
-                        Generate CSR
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate("/certificates/import")}
-                        disabled={!isEncryptionKeyProvided}
-                        title={
-                            !isEncryptionKeyProvided
-                                ? "Encryption key required"
-                                : ""
-                        }
-                    >
-                        Import Certificate
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                                <Button
+                                    onClick={() => navigate("/certificates/generate")}
+                                    disabled={!isEncryptionKeyProvided}
+                                >
+                                    Generate CSR
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!isEncryptionKeyProvided && (
+                            <TooltipContent>Encryption key required</TooltipContent>
+                        )}
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => navigate("/certificates/import")}
+                                    disabled={!isEncryptionKeyProvided}
+                                >
+                                    Import Certificate
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!isEncryptionKeyProvided && (
+                            <TooltipContent>Encryption key required</TooltipContent>
+                        )}
+                    </Tooltip>
                     <Button
                         variant="outline"
                         onClick={() => navigate("/settings")}
