@@ -42,6 +42,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { LimitedModeNotice } from "@/components/shared/LimitedModeNotice";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { Certificate, ChainCertificateInfo } from "@/types";
 
@@ -299,52 +304,66 @@ export function CertificateDetail() {
                         animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                                navigate("/certificates/generate", {
-                                    state: certificate.pending_csr
-                                        ? { regenerate: certificate.hostname }
-                                        : { renewal: certificate.hostname },
-                                })
-                            }
-                            disabled={!isEncryptionKeyProvided || certificate.read_only}
-                            title={
-                                certificate.read_only
-                                    ? "Certificate is read-only"
-                                    : !isEncryptionKeyProvided
-                                      ? "Encryption key required"
-                                      : ""
-                            }
-                        >
-                            <HugeiconsIcon
-                                icon={RefreshIcon}
-                                className="w-4 h-4 mr-1"
-                                strokeWidth={2}
-                            />
-                            {certificate.pending_csr ? "Regenerate" : "Renew"}
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="inline-flex">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                            navigate("/certificates/generate", {
+                                                state: certificate.pending_csr
+                                                    ? { regenerate: certificate.hostname }
+                                                    : { renewal: certificate.hostname },
+                                            })
+                                        }
+                                        disabled={!isEncryptionKeyProvided || certificate.read_only}
+                                    >
+                                        <HugeiconsIcon
+                                            icon={RefreshIcon}
+                                            className="w-4 h-4 mr-1"
+                                            strokeWidth={2}
+                                        />
+                                        {certificate.pending_csr ? "Regenerate" : "Renew"}
+                                    </Button>
+                                </span>
+                            </TooltipTrigger>
+                            {(certificate.read_only || !isEncryptionKeyProvided) && (
+                                <TooltipContent>
+                                    {certificate.read_only
+                                        ? "Certificate is read-only"
+                                        : "Encryption key required"}
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
                     </motion.div>
                     <motion.div
                         animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
-                            onClick={() => setDeleteConfirming(true)}
-                            disabled={certLoading || backupLoading || certificate.read_only}
-                            title={certificate.read_only ? "Certificate is read-only" : ""}
-                        >
-                            <HugeiconsIcon
-                                icon={Delete02Icon}
-                                className="w-4 h-4 mr-1"
-                                strokeWidth={2}
-                            />
-                            Delete
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="inline-flex">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
+                                        onClick={() => setDeleteConfirming(true)}
+                                        disabled={certLoading || backupLoading || certificate.read_only}
+                                    >
+                                        <HugeiconsIcon
+                                            icon={Delete02Icon}
+                                            className="w-4 h-4 mr-1"
+                                            strokeWidth={2}
+                                        />
+                                        Delete
+                                    </Button>
+                                </span>
+                            </TooltipTrigger>
+                            {certificate.read_only && (
+                                <TooltipContent>Certificate is read-only</TooltipContent>
+                            )}
+                        </Tooltip>
                     </motion.div>
                     <Button
                         variant="outline"
@@ -545,14 +564,14 @@ export function CertificateDetail() {
 
             {/* Pending CSR */}
             {certificate.pending_csr && (
-                <Card className="mb-6 shadow-sm border-warning/30 bg-warning-muted">
+                <Card className="mb-6 shadow-sm border-info/30 bg-info/10">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-warning-foreground">
+                                <CardTitle className="text-info dark:text-chart-2">
                                     Pending Certificate Signing Request
                                 </CardTitle>
-                                <CardDescription className="text-warning-foreground/80">
+                                <CardDescription className="text-info/80 dark:text-chart-2/80">
                                     This CSR is awaiting a signed certificate
                                 </CardDescription>
                             </div>
@@ -560,7 +579,6 @@ export function CertificateDetail() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="border-warning/50 text-warning-foreground hover:bg-warning/20"
                                     onClick={() => {
                                         const link =
                                             document.createElement("a");
@@ -584,15 +602,27 @@ export function CertificateDetail() {
                                     animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <Button
-                                        variant="default"
-                                        size="sm"
-                                        onClick={() => setUploadDialogOpen(true)}
-                                        disabled={certificate.read_only}
-                                        title={certificate.read_only ? "Certificate is read-only" : ""}
-                                    >
-                                        Upload Signed Certificate
-                                    </Button>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex">
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    onClick={() => setUploadDialogOpen(true)}
+                                                    disabled={certificate.read_only || !isEncryptionKeyProvided}
+                                                >
+                                                    Upload Signed Certificate
+                                                </Button>
+                                            </span>
+                                        </TooltipTrigger>
+                                        {(certificate.read_only || !isEncryptionKeyProvided) && (
+                                            <TooltipContent>
+                                                {certificate.read_only
+                                                    ? "Certificate is read-only"
+                                                    : "Encryption key required"}
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
                                 </motion.div>
                             </div>
                         </div>
