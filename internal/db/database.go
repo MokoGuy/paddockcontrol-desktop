@@ -26,16 +26,24 @@ type Database struct {
 
 // NewDatabase initializes a new database connection and runs migrations
 func NewDatabase(dataDir string) (*Database, error) {
-	// Ensure data directory exists
-	if err := ensureDir(dataDir); err != nil {
-		return nil, fmt.Errorf("failed to create data directory: %w", err)
+	var dbPath string
+
+	// Check if in-memory mode is requested (for testing)
+	if dataDir == ":memory:" {
+		// Use shared memory mode so migrations persist across connections
+		// WAL mode doesn't apply to in-memory databases
+		dbPath = "file::memory:?cache=shared"
+	} else {
+		// Ensure data directory exists
+		if err := ensureDir(dataDir); err != nil {
+			return nil, fmt.Errorf("failed to create data directory: %w", err)
+		}
+		// Construct database path with WAL mode for file-based databases
+		dbPath = filepath.Join(dataDir, "certificates.db") + "?_journal_mode=WAL"
 	}
 
-	// Construct database path
-	dbPath := filepath.Join(dataDir, "certificates.db")
-
-	// Open database with WAL mode enabled
-	db, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL")
+	// Open database
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -77,6 +85,36 @@ func runMigrations(db *sql.DB) error {
 	// Run all pending migrations
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("migration failed: %w", err)
+	}
+
+	return nil
+}
+
+// ResetWithMigrations drops all tables and re-runs migrations (for testing)
+func (d *Database) ResetWithMigrations() error {
+	driver, err := sqlite3.WithInstance(d.db, &sqlite3.Config{})
+	if err != nil {
+		return fmt.Errorf("failed to create migration driver: %w", err)
+	}
+
+	source, err := iofs.New(migrations, "migrations")
+	if err != nil {
+		return fmt.Errorf("failed to create migration source: %w", err)
+	}
+
+	m, err := migrate.NewWithInstance("iofs", source, "sqlite3", driver)
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %w", err)
+	}
+
+	// Drop all tables (run down migration)
+	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("down migration failed: %w", err)
+	}
+
+	// Recreate all tables (run up migration)
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("up migration failed: %w", err)
 	}
 
 	return nil

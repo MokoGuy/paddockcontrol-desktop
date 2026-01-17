@@ -139,8 +139,11 @@ func (a *App) shutdown(ctx context.Context) {
 func (a *App) getDataDirectory() (string, error) {
 	// Check for environment variable override (useful for testing)
 	if envDir := os.Getenv("PADDOCKCONTROL_DATA_DIR"); envDir != "" {
-		if err := os.MkdirAll(envDir, 0700); err != nil {
-			return "", fmt.Errorf("failed to create data directory: %w", err)
+		// Skip directory creation for in-memory mode (testing)
+		if envDir != ":memory:" {
+			if err := os.MkdirAll(envDir, 0700); err != nil {
+				return "", fmt.Errorf("failed to create data directory: %w", err)
+			}
 		}
 		return envDir, nil
 	}
@@ -1232,27 +1235,46 @@ func (a *App) ResetDatabase() error {
 
 	logger.Info("Resetting database - deleting all data...")
 
-	// Close database connection
-	if a.db != nil {
-		if err := a.db.Close(); err != nil {
-			logger.Error("Failed to close database: %v", err)
+	// Handle in-memory database differently (for testing)
+	if a.dataDir == ":memory:" {
+		// For in-memory database, use migrations to reset schema
+		if a.db != nil {
+			if err := a.db.ResetWithMigrations(); err != nil {
+				logger.Error("Failed to reset in-memory database: %v", err)
+				return fmt.Errorf("failed to reset in-memory database: %w", err)
+			}
 		}
-		a.db = nil
-	}
+	} else {
+		// For file-based database, close and delete files
+		if a.db != nil {
+			if err := a.db.Close(); err != nil {
+				logger.Error("Failed to close database: %v", err)
+			}
+			a.db = nil
+		}
 
-	// Delete database files
-	dbPath := filepath.Join(a.dataDir, "certificates.db")
-	filesToDelete := []string{
-		dbPath,
-		dbPath + "-wal",
-		dbPath + "-shm",
-	}
+		// Delete database files
+		dbPath := filepath.Join(a.dataDir, "certificates.db")
+		filesToDelete := []string{
+			dbPath,
+			dbPath + "-wal",
+			dbPath + "-shm",
+		}
 
-	for _, f := range filesToDelete {
-		if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
-			logger.Error("Failed to delete %s: %v", f, err)
-		} else if err == nil {
-			logger.Info("Deleted: %s", f)
+		for _, f := range filesToDelete {
+			if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
+				logger.Error("Failed to delete %s: %v", f, err)
+			} else if err == nil {
+				logger.Info("Deleted: %s", f)
+			}
+		}
+
+		// Reinitialize database
+		var err error
+		a.db, err = db.NewDatabase(a.dataDir)
+		if err != nil {
+			logger.Error("Failed to reinitialize database: %v", err)
+			return fmt.Errorf("failed to reinitialize database: %w", err)
 		}
 	}
 
@@ -1262,14 +1284,6 @@ func (a *App) ResetDatabase() error {
 			a.encryptionKey[i] = 0
 		}
 		a.encryptionKey = nil
-	}
-
-	// Reinitialize database
-	var err error
-	a.db, err = db.NewDatabase(a.dataDir)
-	if err != nil {
-		logger.Error("Failed to reinitialize database: %v", err)
-		return fmt.Errorf("failed to reinitialize database: %w", err)
 	}
 
 	// Reset state to initial values
