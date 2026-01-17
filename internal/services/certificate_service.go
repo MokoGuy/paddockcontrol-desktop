@@ -12,6 +12,7 @@ import (
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 )
 
@@ -31,25 +32,34 @@ func NewCertificateService(database *db.Database, configSvc *config.Service) *Ce
 
 // GenerateCSR generates a new Certificate Signing Request
 func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequest, encryptionKey []byte) (*models.CSRResponse, error) {
+	start := time.Now()
+
 	// Validate hostname
+	t := time.Now()
 	if err := s.validateHostname(ctx, req.Hostname); err != nil {
 		return nil, err
 	}
+	logger.Debug("[CSR Profile] validateHostname: %v", time.Since(t))
 
 	// Check for duplicates
+	t = time.Now()
 	exists, err := s.db.Queries().CertificateExists(ctx, req.Hostname)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check certificate existence: %w", err)
 	}
+	logger.Debug("[CSR Profile] CertificateExists: %v", time.Since(t))
+
 	if exists == 1 && !req.IsRenewal {
 		return nil, fmt.Errorf("certificate already exists for hostname: %s", req.Hostname)
 	}
 
 	// Generate RSA key pair
+	t = time.Now()
 	privateKey, err := crypto.GenerateRSAKey(req.KeySize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate RSA key: %w", err)
 	}
+	logger.Debug("[CSR Profile] GenerateRSAKey (%d-bit): %v", req.KeySize, time.Since(t))
 
 	// Convert CSRRequest to crypto.CSRRequest
 	csrReq := crypto.CSRRequest{
@@ -63,24 +73,31 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	}
 
 	// Create CSR
+	t = time.Now()
 	csrPEM, err := crypto.CreateCSR(csrReq, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CSR: %w", err)
 	}
+	logger.Debug("[CSR Profile] CreateCSR: %v", time.Since(t))
 
 	// Convert private key to PEM
+	t = time.Now()
 	keyPEM, err := crypto.PrivateKeyToPEM(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode private key: %w", err)
 	}
+	logger.Debug("[CSR Profile] PrivateKeyToPEM: %v", time.Since(t))
 
 	// Encrypt private key
+	t = time.Now()
 	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, string(encryptionKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt private key: %w", err)
 	}
+	logger.Debug("[CSR Profile] EncryptPrivateKey: %v", time.Since(t))
 
 	// Store in database
+	t = time.Now()
 	if req.IsRenewal {
 		// Update existing certificate with pending renewal
 		err = s.db.Queries().UpdatePendingCSR(ctx, sqlc.UpdatePendingCSRParams{
@@ -99,10 +116,13 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 			ReadOnly:            0,
 		})
 	}
+	logger.Debug("[CSR Profile] Database write: %v", time.Since(t))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to store CSR: %w", err)
 	}
+
+	logger.Debug("[CSR Profile] Total: %v", time.Since(start))
 
 	return &models.CSRResponse{
 		Hostname: req.Hostname,

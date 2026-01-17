@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence, motion } from "motion/react";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
@@ -357,7 +358,31 @@ export function GenerateCSR() {
                 </StatusAlert>
             )}
 
-            <Card className="shadow-sm border-border">
+            <Card className="shadow-sm border-border relative overflow-hidden">
+                {/* Loading overlay during key generation */}
+                <AnimatePresence>
+                    {(isSubmitting || isLoading) && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg"
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            >
+                                <LoadingSpinner
+                                    size="lg"
+                                    text={`Generating ${watch("key_size")}-bit key... This may take a few seconds`}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 <CardHeader>
                     <CardTitle>Request Details</CardTitle>
                     <CardDescription>
