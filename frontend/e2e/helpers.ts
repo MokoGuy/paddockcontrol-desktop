@@ -44,11 +44,11 @@ export async function generateCertificate(
 ): Promise<string> {
     // Click header button to navigate to CSR form
     await page.getByRole("button", { name: "Generate CSR" }).first().click();
-    // Wait for form to be ready
-    const hostnameInput = page.getByPlaceholder("example");
+    // Wait for form to be ready - use specific label text to avoid matching SAN display
+    const hostnameInput = page.getByRole("textbox", { name: "Hostname *" });
     await hostnameInput.waitFor({ state: "visible" });
-    // Fill hostname
-    await hostnameInput.fill(hostname);
+    // Fill hostname with suffix directly (more reliable than clicking button)
+    await hostnameInput.fill(`${hostname}.test.local`);
     // Click form submit button (last one on page)
     await page.getByRole("button", { name: "Generate CSR" }).last().click();
     await expect(page).toHaveURL(new RegExp(hostname), { timeout: 30000 });

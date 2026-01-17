@@ -7,6 +7,7 @@ export type Certificate = models.Certificate;
 export type CertificateListItem = models.CertificateListItem;
 export type CSRRequest = models.CSRRequest;
 export type CSRResponse = models.CSRResponse;
+export type SANEntry = models.SANEntry;
 export type ImportRequest = models.ImportRequest;
 export type CertificateFilter = models.CertificateFilter;
 export type Config = models.Config;

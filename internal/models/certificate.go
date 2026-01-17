@@ -47,18 +47,31 @@ type CertificateListItem struct {
 	ReadOnly            bool     `json:"read_only"`
 }
 
+// SANType constants for Subject Alternative Name types
+const (
+	SANTypeDNS = "dns"
+	SANTypeIP  = "ip"
+)
+
+// SANEntry represents a typed Subject Alternative Name entry
+type SANEntry struct {
+	Value string `json:"value"`
+	Type  string `json:"type"` // "dns", "ipv4", "ipv6"
+}
+
 // CSRRequest represents a request to generate a certificate signing request
 type CSRRequest struct {
-	Hostname           string   `json:"hostname"`
-	SANs               []string `json:"sans,omitempty"`
-	Organization       string   `json:"organization"`
-	OrganizationalUnit string   `json:"organizational_unit,omitempty"`
-	City               string   `json:"city"`
-	State              string   `json:"state"`
-	Country            string   `json:"country"`
-	KeySize            int      `json:"key_size"`
-	Note               string   `json:"note,omitempty"`
-	IsRenewal          bool     `json:"is_renewal,omitempty"`
+	Hostname             string     `json:"hostname"`
+	SANs                 []SANEntry `json:"sans,omitempty"`
+	Organization         string     `json:"organization"`
+	OrganizationalUnit   string     `json:"organizational_unit,omitempty"`
+	City                 string     `json:"city"`
+	State                string     `json:"state"`
+	Country              string     `json:"country"`
+	KeySize              int        `json:"key_size"`
+	Note                 string     `json:"note,omitempty"`
+	IsRenewal            bool       `json:"is_renewal,omitempty"`
+	SkipSuffixValidation bool       `json:"skip_suffix_validation,omitempty"`
 }
 
 // CSRResponse represents the response from CSR generation

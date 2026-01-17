@@ -3,6 +3,10 @@ import { defineConfig } from "@playwright/test";
 // Use in-memory database for complete test isolation
 // No temp directory or file cleanup needed!
 
+// Use dedicated ports for Playwright tests to avoid conflicts with dev server
+const TEST_PORT = process.env.PLAYWRIGHT_PORT || "34116";
+const VITE_PORT = process.env.PLAYWRIGHT_VITE_PORT || "5174";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -12,7 +16,7 @@ export default defineConfig({
   reporter: "list",
   timeout: 60000, // 60 seconds per test max
   use: {
-    baseURL: "http://localhost:34115",
+    baseURL: `http://localhost:${TEST_PORT}`,
     trace: "off",
     screenshot: "off",
     actionTimeout: 10000, // 10 seconds per action
@@ -34,8 +38,8 @@ export default defineConfig({
   // Global teardown to kill Wails/Vite child processes
   globalTeardown: "./e2e/global-teardown.ts",
   webServer: {
-    command: `PADDOCKCONTROL_DATA_DIR=":memory:" wails dev -tags webkit2_41`,
-    url: "http://localhost:34115",
+    command: `PADDOCKCONTROL_DATA_DIR=":memory:" VITE_DEV_SERVER_PORT=${VITE_PORT} wails dev -tags webkit2_41 -devserver "localhost:${TEST_PORT}"`,
+    url: `http://localhost:${TEST_PORT}`,
     // Always start fresh to ensure clean in-memory database state
     reuseExistingServer: false,
     timeout: 60 * 1000,

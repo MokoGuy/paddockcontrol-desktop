@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useCertificates } from "@/hooks/useCertificates";
-import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { useAppStore } from "@/stores/useAppStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,12 +44,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const { certificates, isLoading, error, listCertificates } =
         useCertificates();
-    const { isEncryptionKeyProvided, setIsAdminModeEnabled } = useAppStore();
-
-    // Konami code to enable admin mode
-    useKonamiCode(() => {
-        setIsAdminModeEnabled(true);
-    });
+    const { isEncryptionKeyProvided } = useAppStore();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<

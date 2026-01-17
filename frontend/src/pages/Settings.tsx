@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSetup } from "@/hooks/useSetup";
 import { useBackup } from "@/hooks/useBackup";
-import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
@@ -58,12 +57,6 @@ export function Settings() {
     const [isEditMode, setIsEditMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Enable admin mode via Konami code
-    const handleKonamiSuccess = useCallback(() => {
-        console.debug("[Settings] Konami code entered - admin mode enabled");
-        setIsAdminModeEnabled(true);
-    }, [setIsAdminModeEnabled]);
-    useKonamiCode(handleKonamiSuccess);
     const {
         isLoading: backupLoading,
         error: backupError,

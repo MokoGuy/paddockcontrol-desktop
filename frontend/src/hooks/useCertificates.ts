@@ -38,8 +38,11 @@ export function useCertificates(): UseCertificatesReturn {
     const { certificates, setCertificates } = useCertificateStore();
 
     const handleError = (err: unknown) => {
+        // Wails returns error messages as strings, not Error objects
         const message =
-            err instanceof Error ? err.message : "An error occurred";
+            err instanceof Error ? err.message :
+            typeof err === "string" ? err :
+            "An error occurred";
         setError(message);
         console.error("Certificate operation error:", err);
     };
@@ -81,7 +84,7 @@ export function useCertificates(): UseCertificatesReturn {
             return await api.generateCSR(req);
         } catch (err) {
             handleError(err);
-            return null;
+            throw err; // Re-throw so caller can handle field-level errors
         } finally {
             setIsLoading(false);
         }

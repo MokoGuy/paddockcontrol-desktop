@@ -105,6 +105,8 @@ test.describe("Setup", () => {
 
     await page.keyboard.press("Enter"); // Defaults step
 
+    // Wait for Encryption Key step to be visible
+    await page.getByRole("textbox", { name: /^Encryption Key \*/i }).waitFor({ state: "visible", timeout: 10000 });
     await page.getByRole("textbox", { name: /^Encryption Key \*/i }).fill("test-encryption-key-123");
     await page.getByRole("textbox", { name: /Confirm Encryption Key/i }).fill("test-encryption-key-123");
     await page.keyboard.press("Enter");

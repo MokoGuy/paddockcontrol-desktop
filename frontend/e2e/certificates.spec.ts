@@ -10,10 +10,10 @@ test.describe("Certificates", () => {
     // Click Generate CSR button in header
     await page.getByRole("button", { name: "Generate CSR" }).first().click();
 
-    // Wait for form and fill hostname
-    const hostnameInput = page.getByPlaceholder("example");
+    // Wait for form and fill hostname (must include suffix for client-side validation)
+    const hostnameInput = page.getByRole("textbox", { name: "Hostname *" });
     await hostnameInput.waitFor({ state: "visible" });
-    await hostnameInput.fill("myserver");
+    await hostnameInput.fill("myserver.test.local");
 
     // Generate the CSR (form submit button is last on page)
     await page.getByRole("button", { name: "Generate CSR" }).last().click();
@@ -27,11 +27,11 @@ test.describe("Certificates", () => {
   });
 
   test("certificate deletion removes from list", async ({ page }) => {
-    // First generate a certificate
+    // First generate a certificate (must include suffix for client-side validation)
     await page.getByRole("button", { name: "Generate CSR" }).first().click();
-    const hostnameInput = page.getByPlaceholder("example");
+    const hostnameInput = page.getByRole("textbox", { name: "Hostname *" });
     await hostnameInput.waitFor({ state: "visible" });
-    await hostnameInput.fill("todelete");
+    await hostnameInput.fill("todelete.test.local");
     await page.getByRole("button", { name: "Generate CSR" }).last().click();
     await expect(page).toHaveURL(/todelete/, { timeout: 30000 });
 
@@ -49,11 +49,11 @@ test.describe("Certificates", () => {
   });
 
   test("certificate upload activates pending certificate", async ({ page }) => {
-    // Generate a CSR first
+    // Generate a CSR first (must include suffix for client-side validation)
     await page.getByRole("button", { name: "Generate CSR" }).first().click();
-    const hostnameInput = page.getByPlaceholder("example");
+    const hostnameInput = page.getByRole("textbox", { name: "Hostname *" });
     await hostnameInput.waitFor({ state: "visible" });
-    await hostnameInput.fill("uploadtest");
+    await hostnameInput.fill("uploadtest.test.local");
     await page.getByRole("button", { name: "Generate CSR" }).last().click();
     await expect(page).toHaveURL(/uploadtest/, { timeout: 30000 });
 

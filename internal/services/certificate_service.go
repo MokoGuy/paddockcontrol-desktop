@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
 	"sort"
 	"strings"
 	"time"
@@ -34,9 +35,9 @@ func NewCertificateService(database *db.Database, configSvc *config.Service) *Ce
 func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequest, encryptionKey []byte) (*models.CSRResponse, error) {
 	start := time.Now()
 
-	// Validate hostname
+	// Validate hostname (with optional bypass for admin mode)
 	t := time.Now()
-	if err := s.validateHostname(ctx, req.Hostname); err != nil {
+	if err := s.validateHostname(ctx, req.Hostname, req.SkipSuffixValidation); err != nil {
 		return nil, err
 	}
 	logger.Debug("[CSR Profile] validateHostname: %v", time.Since(t))
@@ -52,6 +53,14 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	if exists == 1 && !req.IsRenewal {
 		return nil, fmt.Errorf("certificate already exists for hostname: %s", req.Hostname)
 	}
+
+	// Process SANs into DNS and IP categories
+	t = time.Now()
+	dnsSANs, ipSANs, err := s.processSANEntries(req.SANs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SAN entry: %w", err)
+	}
+	logger.Debug("[CSR Profile] processSANEntries: %v", time.Since(t))
 
 	// Generate RSA key pair
 	t = time.Now()
@@ -69,7 +78,8 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 		City:               req.City,
 		State:              req.State,
 		Country:            req.Country,
-		SANs:               req.SANs,
+		DNSSANs:            dnsSANs,
+		IPSANs:             ipSANs,
 	}
 
 	// Create CSR
@@ -501,9 +511,14 @@ func (s *CertificateService) GetPrivateKeyForDownload(ctx context.Context, hostn
 
 // Helper methods
 
-func (s *CertificateService) validateHostname(ctx context.Context, hostname string) error {
+func (s *CertificateService) validateHostname(ctx context.Context, hostname string, skipSuffixValidation bool) error {
 	if hostname == "" {
 		return fmt.Errorf("hostname cannot be empty")
+	}
+
+	// Skip suffix validation if requested (admin bypass)
+	if skipSuffixValidation {
+		return nil
 	}
 
 	cfg, err := s.config.GetConfig(ctx)
@@ -518,6 +533,29 @@ func (s *CertificateService) validateHostname(ctx context.Context, hostname stri
 	}
 
 	return nil
+}
+
+// processSANEntries converts SANEntry slice to separate DNS and IP SAN slices
+func (s *CertificateService) processSANEntries(entries []models.SANEntry) ([]string, []net.IP, error) {
+	var dnsSANs []string
+	var ipSANs []net.IP
+
+	for _, entry := range entries {
+		switch entry.Type {
+		case models.SANTypeDNS:
+			dnsSANs = append(dnsSANs, entry.Value)
+		case models.SANTypeIP:
+			ip := net.ParseIP(entry.Value)
+			if ip == nil {
+				return nil, nil, fmt.Errorf("invalid IP address: %s", entry.Value)
+			}
+			ipSANs = append(ipSANs, ip)
+		default:
+			return nil, nil, fmt.Errorf("unknown SAN type: %s", entry.Type)
+		}
+	}
+
+	return dnsSANs, ipSANs, nil
 }
 
 func (s *CertificateService) calculateDaysUntilExpiration(expiresAt int64) int {

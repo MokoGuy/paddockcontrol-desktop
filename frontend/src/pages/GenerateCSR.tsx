@@ -7,8 +7,16 @@ import { useCertificates } from "@/hooks/useCertificates";
 import { useConfigStore } from "@/stores/useConfigStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
-import { csrRequestSchema, type CSRRequestInput } from "@/lib/validation";
-import { Certificate } from "@/types";
+import {
+    csrRequestSchema,
+    type CSRRequestInput,
+    type SANType,
+    hasSuffix,
+    detectSANType,
+    validateIP,
+} from "@/lib/validation";
+import { parseBackendError } from "@/lib/error-parser";
+import { Certificate, CSRRequest } from "@/types";
 import {
     Card,
     CardContent,
@@ -20,6 +28,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { StatusAlert } from "@/components/shared/StatusAlert";
@@ -30,8 +44,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
-import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
+import {
+    InputGroup,
+    InputGroupInput,
+    InputGroupAddon,
+    InputGroupButton,
+} from "@/components/ui/input-group";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
@@ -40,13 +58,22 @@ interface LocationState {
     regenerate?: string;
 }
 
+// SAN entry with UI state
+interface SANInputEntry {
+    value: string;
+    type: SANType;
+}
+
 export function GenerateCSR() {
     const navigate = useNavigate();
     const location = useLocation();
     const { config, setConfig } = useConfigStore();
-    const { isEncryptionKeyProvided } = useAppStore();
-    const { generateCSR, getCertificate, isLoading, error } = useCertificates();
-    const [sanInputs, setSanInputs] = useState<string[]>([]);
+    const { isEncryptionKeyProvided, isAdminModeEnabled } = useAppStore();
+    const { generateCSR, getCertificate, isLoading } = useCertificates();
+    const [sanInputs, setSanInputs] = useState<SANInputEntry[]>([]);
+    const [skipSuffixValidation, setSkipSuffixValidation] = useState(false);
+    const [sanError, setSanError] = useState<string | null>(null);
+    const [generalError, setGeneralError] = useState<string | null>(null);
 
     // Extract mode from navigation state
     const locationState = location.state as LocationState | null;
@@ -69,6 +96,7 @@ export function GenerateCSR() {
         formState: { errors, isSubmitting },
         reset,
         setValue,
+        setError,
     } = useForm({
         resolver: zodResolver(csrRequestSchema),
         defaultValues: {
@@ -143,12 +171,15 @@ export function GenerateCSR() {
                 existingCertificate.hostname,
                 suffix,
             );
-            // Extract additional SANs (excluding the primary hostname)
+            // Extract additional SANs (excluding the primary hostname) with type detection
             const additionalSans = (
                 existingCertificate.pending_sans || []
             ).filter((san) => san !== existingCertificate.hostname);
             setSanInputs(
-                additionalSans.map((san) => stripHostnameSuffix(san, suffix)),
+                additionalSans.map((san) => ({
+                    value: stripHostnameSuffix(san, suffix),
+                    type: detectSANType(san),
+                })),
             );
 
             const formValues = {
@@ -182,12 +213,15 @@ export function GenerateCSR() {
                 existingCertificate.hostname,
                 suffix,
             );
-            // Extract additional SANs (excluding the primary hostname)
+            // Extract additional SANs (excluding the primary hostname) with type detection
             const additionalSans = (existingCertificate.sans || []).filter(
                 (san) => san !== existingCertificate.hostname,
             );
             setSanInputs(
-                additionalSans.map((san) => stripHostnameSuffix(san, suffix)),
+                additionalSans.map((san) => ({
+                    value: stripHostnameSuffix(san, suffix),
+                    type: detectSANType(san),
+                })),
             );
 
             const formValues = {
@@ -253,34 +287,101 @@ export function GenerateCSR() {
     ]);
 
     const onSubmit = async (data: CSRRequestInput) => {
-        const suffix = config?.hostname_suffix || "";
-        // Append suffix to hostname if not already present
-        const fullHostname = data.hostname.endsWith(suffix)
-            ? data.hostname
-            : data.hostname + suffix;
+        // Clear previous errors
+        setGeneralError(null);
+        setSanError(null);
 
-        // Append suffix to SANs and filter empty values
-        const sans = sanInputs
-            .filter((s) => s.trim())
-            .map((s) => (s.endsWith(suffix) ? s : s + suffix));
+        // === CLIENT-SIDE VALIDATION ===
 
-        // Always include hostname as first SAN entry
-        const allSans = [fullHostname, ...sans];
+        // 1. Hostname suffix validation (unless bypass enabled)
+        if (!skipSuffixValidation && config?.hostname_suffix) {
+            if (!hasSuffix(data.hostname, config.hostname_suffix)) {
+                setError("hostname", {
+                    type: "manual",
+                    message: `Hostname must end with ${config.hostname_suffix}`,
+                });
+                return;
+            }
+        }
+
+        // 2. SAN IP validation
+        for (const san of sanInputs) {
+            if (!san.value.trim()) continue;
+            if (san.type === "ip") {
+                const ipError = validateIP(san.value);
+                if (ipError) {
+                    setSanError(ipError);
+                    return;
+                }
+            }
+        }
+
+        // === END CLIENT-SIDE VALIDATION ===
+
+        // Build typed SANs list
+        const typedSans: Array<{ value: string; type: string }> = [];
+
+        // Add hostname as first SAN (always DNS type)
+        typedSans.push({
+            value: data.hostname,
+            type: "dns",
+        });
+
+        // Add additional SANs with their types
+        for (const san of sanInputs) {
+            if (!san.value.trim()) continue;
+            typedSans.push({
+                value: san.value,
+                type: san.type,
+            });
+        }
+
+        // Build the request object (will be cast to CSRRequest by the API layer)
+        const csrRequest = {
+            hostname: data.hostname,
+            sans: typedSans,
+            organization: data.organization,
+            organizational_unit: data.organizational_unit || "",
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            key_size: data.key_size,
+            note: data.note || "",
+            is_renewal: isRenewalMode || isRegenerateMode,
+            skip_suffix_validation: skipSuffixValidation,
+        } as CSRRequest;
 
         try {
-            const result = await generateCSR({
-                ...data,
-                hostname: fullHostname,
-                sans: allSans,
-                is_renewal: isRenewalMode || isRegenerateMode,
-            });
+            const result = await generateCSR(csrRequest);
             if (result) {
                 navigate(
                     `/certificates/${encodeURIComponent(result.hostname)}`,
                 );
             }
         } catch (err) {
-            console.error("CSR generation error:", err);
+            // Wails returns error messages as strings, not Error objects
+            const errorMessage =
+                err instanceof Error ? err.message :
+                typeof err === "string" ? err :
+                "An unexpected error occurred";
+            const parsed = parseBackendError(errorMessage);
+
+            // Apply field-level errors
+            for (const fieldError of parsed.fieldErrors) {
+                if (fieldError.field === "sans") {
+                    setSanError(fieldError.message);
+                } else {
+                    setError(fieldError.field as keyof CSRRequestInput, {
+                        type: "server",
+                        message: fieldError.message,
+                    });
+                }
+            }
+
+            // Set general error for unmapped errors
+            if (parsed.generalError) {
+                setGeneralError(parsed.generalError);
+            }
         }
     };
 
@@ -342,7 +443,7 @@ export function GenerateCSR() {
                 </Button>
             </div>
 
-            {error && (
+            {generalError && (
                 <StatusAlert
                     variant="destructive"
                     className="mb-6"
@@ -354,7 +455,7 @@ export function GenerateCSR() {
                         />
                     }
                 >
-                    {error}
+                    {generalError}
                 </StatusAlert>
             )}
 
@@ -394,37 +495,104 @@ export function GenerateCSR() {
                         onSubmit={handleSubmit(onSubmit)}
                         className="space-y-6"
                     >
+                        {/* Admin Bypass Checkbox */}
+                        <div className="flex items-center space-x-2">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="skip_suffix_validation"
+                                            checked={skipSuffixValidation}
+                                            onCheckedChange={(checked) =>
+                                                setSkipSuffixValidation(
+                                                    checked === true,
+                                                )
+                                            }
+                                            disabled={
+                                                !isAdminModeEnabled ||
+                                                isSubmitting ||
+                                                isLoading
+                                            }
+                                        />
+                                        <Label
+                                            htmlFor="skip_suffix_validation"
+                                            className={
+                                                !isAdminModeEnabled
+                                                    ? "text-muted-foreground cursor-not-allowed"
+                                                    : "cursor-pointer"
+                                            }
+                                        >
+                                            Bypass hostname suffix enforcement
+                                        </Label>
+                                    </div>
+                                </TooltipTrigger>
+                                {!isAdminModeEnabled && (
+                                    <TooltipContent>
+                                        <p>Only available in admin mode</p>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </div>
+
                         {/* Hostname */}
                         <div className="space-y-2">
                             <Label htmlFor="hostname">Hostname *</Label>
-                            <div className="flex gap-2">
-                                <ButtonGroup
-                                    className={`flex-1 ${isRenewalMode || isRegenerateMode ? "bg-muted" : ""}`}
-                                >
-                                    <InputGroup>
-                                        <InputGroupInput
-                                            id="hostname"
-                                            placeholder="example"
+                            <InputGroup
+                                className={
+                                    isRenewalMode || isRegenerateMode
+                                        ? "bg-muted"
+                                        : "bg-background"
+                                }
+                            >
+                                <InputGroupInput
+                                    id="hostname"
+                                    placeholder="server.example.com"
+                                    className="cursor-text"
+                                    disabled={
+                                        isSubmitting ||
+                                        isLoading ||
+                                        isRenewalMode ||
+                                        isRegenerateMode
+                                    }
+                                    {...register("hostname")}
+                                />
+                                {config?.hostname_suffix && (
+                                    <InputGroupAddon align="inline-end">
+                                        <InputGroupButton
+                                            onClick={() => {
+                                                const suffix =
+                                                    config.hostname_suffix;
+                                                if (
+                                                    hostname &&
+                                                    !hasSuffix(
+                                                        hostname,
+                                                        suffix,
+                                                    )
+                                                ) {
+                                                    setValue(
+                                                        "hostname",
+                                                        hostname + suffix,
+                                                    );
+                                                }
+                                            }}
                                             disabled={
                                                 isSubmitting ||
                                                 isLoading ||
                                                 isRenewalMode ||
-                                                isRegenerateMode
+                                                isRegenerateMode ||
+                                                !hostname ||
+                                                hasSuffix(
+                                                    hostname || "",
+                                                    config?.hostname_suffix ||
+                                                        "",
+                                                )
                                             }
-                                            {...register("hostname")}
-                                        />
-                                    </InputGroup>
-                                    <ButtonGroupText
-                                        className={
-                                            isRenewalMode || isRegenerateMode
-                                                ? "opacity-50"
-                                                : ""
-                                        }
-                                    >
-                                        {config?.hostname_suffix}
-                                    </ButtonGroupText>
-                                </ButtonGroup>
-                            </div>
+                                        >
+                                            +{config.hostname_suffix}
+                                        </InputGroupButton>
+                                    </InputGroupAddon>
+                                )}
+                            </InputGroup>
                             {errors.hostname && (
                                 <p className="text-sm text-destructive">
                                     {errors.hostname.message}
@@ -446,18 +614,23 @@ export function GenerateCSR() {
                             <div className="space-y-2">
                                 {/* Show hostname as first SAN */}
                                 <div className="flex gap-2">
-                                    <ButtonGroup className="flex-1 bg-muted">
-                                        <InputGroup>
-                                            <InputGroupInput
-                                                value={hostname || ""}
-                                                placeholder="Enter hostname first"
-                                                disabled
-                                            />
-                                        </InputGroup>
-                                        <ButtonGroupText className="opacity-50">
-                                            {config?.hostname_suffix}
-                                        </ButtonGroupText>
-                                    </ButtonGroup>
+                                    <Select value="dns" disabled>
+                                        <SelectTrigger className="w-24 bg-muted">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="dns">
+                                                DNS
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputGroup className="flex-1 bg-muted">
+                                        <InputGroupInput
+                                            value={hostname || ""}
+                                            placeholder="Enter hostname first"
+                                            disabled
+                                        />
+                                    </InputGroup>
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -467,31 +640,113 @@ export function GenerateCSR() {
                                         Primary
                                     </Button>
                                 </div>
-                                {sanInputs.map((_, index) => (
+                                {sanInputs.map((san, index) => (
                                     <div key={index} className="flex gap-2">
-                                        <ButtonGroup className="flex-1">
-                                            <InputGroup>
-                                                <InputGroupInput
-                                                    placeholder="example"
-                                                    disabled={
-                                                        isSubmitting ||
-                                                        isLoading
-                                                    }
-                                                    value={sanInputs[index]}
-                                                    onChange={(e) => {
-                                                        const newSans = [
-                                                            ...sanInputs,
-                                                        ];
-                                                        newSans[index] =
-                                                            e.target.value;
-                                                        setSanInputs(newSans);
-                                                    }}
-                                                />
-                                            </InputGroup>
-                                            <ButtonGroupText>
-                                                {config?.hostname_suffix}
-                                            </ButtonGroupText>
-                                        </ButtonGroup>
+                                        <Select
+                                            value={san.type}
+                                            onValueChange={(
+                                                value: SANType,
+                                            ) => {
+                                                const newSans = [
+                                                    ...sanInputs,
+                                                ];
+                                                newSans[index] = {
+                                                    ...newSans[index],
+                                                    type: value,
+                                                };
+                                                setSanInputs(newSans);
+                                            }}
+                                            disabled={
+                                                isSubmitting || isLoading
+                                            }
+                                        >
+                                            <SelectTrigger className="w-24">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="dns">
+                                                    DNS
+                                                </SelectItem>
+                                                <SelectItem value="ip">
+                                                    IP
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputGroup className="flex-1 bg-background">
+                                            <InputGroupInput
+                                                placeholder={
+                                                    san.type === "dns"
+                                                        ? "server.example.com"
+                                                        : "192.168.1.100 or 2001:db8::1"
+                                                }
+                                                className="cursor-text"
+                                                disabled={
+                                                    isSubmitting || isLoading
+                                                }
+                                                value={san.value}
+                                                onChange={(e) => {
+                                                    const newSans = [
+                                                        ...sanInputs,
+                                                    ];
+                                                    newSans[index] = {
+                                                        ...newSans[index],
+                                                        value: e.target.value,
+                                                    };
+                                                    setSanInputs(newSans);
+                                                }}
+                                            />
+                                            {san.type !== "ip" &&
+                                                config?.hostname_suffix && (
+                                                    <InputGroupAddon align="inline-end">
+                                                        <InputGroupButton
+                                                            onClick={() => {
+                                                                const suffix =
+                                                                    config.hostname_suffix;
+                                                                if (
+                                                                    san.value &&
+                                                                    !hasSuffix(
+                                                                        san.value,
+                                                                        suffix,
+                                                                    )
+                                                                ) {
+                                                                    const newSans =
+                                                                        [
+                                                                            ...sanInputs,
+                                                                        ];
+                                                                    newSans[
+                                                                        index
+                                                                    ] = {
+                                                                        ...newSans[
+                                                                            index
+                                                                        ],
+                                                                        value:
+                                                                            san.value +
+                                                                            suffix,
+                                                                    };
+                                                                    setSanInputs(
+                                                                        newSans,
+                                                                    );
+                                                                }
+                                                            }}
+                                                            disabled={
+                                                                isSubmitting ||
+                                                                isLoading ||
+                                                                !san.value ||
+                                                                hasSuffix(
+                                                                    san.value,
+                                                                    config?.hostname_suffix ||
+                                                                        "",
+                                                                )
+                                                            }
+                                                        >
+                                                            +
+                                                            {
+                                                                config.hostname_suffix
+                                                            }
+                                                        </InputGroupButton>
+                                                    </InputGroupAddon>
+                                                )}
+                                        </InputGroup>
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -513,12 +768,20 @@ export function GenerateCSR() {
                                     type="button"
                                     variant="outline"
                                     onClick={() =>
-                                        setSanInputs([...sanInputs, ""])
+                                        setSanInputs([
+                                            ...sanInputs,
+                                            { value: "", type: "dns" },
+                                        ])
                                     }
                                     disabled={isSubmitting || isLoading}
                                 >
                                     Add SAN
                                 </Button>
+                                {sanError && (
+                                    <p className="text-sm text-destructive">
+                                        {sanError}
+                                    </p>
+                                )}
                             </div>
                         </div>
 

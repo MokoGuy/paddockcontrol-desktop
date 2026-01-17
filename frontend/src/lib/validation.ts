@@ -100,6 +100,95 @@ export const setupStepFields = {
   review: [],
 } as const;
 
+// SAN Type enum
+export const sanTypeSchema = z.enum(['dns', 'ip']);
+export type SANType = z.infer<typeof sanTypeSchema>;
+
+// SAN Entry
+export const sanEntrySchema = z.object({
+  value: z.string().min(1, 'SAN value is required'),
+  type: sanTypeSchema,
+});
+export type SANEntry = z.infer<typeof sanEntrySchema>;
+
+// Validation regex patterns
+const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const ipv6Regex = /^(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}$|^::(?:[a-fA-F0-9]{1,4}:){0,6}[a-fA-F0-9]{1,4}$|^[a-fA-F0-9]{1,4}::(?:[a-fA-F0-9]{1,4}:){0,5}[a-fA-F0-9]{1,4}$|^(?:[a-fA-F0-9]{1,4}:){1,6}::[a-fA-F0-9]{1,4}$|^(?:[a-fA-F0-9]{1,4}:){1,7}:$/;
+const dnsLabelRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+
+/**
+ * Validate a DNS hostname
+ * - Must have at least 2 levels (e.g., domain.tld)
+ * - Wildcards (*.domain.tld) are allowed
+ */
+export function validateDNS(value: string): string | null {
+  if (!value) return 'DNS name is required';
+
+  // Check for wildcard
+  const isWildcard = value.startsWith('*.');
+  const dnsName = isWildcard ? value.slice(2) : value;
+
+  const labels = dnsName.split('.');
+
+  // Must have at least 2 levels
+  if (labels.length < 2) {
+    return 'Hostname must have at least 2 levels (e.g., domain.tld)';
+  }
+
+  // Validate each label
+  for (const label of labels) {
+    if (!label || label.length > 63) {
+      return 'Invalid hostname format';
+    }
+    if (!dnsLabelRegex.test(label)) {
+      return 'Invalid hostname format';
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Validate an IP address (IPv4 or IPv6)
+ */
+export function validateIP(value: string): string | null {
+  if (!value) return 'IP address is required';
+  if (!ipv4Regex.test(value) && !ipv6Regex.test(value)) {
+    return 'Invalid IP address format (IPv4 or IPv6)';
+  }
+  return null;
+}
+
+/**
+ * Validate a SAN value based on its type
+ */
+export function validateSANValue(value: string, type: SANType): string | null {
+  switch (type) {
+    case 'dns':
+      return validateDNS(value);
+    case 'ip':
+      return validateIP(value);
+    default:
+      return 'Unknown SAN type';
+  }
+}
+
+/**
+ * Check if a hostname ends with the given suffix
+ */
+export function hasSuffix(value: string, suffix: string): boolean {
+  if (!suffix) return false;
+  return value.endsWith(suffix);
+}
+
+/**
+ * Detect SAN type from value
+ */
+export function detectSANType(value: string): SANType {
+  if (ipv4Regex.test(value) || ipv6Regex.test(value)) return 'ip';
+  return 'dns';
+}
+
 // CSR Request
 export const csrRequestSchema = z.object({
   hostname: z
@@ -107,7 +196,7 @@ export const csrRequestSchema = z.object({
     .min(1, 'Hostname is required')
     .max(255, 'Hostname is too long'),
   sans: z
-    .array(z.string())
+    .array(sanEntrySchema)
     .optional()
     .default([]),
   organization: z
@@ -142,6 +231,9 @@ export const csrRequestSchema = z.object({
     .optional()
     .or(z.literal('')),
   is_renewal: z
+    .boolean()
+    .default(false),
+  skip_suffix_validation: z
     .boolean()
     .default(false),
 });

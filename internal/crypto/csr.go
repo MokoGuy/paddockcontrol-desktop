@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"net"
 )
 
 // CSRRequest represents the data needed to create a CSR
@@ -18,7 +19,8 @@ type CSRRequest struct {
 	City               string
 	State              string
 	Country            string
-	SANs               []string // Subject Alternative Names
+	DNSSANs            []string // DNS Subject Alternative Names
+	IPSANs             []net.IP // IP Address Subject Alternative Names
 }
 
 // CreateCSR creates a new Certificate Signing Request
@@ -40,7 +42,8 @@ func CreateCSR(req CSRRequest, privateKey *rsa.PrivateKey) ([]byte, error) {
 	template := x509.CertificateRequest{
 		Subject:            subject,
 		SignatureAlgorithm: x509.SHA256WithRSA,
-		DNSNames:           req.SANs,
+		DNSNames:           req.DNSSANs,
+		IPAddresses:        req.IPSANs,
 	}
 
 	// Create CSR
@@ -212,7 +215,7 @@ func ChainToPEM(certs []*x509.Certificate) []byte {
 // CertificateDetails represents extracted information from a certificate
 type CertificateDetails struct {
 	Hostname           string
-	SANs               []string
+	SANs               []string // All SANs as strings (DNS names and IP addresses)
 	Organization       string
 	OrganizationalUnit string
 	City               string
@@ -221,11 +224,21 @@ type CertificateDetails struct {
 	KeySize            int
 }
 
+// combineAllSANs combines DNS names and IP addresses into a single string slice
+func combineAllSANs(dnsNames []string, ipAddresses []net.IP) []string {
+	allSANs := make([]string, 0, len(dnsNames)+len(ipAddresses))
+	allSANs = append(allSANs, dnsNames...)
+	for _, ip := range ipAddresses {
+		allSANs = append(allSANs, ip.String())
+	}
+	return allSANs
+}
+
 // ExtractCertificateDetails extracts all relevant details from a parsed certificate
 func ExtractCertificateDetails(cert *x509.Certificate) (*CertificateDetails, error) {
 	details := &CertificateDetails{
 		Hostname: cert.Subject.CommonName,
-		SANs:     cert.DNSNames,
+		SANs:     combineAllSANs(cert.DNSNames, cert.IPAddresses),
 	}
 
 	// Extract organization details (take first element from arrays)
@@ -265,7 +278,7 @@ func ExtractCertificateDetails(cert *x509.Certificate) (*CertificateDetails, err
 func ExtractCSRDetails(csr *x509.CertificateRequest) (*CertificateDetails, error) {
 	details := &CertificateDetails{
 		Hostname: csr.Subject.CommonName,
-		SANs:     csr.DNSNames,
+		SANs:     combineAllSANs(csr.DNSNames, csr.IPAddresses),
 	}
 
 	// Extract organization details (take first element from arrays)

@@ -11,4 +11,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Allow port override via env variable (used by Playwright tests)
+    port: process.env.VITE_DEV_SERVER_PORT
+      ? parseInt(process.env.VITE_DEV_SERVER_PORT, 10)
+      : undefined,
+  },
 })

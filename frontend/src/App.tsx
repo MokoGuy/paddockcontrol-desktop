@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import {
     HashRouter as Router,
     Routes,
@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { EventsOnce } from "../wailsjs/runtime/runtime";
 import { useAppStore } from "@/stores/useAppStore";
+import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { api } from "@/lib/api";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -63,8 +64,19 @@ function AppContent() {
         setIsSetupComplete,
         isLoading,
         setIsLoading,
+        setIsAdminModeEnabled,
     } = useAppStore();
     const location = useLocation();
+
+    // Enable admin mode via Konami code (app-wide, except during setup)
+    const isSetupPage = location.pathname.startsWith("/setup");
+    const handleKonamiSuccess = useCallback(() => {
+        if (!isSetupPage) {
+            console.debug("[App] Konami code entered - admin mode enabled");
+            setIsAdminModeEnabled(true);
+        }
+    }, [isSetupPage, setIsAdminModeEnabled]);
+    useKonamiCode(handleKonamiSuccess);
 
     useEffect(() => {
         // Check initial state on app load
