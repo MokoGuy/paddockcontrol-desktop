@@ -15,6 +15,9 @@ export async function resetDatabase(page: Page): Promise<void> {
     await page.goto("/");
     await waitForWails(page);
     await page.evaluate(() => (window as any).go.main.App.ResetDatabase());
+    // Reload to let React app recognize the unconfigured state
+    await page.reload();
+    await waitForWails(page);
 }
 
 // Composite helper: reset + complete wizard (limited mode - no encryption key in session)
