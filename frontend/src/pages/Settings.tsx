@@ -302,44 +302,6 @@ export function Settings() {
                 />
             )}
 
-            {/* Backup Management */}
-            <Card className="shadow-sm border-border">
-                <CardHeader>
-                    <CardTitle>Backup Management</CardTitle>
-                    <CardDescription>
-                        Export and manage your backups
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {backupError && (
-                        <StatusAlert
-                            variant="destructive"
-                            className="mb-4"
-                            icon={
-                                <HugeiconsIcon
-                                    icon={AlertCircleIcon}
-                                    className="size-4"
-                                    strokeWidth={2}
-                                />
-                            }
-                        >
-                            {backupError}
-                        </StatusAlert>
-                    )}
-
-                    <p className="text-sm text-muted-foreground mb-4">
-                        Create an encrypted backup of your CA configuration and
-                        certificates.
-                    </p>
-                    <Button
-                        onClick={() => setExportConfirming(true)}
-                        disabled={backupLoading}
-                    >
-                        {backupLoading ? "Exporting..." : "Export Backup Now"}
-                    </Button>
-                </CardContent>
-            </Card>
-
             {/* Data Directory */}
             {dataDir && (
                 <Card className="mt-6 shadow-sm border-border">
@@ -498,6 +460,35 @@ export function Settings() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Backup Management */}
+            <Card className="mt-6 border-blue-500/30 bg-blue-500/5">
+                <CardContent className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            Backup Management
+                        </p>
+                        <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                            Create an encrypted backup of your CA configuration and
+                            certificates.
+                        </p>
+                        {backupError && (
+                            <p className="text-xs text-destructive mt-1">
+                                {backupError}
+                            </p>
+                        )}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-500/50 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400 dark:hover:bg-blue-500/20"
+                        onClick={() => setExportConfirming(true)}
+                        disabled={backupLoading}
+                    >
+                        {backupLoading ? "Exporting..." : "Export Backup"}
+                    </Button>
+                </CardContent>
+            </Card>
 
             {/* Change Encryption Key */}
             <Card
