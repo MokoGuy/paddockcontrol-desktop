@@ -75,6 +75,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateConfigStmt, err = db.PrepareContext(ctx, updateConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateConfig: %w", err)
 	}
+	if q.updateEncryptedKeysStmt, err = db.PrepareContext(ctx, updateEncryptedKeys); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateEncryptedKeys: %w", err)
+	}
 	if q.updatePendingCSRStmt, err = db.PrepareContext(ctx, updatePendingCSR); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdatePendingCSR: %w", err)
 	}
@@ -171,6 +174,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateConfigStmt: %w", cerr)
 		}
 	}
+	if q.updateEncryptedKeysStmt != nil {
+		if cerr := q.updateEncryptedKeysStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateEncryptedKeysStmt: %w", cerr)
+		}
+	}
 	if q.updatePendingCSRStmt != nil {
 		if cerr := q.updatePendingCSRStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updatePendingCSRStmt: %w", cerr)
@@ -237,6 +245,7 @@ type Queries struct {
 	updateCertificateNoteStmt     *sql.Stmt
 	updateCertificateReadOnlyStmt *sql.Stmt
 	updateConfigStmt              *sql.Stmt
+	updateEncryptedKeysStmt       *sql.Stmt
 	updatePendingCSRStmt          *sql.Stmt
 	updatePendingNoteStmt         *sql.Stmt
 }
@@ -262,6 +271,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		updateCertificateNoteStmt:     q.updateCertificateNoteStmt,
 		updateCertificateReadOnlyStmt: q.updateCertificateReadOnlyStmt,
 		updateConfigStmt:              q.updateConfigStmt,
+		updateEncryptedKeysStmt:       q.updateEncryptedKeysStmt,
 		updatePendingCSRStmt:          q.updatePendingCSRStmt,
 		updatePendingNoteStmt:         q.updatePendingNoteStmt,
 	}

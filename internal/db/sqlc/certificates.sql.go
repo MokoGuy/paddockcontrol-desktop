@@ -283,6 +283,26 @@ func (q *Queries) UpdateCertificateReadOnly(ctx context.Context, arg UpdateCerti
 	return err
 }
 
+const updateEncryptedKeys = `-- name: UpdateEncryptedKeys :exec
+UPDATE certificates
+SET encrypted_private_key = ?,
+    pending_encrypted_private_key = ?,
+    last_modified = unixepoch('now')
+WHERE hostname = ?
+`
+
+type UpdateEncryptedKeysParams struct {
+	EncryptedPrivateKey        []byte `json:"encrypted_private_key"`
+	PendingEncryptedPrivateKey []byte `json:"pending_encrypted_private_key"`
+	Hostname                   string `json:"hostname"`
+}
+
+// Update encrypted private key fields (for key rotation)
+func (q *Queries) UpdateEncryptedKeys(ctx context.Context, arg UpdateEncryptedKeysParams) error {
+	_, err := q.exec(ctx, q.updateEncryptedKeysStmt, updateEncryptedKeys, arg.EncryptedPrivateKey, arg.PendingEncryptedPrivateKey, arg.Hostname)
+	return err
+}
+
 const updatePendingCSR = `-- name: UpdatePendingCSR :exec
 UPDATE certificates
 SET pending_csr_pem = ?,

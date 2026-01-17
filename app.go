@@ -14,6 +14,7 @@ import (
 	"paddockcontrol-desktop/internal/config"
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db"
+	"paddockcontrol-desktop/internal/db/sqlc"
 	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 	"paddockcontrol-desktop/internal/services"
@@ -380,6 +381,106 @@ func (a *App) ClearEncryptionKey() error {
 	a.encryptionKeyProvided = false
 	// Keep waitingForEncryptionKey = false (user can provide again from Settings)
 
+	return nil
+}
+
+// ChangeEncryptionKey changes the encryption key by re-encrypting all certificates atomically
+// Requires the current encryption key to be already provided
+func (a *App) ChangeEncryptionKey(newKey string) error {
+	// Check current key is provided (without holding the lock for the entire operation)
+	if err := a.requireEncryptionKey(); err != nil {
+		return fmt.Errorf("current encryption key required: %w", err)
+	}
+
+	// Validate new key
+	if len(newKey) < 16 {
+		return fmt.Errorf("new encryption key must be at least 16 characters")
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	logger.Info("Changing encryption key - starting atomic re-encryption...")
+
+	// Get all certificates
+	certs, err := a.db.Queries().ListAllCertificates(a.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list certificates: %w", err)
+	}
+
+	// Pre-compute all re-encrypted keys (decrypt with old, encrypt with new)
+	type reEncryptedCert struct {
+		Hostname                   string
+		NewEncryptedPrivateKey     []byte
+		NewPendingEncryptedPrivateKey []byte
+	}
+	var reEncrypted []reEncryptedCert
+
+	oldKey := string(a.encryptionKey)
+
+	for _, cert := range certs {
+		rec := reEncryptedCert{Hostname: cert.Hostname}
+
+		// Re-encrypt active private key if present
+		if len(cert.EncryptedPrivateKey) > 0 {
+			plaintext, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, oldKey)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt key for %s: %w", cert.Hostname, err)
+			}
+			newEncrypted, err := crypto.EncryptPrivateKey(plaintext, newKey)
+			if err != nil {
+				return fmt.Errorf("failed to re-encrypt key for %s: %w", cert.Hostname, err)
+			}
+			rec.NewEncryptedPrivateKey = newEncrypted
+		}
+
+		// Re-encrypt pending private key if present
+		if len(cert.PendingEncryptedPrivateKey) > 0 {
+			plaintext, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, oldKey)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt pending key for %s: %w", cert.Hostname, err)
+			}
+			newEncrypted, err := crypto.EncryptPrivateKey(plaintext, newKey)
+			if err != nil {
+				return fmt.Errorf("failed to re-encrypt pending key for %s: %w", cert.Hostname, err)
+			}
+			rec.NewPendingEncryptedPrivateKey = newEncrypted
+		}
+
+		reEncrypted = append(reEncrypted, rec)
+	}
+
+	// Atomic transaction: update all certificates
+	tx, err := a.db.GetDB().BeginTx(a.ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() // Will be no-op if commit succeeds
+
+	qtx := a.db.Queries().WithTx(tx)
+
+	for _, rec := range reEncrypted {
+		err := qtx.UpdateEncryptedKeys(a.ctx, sqlc.UpdateEncryptedKeysParams{
+			EncryptedPrivateKey:        rec.NewEncryptedPrivateKey,
+			PendingEncryptedPrivateKey: rec.NewPendingEncryptedPrivateKey,
+			Hostname:                   rec.Hostname,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update keys for %s: %w", rec.Hostname, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// Update in-memory key - zero out old key for security
+	for i := range a.encryptionKey {
+		a.encryptionKey[i] = 0
+	}
+	a.encryptionKey = []byte(newKey)
+
+	logger.Info("Encryption key changed successfully, re-encrypted %d certificates", len(reEncrypted))
 	return nil
 }
 

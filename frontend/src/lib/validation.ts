@@ -10,6 +10,22 @@ export const encryptionKeySchema = z.object({
 
 export type EncryptionKeyInput = z.infer<typeof encryptionKeySchema>;
 
+// Change Encryption Key
+export const changeEncryptionKeySchema = z.object({
+  new_key: z
+    .string()
+    .min(16, 'New encryption key must be at least 16 characters')
+    .max(256, 'Encryption key is too long'),
+  new_key_confirm: z
+    .string()
+    .min(1, 'Please confirm your new encryption key'),
+}).refine((data) => data.new_key === data.new_key_confirm, {
+  message: "Encryption keys do not match",
+  path: ["new_key_confirm"],
+});
+
+export type ChangeEncryptionKeyInput = z.infer<typeof changeEncryptionKeySchema>;
+
 // Setup Request
 export const setupRequestSchema = z.object({
   owner_email: z

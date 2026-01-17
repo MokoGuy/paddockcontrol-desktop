@@ -44,6 +44,8 @@ type Querier interface {
 	UpdateCertificateReadOnly(ctx context.Context, arg UpdateCertificateReadOnlyParams) error
 	// Update configuration (preserves is_configured flag)
 	UpdateConfig(ctx context.Context, arg UpdateConfigParams) error
+	// Update encrypted private key fields (for key rotation)
+	UpdateEncryptedKeys(ctx context.Context, arg UpdateEncryptedKeysParams) error
 	// Store or update pending CSR and key (unified for initial generation or renewal)
 	UpdatePendingCSR(ctx context.Context, arg UpdatePendingCSRParams) error
 	// Update the pending note field

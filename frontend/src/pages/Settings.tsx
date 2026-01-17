@@ -16,6 +16,11 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
@@ -35,6 +40,7 @@ import { StatusAlert } from "@/components/shared/StatusAlert";
 import { formatDateTime } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
+import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 export function Settings() {
@@ -45,6 +51,7 @@ export function Settings() {
         setIsAdminModeEnabled,
         setIsSetupComplete,
         setIsWaitingForEncryptionKey,
+        isEncryptionKeyProvided,
         setIsEncryptionKeyProvided,
     } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
@@ -67,6 +74,7 @@ export function Settings() {
     const [exportConfirming, setExportConfirming] = useState(false);
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
+    const [changeKeyOpen, setChangeKeyOpen] = useState(false);
     const { copy, isCopied } = useCopyToClipboard();
     const [buildInfo, setBuildInfo] = useState<Record<string, string> | null>(
         null,
@@ -406,9 +414,52 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Danger Zone - disabled until admin mode enabled via Konami code */}
+            {/* Change Encryption Key */}
             <Card
                 className={`mt-6 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
+            >
+                <CardContent className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-destructive">
+                            Danger Zone - Change Encryption Key
+                        </p>
+                        <p className="text-xs text-admin/80 mt-1">
+                            Re-encrypt all private keys with a new encryption
+                            key.
+                        </p>
+                    </div>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-admin/50 text-admin hover:bg-admin/20"
+                                    onClick={() => setChangeKeyOpen(true)}
+                                    disabled={
+                                        !isAdminModeEnabled ||
+                                        !isEncryptionKeyProvided
+                                    }
+                                >
+                                    Change Key
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!isAdminModeEnabled && (
+                            <TooltipContent>Admin mode required</TooltipContent>
+                        )}
+                        {isAdminModeEnabled && !isEncryptionKeyProvided && (
+                            <TooltipContent>
+                                Encryption key required
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                </CardContent>
+            </Card>
+
+            {/* Danger Zone - Reset Database */}
+            <Card
+                className={`mt-4 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
             >
                 <CardContent className="flex items-center justify-between">
                     <div>
@@ -420,15 +471,24 @@ export function Settings() {
                             and encryption keys.
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-admin/50 text-admin hover:bg-admin/20"
-                        onClick={() => setResetConfirming(true)}
-                        disabled={!isAdminModeEnabled || resetLoading}
-                    >
-                        {resetLoading ? "Resetting..." : "Reset Database"}
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-admin/50 text-admin hover:bg-admin/20"
+                                    onClick={() => setResetConfirming(true)}
+                                    disabled={!isAdminModeEnabled || resetLoading}
+                                >
+                                    {resetLoading ? "Resetting..." : "Reset Database"}
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!isAdminModeEnabled && (
+                            <TooltipContent>Admin mode required</TooltipContent>
+                        )}
+                    </Tooltip>
                 </CardContent>
             </Card>
 
@@ -463,6 +523,12 @@ export function Settings() {
                 isLoading={resetLoading}
                 onConfirm={handleResetDatabase}
                 onCancel={() => setResetConfirming(false)}
+            />
+
+            {/* Change Encryption Key Dialog */}
+            <ChangeEncryptionKeyDialog
+                open={changeKeyOpen}
+                onClose={() => setChangeKeyOpen(false)}
             />
         </>
     );

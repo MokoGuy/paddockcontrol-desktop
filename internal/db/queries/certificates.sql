@@ -85,6 +85,14 @@ SET read_only = ?,
     last_modified = unixepoch('now')
 WHERE hostname = ?;
 
+-- name: UpdateEncryptedKeys :exec
+-- Update encrypted private key fields (for key rotation)
+UPDATE certificates
+SET encrypted_private_key = ?,
+    pending_encrypted_private_key = ?,
+    last_modified = unixepoch('now')
+WHERE hostname = ?;
+
 -- name: RestoreCertificate :exec
 -- Restore a complete certificate from backup in a single operation
 INSERT INTO certificates (
