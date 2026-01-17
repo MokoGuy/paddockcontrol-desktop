@@ -27,9 +27,14 @@ export async function setupFromScratch(page: Page): Promise<void> {
 }
 
 // Composite helper: reset + wizard + encryption key (full mode)
+// Note: After wizard completion, we're already in full mode (key was provided in step 5)
 export async function setupWithFullMode(page: Page): Promise<void> {
     await setupFromScratch(page);
-    await provideEncryptionKey(page);
+    // Only provide key if we're in limited mode (key not already set)
+    const provideKeyButton = page.getByRole("button", { name: "Provide Key" });
+    if (await provideKeyButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await provideEncryptionKey(page);
+    }
 }
 
 // Generate a certificate and return full hostname
@@ -37,12 +42,16 @@ export async function generateCertificate(
     page: Page,
     hostname: string
 ): Promise<string> {
-    await page.getByRole("button", { name: "Generate CSR" }).click();
-    await page.getByRole("textbox", { name: /Common Name/i }).fill(hostname);
-    await page.getByRole("button", { name: "Continue" }).click();
-    await page.getByRole("button", { name: "Generate" }).waitFor({ state: "visible" });
-    await page.getByRole("button", { name: "Generate" }).click();
-    await expect(page).toHaveURL(new RegExp(hostname), { timeout: 10000 });
+    // Click header button to navigate to CSR form
+    await page.getByRole("button", { name: "Generate CSR" }).first().click();
+    // Wait for form to be ready
+    const hostnameInput = page.getByPlaceholder("example");
+    await hostnameInput.waitFor({ state: "visible" });
+    // Fill hostname
+    await hostnameInput.fill(hostname);
+    // Click form submit button (last one on page)
+    await page.getByRole("button", { name: "Generate CSR" }).last().click();
+    await expect(page).toHaveURL(new RegExp(hostname), { timeout: 30000 });
     return `${hostname}.test.local`;
 }
 
@@ -99,7 +108,7 @@ export async function completeSetupWizard(page: Page) {
     // Wait for either dashboard or error message
     const dashboardOrError = await Promise.race([
         page
-            .getByRole("heading", { name: "Certificates" })
+            .getByRole("heading", { name: "Certificates", exact: true })
             .waitFor({ state: "visible", timeout: 20000 })
             .then(() => "dashboard"),
         page
