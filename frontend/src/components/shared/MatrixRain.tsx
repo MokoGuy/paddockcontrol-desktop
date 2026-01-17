@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { useThemeStore } from "@/stores/useThemeStore";
+import { useTheme } from "next-themes";
 
 interface MatrixRainProps {
     duration?: number;
@@ -9,7 +9,8 @@ interface MatrixRainProps {
 
 export function MatrixRain({ duration = 1200, onComplete }: MatrixRainProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const { isDarkMode } = useThemeStore();
+    const { resolvedTheme } = useTheme();
+    const isDarkMode = resolvedTheme === "dark";
 
     useEffect(() => {
         const canvas = canvasRef.current;

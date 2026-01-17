@@ -1,63 +1,3 @@
-export type Theme = 'light' | 'dark' | 'system';
-
-/**
- * Get the current theme from localStorage or system preference
- */
-export function getTheme(): Theme {
-  const stored = localStorage.getItem('pc-theme') as Theme | null;
-  if (stored && ['light', 'dark', 'system'].includes(stored)) {
-    return stored;
-  }
-  return 'system';
-}
-
-/**
- * Save theme preference to localStorage
- */
-export function setTheme(theme: Theme): void {
-  localStorage.setItem('pc-theme', theme);
-  applyTheme(theme);
-}
-
-/**
- * Apply theme to document
- */
-export function applyTheme(theme: Theme): void {
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  const html = document.documentElement;
-  if (isDark) {
-    html.classList.add('dark');
-  } else {
-    html.classList.remove('dark');
-  }
-}
-
-/**
- * Check if system prefers dark mode
- */
-export function isSystemDarkMode(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-/**
- * Listen for system theme changes
- */
-export function watchSystemTheme(callback: (isDark: boolean) => void): () => void {
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const handler = (e: MediaQueryListEvent) => callback(e.matches);
-
-  // Use addEventListener for modern browsers
-  if (mediaQuery.addEventListener) {
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }
-
-  return () => {};
-}
-
 /**
  * Format Unix timestamp to readable date
  */
@@ -103,9 +43,6 @@ export function getRelativeTime(timestamp: number | null | undefined): string {
 }
 
 /**
- * Get status color for certificate status
- */
-/**
  * Get computed RGB color from CSS variable
  * Works with OKLCH values by using browser's color computation
  */
@@ -139,4 +76,3 @@ export function getStatusColor(status: string): string {
       return 'bg-muted text-muted-foreground';
   }
 }
-

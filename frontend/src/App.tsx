@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "next-themes";
 import { EventsOnce } from "../wailsjs/runtime/runtime";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
@@ -209,11 +210,13 @@ function AppContent() {
 
 export default function App() {
     return (
-        <ErrorBoundary>
-            <Router>
-                <AppContent />
-            </Router>
-            <Toaster richColors position="top-right" offset="80px" />
-        </ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ErrorBoundary>
+                <Router>
+                    <AppContent />
+                </Router>
+                <Toaster richColors position="top-right" offset="80px" />
+            </ErrorBoundary>
+        </ThemeProvider>
     );
 }

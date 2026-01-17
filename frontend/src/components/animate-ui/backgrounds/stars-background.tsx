@@ -9,8 +9,8 @@ import {
   type SpringOptions,
   type Transition,
 } from 'motion/react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-import { useThemeStore } from '@/stores/useThemeStore';
 
 type StarLayerProps = HTMLMotionProps<'div'> & {
   count: number;
@@ -78,7 +78,8 @@ function StarsBackground({
   pointerEvents = true,
   ...props
 }: StarsBackgroundProps) {
-  const { isDarkMode } = useThemeStore();
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
 
   const starColor = isDarkMode ? '#fff' : '#333';
   const backgroundClass = isDarkMode

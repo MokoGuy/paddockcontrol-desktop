@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTheme } from "next-themes";
 import { useAppStore } from "@/stores/useAppStore";
-import { useThemeStore } from "@/stores/useThemeStore";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, MinusSignIcon, SquareIcon, Bug01Icon, Copy01Icon } from "@hugeicons/core-free-icons";
@@ -41,7 +41,8 @@ export function AppHeader({
     showCloseButton = true,
 }: AppHeaderProps) {
     const { isAdminModeEnabled, setIsAdminModeEnabled } = useAppStore();
-    const { isDarkMode } = useThemeStore();
+    const { resolvedTheme } = useTheme();
+    const isDarkMode = resolvedTheme === "dark";
     const [version, setVersion] = useState<string>("");
     const [showPulse, setShowPulse] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);

@@ -1,35 +1,32 @@
-import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Sun02Icon, Moon02Icon } from "@hugeicons/core-free-icons";
-import { useThemeStore } from "@/stores/useThemeStore";
-import { setTheme } from "@/lib/theme";
+import { ThemeToggler } from "@/components/animate-ui/primitives/effects/theme-toggler";
+import { IconButton } from "@/components/animate-ui/components/buttons/icon";
 
 export function ThemeToggle() {
-    const { isDarkMode, setIsDarkMode } = useThemeStore();
-
-    const toggleTheme = () => {
-        const newTheme = isDarkMode ? "light" : "dark";
-        setTheme(newTheme); // Saves to localStorage and applies to DOM
-        setIsDarkMode(!isDarkMode); // Updates store
-    };
+    const { theme, resolvedTheme, setTheme } = useTheme();
 
     return (
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
-            className={`text-muted-foreground hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent ${
-                isDarkMode
-                    ? "hover:text-primary"
-                    : "hover:text-warning"
-            }`}
+        <ThemeToggler
+            theme={theme as "light" | "dark" | "system"}
+            resolvedTheme={resolvedTheme as "light" | "dark"}
+            setTheme={setTheme}
         >
-            <HugeiconsIcon
-                icon={isDarkMode ? Moon02Icon : Sun02Icon}
-                className="w-5 h-5"
-                strokeWidth={2}
-            />
-        </Button>
+            {({ resolved, toggleTheme }) => (
+                <IconButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleTheme(resolved === "dark" ? "light" : "dark")}
+                    title={`Switch to ${resolved === "dark" ? "light" : "dark"} mode`}
+                >
+                    <HugeiconsIcon
+                        icon={resolved === "dark" ? Moon02Icon : Sun02Icon}
+                        className="w-5 h-5"
+                        strokeWidth={2}
+                    />
+                </IconButton>
+            )}
+        </ThemeToggler>
     );
 }

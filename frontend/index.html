@@ -11,9 +11,10 @@
         <title>paddockcontrol</title>
         <script>
             // Initialize theme before React renders to prevent flash
+            // Uses 'theme' key to match next-themes default
             (function () {
                 try {
-                    const stored = localStorage.getItem("pc-theme");
+                    const stored = localStorage.getItem("theme");
                     const theme =
                         stored && ["light", "dark", "system"].includes(stored)
                             ? stored

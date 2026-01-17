@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import {
     Card,
     CardDescription,
@@ -8,12 +9,12 @@ import {
 } from "@/components/ui/card";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { useThemeStore } from "@/stores/useThemeStore";
 import logo from "@/assets/images/logo-universal.png";
 
 export function SetupChoice() {
     const navigate = useNavigate();
-    const { isDarkMode } = useThemeStore();
+    const { resolvedTheme } = useTheme();
+    const isDarkMode = resolvedTheme === "dark";
     const part1 = "Welcome to";
     const part2 = "PaddockControl";
     const part1Delay = 0.3;
