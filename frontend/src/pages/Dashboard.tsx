@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useKonamiCode } from "@/hooks/useKonamiCode";
@@ -60,6 +61,16 @@ export function Dashboard() {
     );
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [showKeyDialog, setShowKeyDialog] = useState(false);
+    const [selectedHostname, setSelectedHostname] = useState<string | null>(null);
+
+    // Handle card click with exit animation
+    const handleCardClick = (hostname: string) => {
+        if (selectedHostname !== null) return; // Prevent double-clicks
+        setSelectedHostname(hostname);
+        setTimeout(() => {
+            navigate(`/certificates/${hostname}`);
+        }, 300);
+    };
 
     useEffect(() => {
         loadCertificates();
@@ -68,6 +79,11 @@ export function Dashboard() {
     useEffect(() => {
         loadCertificates();
     }, [statusFilter, sortBy, sortOrder]);
+
+    // Reset animation state when filters change
+    useEffect(() => {
+        setSelectedHostname(null);
+    }, [statusFilter, searchTerm]);
 
     const loadCertificates = async () => {
         const filter: CertificateFilter = {
@@ -99,10 +115,25 @@ export function Dashboard() {
             ),
     );
 
+    // Animation values
+    const isAnimatingOut = selectedHostname !== null;
+
     return (
         <>
-            {/* Page Header */}
-            <div className="flex items-center justify-between mb-8">
+            {/* Animated page content wrapper */}
+            <motion.div
+                animate={{
+                    x: isAnimatingOut ? -40 : 0,
+                    opacity: isAnimatingOut ? 0 : 1,
+                }}
+                transition={{
+                    duration: 0.25,
+                    ease: [0.4, 0, 0.2, 1],
+                }}
+                className={isAnimatingOut ? "pointer-events-none" : ""}
+            >
+                {/* Page Header */}
+                <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">
                         Certificates
@@ -334,88 +365,118 @@ export function Dashboard() {
                 </Card>
             ) : (
                 <div className="space-y-3">
-                    {filteredCerts.map((cert) => (
-                        <Card
-                            key={cert.hostname}
-                            className="shadow-sm border-border hover:shadow-lg hover:border-border/80 transition-all cursor-pointer group"
-                            onClick={() =>
-                                navigate(`/certificates/${cert.hostname}`)
-                            }
-                        >
-                            <CardContent>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex items-center gap-3">
-                                            <HugeiconsIcon
-                                                icon={Certificate02Icon}
-                                                className="w-5 h-5 text-muted-foreground"
-                                                strokeWidth={2}
-                                            />
-                                            <h3 className="text-lg font-semibold text-foreground">
-                                                {cert.hostname}
-                                            </h3>
-                                            <StatusBadge
-                                                status={cert.status}
-                                                daysUntilExpiration={
-                                                    cert.days_until_expiration
-                                                }
-                                            />
-                                            {cert.read_only && <ReadOnlyBadge />}
-                                        </div>
+                    <AnimatePresence mode="sync">
+                        {filteredCerts.map((cert) => {
+                            const isSelected = selectedHostname === cert.hostname;
 
-                                        {cert.sans && cert.sans.length > 0 && (
-                                            <div className="text-sm text-muted-foreground">
-                                                SANs: {cert.sans.join(", ")}
-                                            </div>
-                                        )}
+                            return (
+                                <motion.div
+                                    key={cert.hostname}
+                                    initial={{ opacity: 1, x: 0 }}
+                                    animate={{
+                                        // Selected card counter-animates to stay in place
+                                        // while the page wrapper moves -40px and fades
+                                        opacity: isSelected && isAnimatingOut ? 0 : 1,
+                                        x: isSelected ? 40 : 0,
+                                    }}
+                                    transition={{
+                                        x: {
+                                            duration: 0.25,
+                                            ease: [0.4, 0, 0.2, 1],
+                                        },
+                                        opacity: isSelected ? {
+                                            duration: 0.1,
+                                            delay: 0.15, // Fade at the end of page animation
+                                            ease: "easeOut",
+                                        } : {
+                                            duration: 0.25,
+                                            ease: [0.4, 0, 0.2, 1],
+                                        },
+                                    }}
+                                    className={isAnimatingOut ? "pointer-events-none" : ""}
+                                >
+                                    <Card
+                                        className="shadow-sm border-border hover:shadow-lg hover:border-border/80 transition-all cursor-pointer group"
+                                        onClick={() => handleCardClick(cert.hostname)}
+                                    >
+                                        <CardContent>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <HugeiconsIcon
+                                                            icon={Certificate02Icon}
+                                                            className="w-5 h-5 text-muted-foreground"
+                                                            strokeWidth={2}
+                                                        />
+                                                        <h3 className="text-lg font-semibold text-foreground">
+                                                            {cert.hostname}
+                                                        </h3>
+                                                        <StatusBadge
+                                                            status={cert.status}
+                                                            daysUntilExpiration={
+                                                                cert.days_until_expiration
+                                                            }
+                                                        />
+                                                        {cert.read_only && <ReadOnlyBadge />}
+                                                    </div>
 
-                                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                                            <div>
-                                                <span className="font-medium">
-                                                    Created:
-                                                </span>{" "}
-                                                {formatDate(cert.created_at)}
-                                            </div>
-                                            {cert.expires_at && (
-                                                <div>
-                                                    <span className="font-medium">
-                                                        Expires:
-                                                    </span>{" "}
-                                                    {formatDate(
-                                                        cert.expires_at,
+                                                    {cert.sans && cert.sans.length > 0 && (
+                                                        <div className="text-sm text-muted-foreground">
+                                                            SANs: {cert.sans.join(", ")}
+                                                        </div>
                                                     )}
-                                                </div>
-                                            )}
-                                            {cert.key_size && (
-                                                <div>
-                                                    <span className="font-medium">
-                                                        Key Size:
-                                                    </span>{" "}
-                                                    {cert.key_size} bits
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    <div className="ml-4 flex items-center">
-                                        <HugeiconsIcon
-                                            icon={ArrowRight01Icon}
-                                            className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all"
-                                            strokeWidth={2}
-                                        />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                                    <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                                                        <div>
+                                                            <span className="font-medium">
+                                                                Created:
+                                                            </span>{" "}
+                                                            {formatDate(cert.created_at)}
+                                                        </div>
+                                                        {cert.expires_at && (
+                                                            <div>
+                                                                <span className="font-medium">
+                                                                    Expires:
+                                                                </span>{" "}
+                                                                {formatDate(
+                                                                    cert.expires_at,
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {cert.key_size && (
+                                                            <div>
+                                                                <span className="font-medium">
+                                                                    Key Size:
+                                                                </span>{" "}
+                                                                {cert.key_size} bits
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="ml-4 flex items-center">
+                                                    <HugeiconsIcon
+                                                        icon={ArrowRight01Icon}
+                                                        className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground group-hover:translate-x-1 transition-all"
+                                                        strokeWidth={2}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
                 </div>
             )}
 
-            {/* Certificates Count */}
-            <div className="mt-8 text-center text-sm text-muted-foreground">
-                Showing {filteredCerts.length} of {certificates.length}{" "}
-                certificates
-            </div>
+                {/* Certificates Count */}
+                <div className="mt-8 text-center text-sm text-muted-foreground">
+                    Showing {filteredCerts.length} of {certificates.length}{" "}
+                    certificates
+                </div>
+            </motion.div>
 
             {/* Encryption Key Dialog */}
             <EncryptionKeyDialog
