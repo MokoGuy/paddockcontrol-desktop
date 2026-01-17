@@ -40,6 +40,6 @@ tasks:
         cmd: npm run test:e2e:ui
 
     test:e2e:headed:
-        desc: Run Playwright e2e tests with visible browser (headed mode)
+        desc: Run Playwright e2e tests with visible browser (slow motion)
         dir: frontend
-        cmd: npx playwright test --headed
+        cmd: SLOW=1 npx playwright test --headed

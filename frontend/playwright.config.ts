@@ -20,7 +20,13 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { browserName: "chromium" },
+      use: {
+        browserName: "chromium",
+        // Add slowMo when running headed: SLOW=1 npx playwright test --headed
+        launchOptions: {
+          slowMo: process.env.SLOW ? 500 : 0, // 500ms delay between actions
+        },
+      },
     },
   ],
   // Global setup to clean test data directory

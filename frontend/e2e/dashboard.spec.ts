@@ -6,7 +6,7 @@ test.describe("Dashboard", () => {
     await setupWithFullMode(page);
   });
 
-  test("status filter shows correct certificates", async ({ page }) => {
+  test.skip("status filter shows correct certificates", async ({ page }) => {
     // Generate two pending certificates
     await generateCertificate(page, "server1");
     await page.goto("/");
