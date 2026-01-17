@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net"
 	"sort"
 	"strings"
@@ -33,24 +34,35 @@ func NewCertificateService(database *db.Database, configSvc *config.Service) *Ce
 
 // GenerateCSR generates a new Certificate Signing Request
 func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequest, encryptionKey []byte) (*models.CSRResponse, error) {
+	ctx, log := logger.WithOperation(ctx, "generate_csr")
+	log = logger.WithHostname(log, req.Hostname)
+	log.Info("starting CSR generation",
+		slog.Int("key_size", req.KeySize),
+		slog.Bool("is_renewal", req.IsRenewal),
+		slog.Int("san_count", len(req.SANs)),
+	)
+
 	start := time.Now()
 
 	// Validate hostname (with optional bypass for admin mode)
 	t := time.Now()
 	if err := s.validateHostname(ctx, req.Hostname, req.SkipSuffixValidation); err != nil {
+		log.Error("hostname validation failed", logger.Err(err))
 		return nil, err
 	}
-	logger.Debug("[CSR Profile] validateHostname: %v", time.Since(t))
+	log.Debug("profile: validateHostname", slog.Duration("duration", time.Since(t)))
 
 	// Check for duplicates
 	t = time.Now()
 	exists, err := s.db.Queries().CertificateExists(ctx, req.Hostname)
 	if err != nil {
+		log.Error("failed to check certificate existence", logger.Err(err))
 		return nil, fmt.Errorf("failed to check certificate existence: %w", err)
 	}
-	logger.Debug("[CSR Profile] CertificateExists: %v", time.Since(t))
+	log.Debug("profile: CertificateExists", slog.Duration("duration", time.Since(t)))
 
 	if exists == 1 && !req.IsRenewal {
+		log.Warn("certificate already exists", slog.String("hostname", req.Hostname))
 		return nil, fmt.Errorf("certificate already exists for hostname: %s", req.Hostname)
 	}
 
@@ -58,17 +70,26 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	t = time.Now()
 	dnsSANs, ipSANs, err := s.processSANEntries(req.SANs)
 	if err != nil {
+		log.Error("invalid SAN entry", logger.Err(err))
 		return nil, fmt.Errorf("invalid SAN entry: %w", err)
 	}
-	logger.Debug("[CSR Profile] processSANEntries: %v", time.Since(t))
+	log.Debug("profile: processSANEntries",
+		slog.Duration("duration", time.Since(t)),
+		slog.Int("dns_sans", len(dnsSANs)),
+		slog.Int("ip_sans", len(ipSANs)),
+	)
 
 	// Generate RSA key pair
 	t = time.Now()
 	privateKey, err := crypto.GenerateRSAKey(req.KeySize)
 	if err != nil {
+		log.Error("failed to generate RSA key", logger.Err(err))
 		return nil, fmt.Errorf("failed to generate RSA key: %w", err)
 	}
-	logger.Debug("[CSR Profile] GenerateRSAKey (%d-bit): %v", req.KeySize, time.Since(t))
+	log.Debug("profile: GenerateRSAKey",
+		slog.Duration("duration", time.Since(t)),
+		slog.Int("key_size", req.KeySize),
+	)
 
 	// Convert CSRRequest to crypto.CSRRequest
 	csrReq := crypto.CSRRequest{
@@ -86,25 +107,28 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	t = time.Now()
 	csrPEM, err := crypto.CreateCSR(csrReq, privateKey)
 	if err != nil {
+		log.Error("failed to create CSR", logger.Err(err))
 		return nil, fmt.Errorf("failed to create CSR: %w", err)
 	}
-	logger.Debug("[CSR Profile] CreateCSR: %v", time.Since(t))
+	log.Debug("profile: CreateCSR", slog.Duration("duration", time.Since(t)))
 
 	// Convert private key to PEM
 	t = time.Now()
 	keyPEM, err := crypto.PrivateKeyToPEM(privateKey)
 	if err != nil {
+		log.Error("failed to encode private key", logger.Err(err))
 		return nil, fmt.Errorf("failed to encode private key: %w", err)
 	}
-	logger.Debug("[CSR Profile] PrivateKeyToPEM: %v", time.Since(t))
+	log.Debug("profile: PrivateKeyToPEM", slog.Duration("duration", time.Since(t)))
 
 	// Encrypt private key
 	t = time.Now()
 	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, string(encryptionKey))
 	if err != nil {
+		log.Error("failed to encrypt private key", logger.Err(err))
 		return nil, fmt.Errorf("failed to encrypt private key: %w", err)
 	}
-	logger.Debug("[CSR Profile] EncryptPrivateKey: %v", time.Since(t))
+	log.Debug("profile: EncryptPrivateKey", slog.Duration("duration", time.Since(t)))
 
 	// Store in database
 	t = time.Now()
@@ -126,13 +150,17 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 			ReadOnly:            0,
 		})
 	}
-	logger.Debug("[CSR Profile] Database write: %v", time.Since(t))
+	log.Debug("profile: Database write", slog.Duration("duration", time.Since(t)))
 
 	if err != nil {
+		log.Error("failed to store CSR", logger.Err(err))
 		return nil, fmt.Errorf("failed to store CSR: %w", err)
 	}
 
-	logger.Debug("[CSR Profile] Total: %v", time.Since(start))
+	log.Info("CSR generated successfully",
+		slog.Duration("total_duration", time.Since(start)),
+		slog.Int("csr_size", len(csrPEM)),
+	)
 
 	return &models.CSRResponse{
 		Hostname: req.Hostname,

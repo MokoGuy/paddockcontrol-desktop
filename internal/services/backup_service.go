@@ -4,36 +4,46 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 	"time"
 )
 
 // BackupService handles backup export and import operations
 type BackupService struct {
-	db *db.Database
+	db  *db.Database
+	log *slog.Logger
 }
 
 // NewBackupService creates a new backup service
 func NewBackupService(database *db.Database) *BackupService {
 	return &BackupService{
-		db: database,
+		db:  database,
+		log: logger.WithComponent("backup"),
 	}
 }
 
 // ExportBackup exports all certificates and configuration to a backup
 func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*models.BackupData, error) {
+	ctx, log := logger.WithOperation(ctx, "backup_export")
+	log.Info("starting backup export", slog.Bool("include_keys", includeKeys))
+
 	// Get all certificates
 	certs, err := s.db.Queries().ListAllCertificates(ctx)
 	if err != nil {
+		log.Error("failed to list certificates", logger.Err(err))
 		return nil, fmt.Errorf("failed to list certificates: %w", err)
 	}
+	log.Debug("retrieved certificates", slog.Int("count", len(certs)))
 
 	// Get configuration
 	cfg, err := s.db.Queries().GetConfig(ctx)
 	if err != nil {
+		log.Error("failed to get configuration", logger.Err(err))
 		return nil, fmt.Errorf("failed to get configuration: %w", err)
 	}
 
@@ -65,6 +75,7 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 	}
 
 	// Convert certificates
+	keysIncludedCount := 0
 	for i, cert := range certs {
 		var expiresAt *int64
 		if cert.ExpiresAt.Valid {
@@ -106,10 +117,19 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 		if includeKeys {
 			backupCert.EncryptedKey = cert.EncryptedPrivateKey
 			backupCert.PendingEncryptedKey = cert.PendingEncryptedPrivateKey
+			if len(cert.EncryptedPrivateKey) > 0 || len(cert.PendingEncryptedPrivateKey) > 0 {
+				keysIncludedCount++
+			}
 		}
 
 		backup.Certificates[i] = backupCert
 	}
+
+	log.Info("backup export completed",
+		slog.Int("certificates", len(certs)),
+		slog.Bool("keys_included", includeKeys),
+		slog.Int("keys_count", keysIncludedCount),
+	)
 
 	return backup, nil
 }
@@ -118,6 +138,12 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 // Enforces strict validation: all certificates must be importable before any are imported
 // If backup has encrypted keys, encryptionKey must be correct to decrypt them
 func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupData, encryptionKey []byte) (*models.ImportResult, error) {
+	ctx, log := logger.WithOperation(ctx, "backup_import")
+	log.Info("starting backup import",
+		slog.String("version", backup.Version),
+		slog.Int("certificates", len(backup.Certificates)),
+	)
+
 	result := &models.ImportResult{
 		Success:   0,
 		Skipped:   0,
@@ -127,35 +153,48 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 
 	// Validate backup format
 	if err := s.validateBackup(backup); err != nil {
+		log.Error("backup validation failed", logger.Err(err))
 		return nil, fmt.Errorf("backup validation failed: %w", err)
 	}
+	log.Debug("backup format validated")
 
 	// Pre-flight validation: check for conflicts and decrypt ability
 	// Ensure all certificates can be imported before importing any
+	log.Debug("starting pre-flight validation")
 	for _, cert := range backup.Certificates {
+		certLog := logger.WithHostname(log, cert.Hostname)
+
 		// Check if certificate already exists
 		exists, err := s.db.Queries().CertificateExists(ctx, cert.Hostname)
 		if err != nil {
+			certLog.Error("failed to check certificate existence", logger.Err(err))
 			return nil, fmt.Errorf("failed to check certificate existence for %s: %w", cert.Hostname, err)
 		}
 
 		if exists == 1 {
+			certLog.Error("certificate already exists, aborting restore")
 			return nil, fmt.Errorf("certificate already exists for hostname: %s. Restore aborted", cert.Hostname)
 		}
 
 		// If certificate has encrypted key, ensure it can be decrypted
 		// This validates the encryption key is correct before importing any certificates
 		if len(cert.EncryptedKey) > 0 {
+			certLog.Debug("validating encrypted key decryption")
 			// Try to decrypt to validate the key works
 			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, string(encryptionKey))
 			if err != nil {
+				certLog.Error("failed to decrypt private key, encryption key may be incorrect", logger.Err(err))
 				return nil, fmt.Errorf("failed to decrypt private key for %s: encryption key may be incorrect. Restore aborted", cert.Hostname)
 			}
 		}
 	}
+	log.Debug("pre-flight validation passed")
 
 	// All pre-flight checks passed, now import all certificates
+	log.Info("importing certificates")
 	for _, cert := range backup.Certificates {
+		certLog := logger.WithHostname(log, cert.Hostname)
+
 		// Insert certificate
 		err := s.db.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
 			Hostname:                   cert.Hostname,
@@ -176,14 +215,21 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 		})
 
 		if err != nil {
+			certLog.Error("failed to import certificate", logger.Err(err))
 			return nil, fmt.Errorf("failed to import certificate %s: %w. Restore aborted", cert.Hostname, err)
 		}
 
+		certLog.Debug("certificate imported successfully")
 		result.Success++
 	}
 
 	// Config is handled by SetupService, not here
 	// Do not import config during backup restore - it's done at a higher level
+
+	log.Info("backup import completed",
+		slog.Int("imported", result.Success),
+		slog.Int("skipped", result.Skipped),
+	)
 
 	return result, nil
 }

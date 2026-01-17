@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,59 +69,62 @@ func (a *App) startup(ctx context.Context) {
 		return
 	}
 
-	logger.Info("Application starting...")
-	logger.Info("Data directory: %s", dataDir)
-	logger.Info("Production mode: %v", ProductionMode)
+	log := logger.WithComponent("app")
+	log.Info("application starting",
+		slog.String("version", Version),
+		slog.String("data_dir", dataDir),
+		slog.Bool("production", ProductionMode),
+	)
 
 	// Initialize database
 	a.db, err = db.NewDatabase(dataDir)
 	if err != nil {
-		logger.Error("Database initialization failed: %v", err)
+		log.Error("database initialization failed", logger.Err(err))
 		a.showFatalError("Database Error",
 			fmt.Sprintf("Failed to initialize database: %v", err))
 		return
 	}
-
-	logger.Info("Database initialized successfully")
+	log.Info("database initialized successfully")
 
 	// Check if configured
 	tmpConfigService := config.NewService(a.db)
 	a.isConfigured, err = tmpConfigService.IsConfigured(ctx)
 	if err != nil {
-		logger.Error("Configuration check failed: %v", err)
+		log.Error("configuration check failed", logger.Err(err))
 		a.showFatalError("Configuration Error",
 			fmt.Sprintf("Failed to check configuration: %v", err))
 		return
 	}
-
-	logger.Info("Configuration status: configured=%v", a.isConfigured)
+	log.Info("configuration status", slog.Bool("configured", a.isConfigured))
 
 	// Initialize services without encryption key (for setup/restore to work)
 	a.initializeServicesWithoutKey()
-	logger.Info("Services initialized (without encryption key)")
+	log.Info("services initialized without encryption key")
 
 	// Auto-skip encryption key at startup (limited mode by default)
 	// Users can provide key anytime via Settings
 	a.waitingForEncryptionKey = false
 	a.encryptionKeyProvided = false
-	logger.Info("Starting in limited mode (encryption key can be provided via Settings)")
+	log.Info("starting in limited mode - encryption key can be provided via Settings")
 }
 
 // domReady is called when the frontend DOM is ready
 func (a *App) domReady(ctx context.Context) {
-	logger.Info("DOM ready, emitting wails:ready event")
+	log := logger.WithComponent("app")
+	log.Info("DOM ready, emitting wails:ready event")
 	wailsruntime.EventsEmit(ctx, "wails:ready")
 }
 
 // shutdown is called when the app exits
 func (a *App) shutdown(ctx context.Context) {
-	logger.Info("Application shutting down...")
+	log := logger.WithComponent("app")
+	log.Info("application shutting down")
 
 	if a.db != nil {
 		if err := a.db.Close(); err != nil {
-			logger.Error("Database close error: %v", err)
+			log.Error("database close error", logger.Err(err))
 		} else {
-			logger.Info("Database closed successfully")
+			log.Info("database closed successfully")
 		}
 	}
 
@@ -129,10 +134,10 @@ func (a *App) shutdown(ctx context.Context) {
 			a.encryptionKey[i] = 0
 		}
 		a.encryptionKey = nil
-		logger.Info("Encryption key cleared from memory")
+		log.Info("encryption key cleared from memory")
 	}
 
-	logger.Info("Application shutdown complete")
+	log.Info("application shutdown complete")
 }
 
 // getDataDirectory returns the platform-specific data directory
@@ -174,7 +179,8 @@ func (a *App) getDataDirectory() (string, error) {
 
 // showFatalError displays a fatal error dialog
 func (a *App) showFatalError(title, message string) {
-	logger.Error("FATAL: %s - %s", title, message)
+	log := logger.WithComponent("app")
+	log.Error("FATAL ERROR", slog.String("title", title), slog.String("message", message))
 	wailsruntime.MessageDialog(a.ctx, wailsruntime.MessageDialogOptions{
 		Type:    wailsruntime.ErrorDialog,
 		Title:   title,
@@ -250,11 +256,13 @@ func (a *App) SkipEncryptionKey() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	log := logger.WithComponent("app")
+
 	if a.encryptionKeyProvided {
 		return fmt.Errorf("encryption key already provided")
 	}
 
-	logger.Info("User skipped encryption key entry - limited functionality enabled")
+	log.Info("user skipped encryption key entry - limited functionality enabled")
 	a.waitingForEncryptionKey = false
 	a.encryptionKeyProvided = false
 
@@ -270,7 +278,9 @@ func (a *App) initializeServicesWithoutKey() {
 	a.backupService = services.NewBackupService(a.db)
 	a.certificateService = services.NewCertificateService(a.db, a.configService)
 	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
-	logger.Info("Services initialized without encryption key (limited access)")
+
+	log := logger.WithComponent("app")
+	log.Debug("services initialized without encryption key (limited access)")
 }
 
 // ProvideEncryptionKey stores encryption key and initializes services
@@ -279,7 +289,8 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logger.Info("Encryption key provided, validating...")
+	_, log := logger.WithOperation(a.ctx, "provide_encryption_key")
+	log.Info("encryption key provided, validating")
 
 	if key == "" {
 		return nil, fmt.Errorf("encryption key cannot be empty")
@@ -291,10 +302,10 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 
 	// If app is already configured, test decryption on ALL certificates
 	if a.isConfigured && a.db != nil {
-		logger.Info("Testing encryption key against ALL stored certificates...")
+		log.Info("testing encryption key against all stored certificates")
 		certs, err := a.db.Queries().ListAllCertificates(a.ctx)
 		if err != nil {
-			logger.Error("Failed to list certificates for key validation: %v", err)
+			log.Error("failed to list certificates for key validation", logger.Err(err))
 			return nil, fmt.Errorf("failed to validate encryption key")
 		}
 
@@ -302,11 +313,13 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 
 		// Test ALL certificates with encrypted keys
 		for _, cert := range certs {
+			certLog := logger.WithHostname(log, cert.Hostname)
+
 			// Test active encrypted private key
 			if len(cert.EncryptedPrivateKey) > 0 {
 				_, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, key)
 				if err != nil {
-					logger.Error("Encryption key validation failed for certificate: %s", cert.Hostname)
+					certLog.Error("encryption key validation failed for certificate")
 					failedHostnames = append(failedHostnames, cert.Hostname)
 					continue
 				}
@@ -316,7 +329,7 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 			if len(cert.PendingEncryptedPrivateKey) > 0 {
 				_, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, key)
 				if err != nil {
-					logger.Error("Encryption key validation failed for pending key: %s", cert.Hostname)
+					certLog.Error("encryption key validation failed for pending key")
 					// Only add if not already in the list
 					found := false
 					for _, h := range failedHostnames {
@@ -334,14 +347,17 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 
 		// If any certificates failed, return error with details
 		if len(failedHostnames) > 0 {
-			logger.Error("Encryption key validation failed for %d certificate(s)", len(failedHostnames))
+			log.Error("encryption key validation failed",
+				slog.Int("failed_count", len(failedHostnames)),
+				slog.Any("failed_hostnames", failedHostnames),
+			)
 			return &models.KeyValidationResult{
 				Valid:           false,
 				FailedHostnames: failedHostnames,
 			}, fmt.Errorf("invalid encryption key: failed to decrypt %d certificate(s)", len(failedHostnames))
 		}
 
-		logger.Info("Encryption key validated successfully against all certificates")
+		log.Info("encryption key validated successfully against all certificates")
 	}
 
 	// Store in memory
@@ -349,7 +365,7 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 	a.waitingForEncryptionKey = false
 	a.encryptionKeyProvided = true
 
-	logger.Info("Encryption key validated, initializing services...")
+	log.Info("encryption key validated, initializing services")
 
 	// Initialize services
 	a.configService = config.NewService(a.db)
@@ -357,7 +373,7 @@ func (a *App) ProvideEncryptionKey(key string) (*models.KeyValidationResult, err
 	a.certificateService = services.NewCertificateService(a.db, a.configService)
 	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
 
-	logger.Info("All services initialized successfully")
+	log.Info("all services initialized successfully")
 
 	return &models.KeyValidationResult{Valid: true}, nil
 }
@@ -367,11 +383,13 @@ func (a *App) ClearEncryptionKey() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	log := logger.WithComponent("app")
+
 	if !a.encryptionKeyProvided {
 		return fmt.Errorf("no encryption key to clear")
 	}
 
-	logger.Info("Clearing encryption key - returning to read-only mode")
+	log.Info("clearing encryption key - returning to read-only mode")
 
 	// Zero out the encryption key for security
 	for i := range a.encryptionKey {
@@ -400,18 +418,20 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logger.Info("Changing encryption key - starting atomic re-encryption...")
+	_, log := logger.WithOperation(a.ctx, "change_encryption_key")
+	log.Info("changing encryption key - starting atomic re-encryption")
 
 	// Get all certificates
 	certs, err := a.db.Queries().ListAllCertificates(a.ctx)
 	if err != nil {
+		log.Error("failed to list certificates", logger.Err(err))
 		return fmt.Errorf("failed to list certificates: %w", err)
 	}
 
 	// Pre-compute all re-encrypted keys (decrypt with old, encrypt with new)
 	type reEncryptedCert struct {
-		Hostname                   string
-		NewEncryptedPrivateKey     []byte
+		Hostname                      string
+		NewEncryptedPrivateKey        []byte
 		NewPendingEncryptedPrivateKey []byte
 	}
 	var reEncrypted []reEncryptedCert
@@ -419,16 +439,19 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 	oldKey := string(a.encryptionKey)
 
 	for _, cert := range certs {
+		certLog := logger.WithHostname(log, cert.Hostname)
 		rec := reEncryptedCert{Hostname: cert.Hostname}
 
 		// Re-encrypt active private key if present
 		if len(cert.EncryptedPrivateKey) > 0 {
 			plaintext, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, oldKey)
 			if err != nil {
+				certLog.Error("failed to decrypt key", logger.Err(err))
 				return fmt.Errorf("failed to decrypt key for %s: %w", cert.Hostname, err)
 			}
 			newEncrypted, err := crypto.EncryptPrivateKey(plaintext, newKey)
 			if err != nil {
+				certLog.Error("failed to re-encrypt key", logger.Err(err))
 				return fmt.Errorf("failed to re-encrypt key for %s: %w", cert.Hostname, err)
 			}
 			rec.NewEncryptedPrivateKey = newEncrypted
@@ -438,10 +461,12 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 		if len(cert.PendingEncryptedPrivateKey) > 0 {
 			plaintext, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, oldKey)
 			if err != nil {
+				certLog.Error("failed to decrypt pending key", logger.Err(err))
 				return fmt.Errorf("failed to decrypt pending key for %s: %w", cert.Hostname, err)
 			}
 			newEncrypted, err := crypto.EncryptPrivateKey(plaintext, newKey)
 			if err != nil {
+				certLog.Error("failed to re-encrypt pending key", logger.Err(err))
 				return fmt.Errorf("failed to re-encrypt pending key for %s: %w", cert.Hostname, err)
 			}
 			rec.NewPendingEncryptedPrivateKey = newEncrypted
@@ -453,6 +478,7 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 	// Atomic transaction: update all certificates
 	tx, err := a.db.GetDB().BeginTx(a.ctx, nil)
 	if err != nil {
+		log.Error("failed to begin transaction", logger.Err(err))
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback() // Will be no-op if commit succeeds
@@ -466,11 +492,16 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 			Hostname:                   rec.Hostname,
 		})
 		if err != nil {
+			log.Error("failed to update keys",
+				slog.String("hostname", rec.Hostname),
+				logger.Err(err),
+			)
 			return fmt.Errorf("failed to update keys for %s: %w", rec.Hostname, err)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
+		log.Error("failed to commit transaction", logger.Err(err))
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -480,7 +511,7 @@ func (a *App) ChangeEncryptionKey(newKey string) error {
 	}
 	a.encryptionKey = []byte(newKey)
 
-	logger.Info("Encryption key changed successfully, re-encrypted %d certificates", len(reEncrypted))
+	log.Info("encryption key changed successfully", slog.Int("re_encrypted_count", len(reEncrypted)))
 	return nil
 }
 
@@ -506,7 +537,11 @@ func (a *App) IsSetupComplete() (bool, error) {
 // SaveSetup creates new configuration from scratch
 func (a *App) SaveSetup(req models.SetupRequest) error {
 	// No encryption key required - just saving CA configuration
-	logger.Info("Saving setup configuration...")
+	_, log := logger.WithOperation(a.ctx, "save_setup")
+	log.Info("saving setup configuration",
+		slog.String("owner_email", req.OwnerEmail),
+		slog.String("ca_name", req.CAName),
+	)
 
 	a.mu.RLock()
 	setupService := a.setupService
@@ -517,7 +552,7 @@ func (a *App) SaveSetup(req models.SetupRequest) error {
 	}
 
 	if err := setupService.SetupFromScratch(a.ctx, req); err != nil {
-		logger.Error("Setup from scratch failed: %v", err)
+		log.Error("setup from scratch failed", logger.Err(err))
 		return err
 	}
 
@@ -525,23 +560,24 @@ func (a *App) SaveSetup(req models.SetupRequest) error {
 	a.isConfigured = true
 	a.mu.Unlock()
 
-	logger.Info("Setup completed successfully")
+	log.Info("setup completed successfully")
 	return nil
 }
 
 // ValidateBackupFile reads and validates backup file structure
 func (a *App) ValidateBackupFile(path string) (*models.BackupValidationResult, error) {
-	logger.Info("Validating backup file: %s", path)
+	log := logger.WithComponent("app")
+	log.Info("validating backup file", slog.String("path", path))
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		logger.Error("Failed to read backup file: %v", err)
+		log.Error("failed to read backup file", logger.Err(err))
 		return nil, fmt.Errorf("failed to read backup file: %w", err)
 	}
 
 	var backup models.BackupData
 	if err := json.Unmarshal(data, &backup); err != nil {
-		logger.Error("Failed to parse backup file: %v", err)
+		log.Error("failed to parse backup file", logger.Err(err))
 		return nil, fmt.Errorf("invalid backup file format: %w", err)
 	}
 
@@ -563,15 +599,20 @@ func (a *App) ValidateBackupFile(path string) (*models.BackupValidationResult, e
 		ExportedAt:       backup.ExportedAt,
 	}
 
-	logger.Info("Backup validation: valid=%v, certs=%d, hasKeys=%v, hasKeyInBackup=%v",
-		result.Valid, result.CertificateCount, result.HasEncryptedKeys, result.HasEncryptionKey)
+	log.Info("backup validation complete",
+		slog.Bool("valid", result.Valid),
+		slog.Int("certificate_count", result.CertificateCount),
+		slog.Bool("has_encrypted_keys", result.HasEncryptedKeys),
+		slog.Bool("has_key_in_backup", result.HasEncryptionKey),
+	)
 
 	return result, nil
 }
 
 // ValidateEncryptionKeyForBackup tests if encryption key can decrypt backup keys
 func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key string) error {
-	logger.Info("Validating encryption key for backup restore...")
+	log := logger.WithComponent("app")
+	log.Info("validating encryption key for backup restore")
 
 	if len(key) < 16 {
 		return fmt.Errorf("encryption key must be at least 16 characters")
@@ -583,28 +624,28 @@ func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key strin
 			// Try to decrypt
 			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, key)
 			if err != nil {
-				logger.Error("Encryption key validation failed: %v", err)
+				log.Error("encryption key validation failed", logger.Err(err))
 				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
 			}
 
-			logger.Info("Encryption key validated successfully")
+			log.Info("encryption key validated successfully")
 			return nil
 		}
 
 		if len(cert.PendingEncryptedKey) > 0 {
 			_, err := crypto.DecryptPrivateKey(cert.PendingEncryptedKey, key)
 			if err != nil {
-				logger.Error("Encryption key validation failed: %v", err)
+				log.Error("encryption key validation failed", logger.Err(err))
 				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
 			}
 
-			logger.Info("Encryption key validated successfully")
+			log.Info("encryption key validated successfully")
 			return nil
 		}
 	}
 
 	// No encrypted keys found - validation passes
-	logger.Info("No encrypted keys in backup, validation skipped")
+	log.Info("no encrypted keys in backup, validation skipped")
 	return nil
 }
 
@@ -614,7 +655,11 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 		return err
 	}
 
-	logger.Info("Restoring from backup...")
+	_, log := logger.WithOperation(a.ctx, "restore_backup")
+	log.Info("restoring from backup",
+		slog.String("version", backup.Version),
+		slog.Int("certificates", len(backup.Certificates)),
+	)
 
 	a.mu.RLock()
 	setupService := a.setupService
@@ -627,7 +672,7 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 	}
 
 	if err := setupService.SetupFromBackup(a.ctx, &backup, encryptionKey); err != nil {
-		logger.Error("Restore from backup failed: %v", err)
+		log.Error("restore from backup failed", logger.Err(err))
 		return err
 	}
 
@@ -637,7 +682,7 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 	a.encryptionKeyProvided = true
 	a.mu.Unlock()
 
-	logger.Info("Restore completed successfully")
+	log.Info("restore completed successfully")
 	return nil
 }
 
@@ -659,7 +704,8 @@ func (a *App) GetSetupDefaults() *models.SetupDefaults {
 
 // GetConfig returns the current configuration
 func (a *App) GetConfig() (*models.Config, error) {
-	logger.Info("Getting configuration...")
+	log := logger.WithComponent("app")
+	log.Debug("getting configuration")
 
 	a.mu.RLock()
 	configService := a.configService
@@ -695,11 +741,15 @@ func (a *App) GetConfig() (*models.Config, error) {
 
 // UpdateConfig updates the application configuration
 func (a *App) UpdateConfig(req models.UpdateConfigRequest) (*models.Config, error) {
-	logger.Info("Updating configuration...")
+	_, log := logger.WithOperation(a.ctx, "update_config")
+	log.Info("updating configuration",
+		slog.String("owner_email", req.OwnerEmail),
+		slog.String("ca_name", req.CAName),
+	)
 
 	// Validate request
 	if err := config.ValidateConfigUpdate(&req); err != nil {
-		logger.Error("Config validation failed: %v", err)
+		log.Error("config validation failed", logger.Err(err))
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
@@ -714,11 +764,11 @@ func (a *App) UpdateConfig(req models.UpdateConfigRequest) (*models.Config, erro
 	// Update configuration
 	updatedConfig, err := configService.UpdateConfig(a.ctx, &req)
 	if err != nil {
-		logger.Error("Failed to update config: %v", err)
+		log.Error("failed to update config", logger.Err(err))
 		return nil, fmt.Errorf("failed to update config: %w", err)
 	}
 
-	logger.Info("Configuration updated successfully")
+	log.Info("configuration updated successfully")
 	return updatedConfig, nil
 }
 
@@ -732,7 +782,13 @@ func (a *App) GenerateCSR(req models.CSRRequest) (*models.CSRResponse, error) {
 		return nil, err
 	}
 
-	logger.Info("Generating CSR for hostname: %s (renewal=%v)", req.Hostname, req.IsRenewal)
+	_, log := logger.WithOperation(a.ctx, "generate_csr")
+	log = logger.WithHostname(log, req.Hostname)
+	log.Info("generating CSR",
+		slog.Bool("is_renewal", req.IsRenewal),
+		slog.Int("key_size", req.KeySize),
+		slog.Int("san_count", len(req.SANs)),
+	)
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -746,11 +802,11 @@ func (a *App) GenerateCSR(req models.CSRRequest) (*models.CSRResponse, error) {
 
 	resp, err := certificateService.GenerateCSR(a.ctx, req, encryptionKey)
 	if err != nil {
-		logger.Error("CSR generation failed: %v", err)
+		log.Error("CSR generation failed", logger.Err(err))
 		return nil, err
 	}
 
-	logger.Info("CSR generated successfully for: %s", req.Hostname)
+	log.Info("CSR generated successfully")
 	return resp, nil
 }
 
@@ -761,7 +817,9 @@ func (a *App) UploadCertificate(hostname, certPEM string) error {
 		return err
 	}
 
-	logger.Info("Uploading certificate for: %s", hostname)
+	_, log := logger.WithOperation(a.ctx, "upload_certificate")
+	log = logger.WithHostname(log, hostname)
+	log.Info("uploading certificate")
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -772,11 +830,11 @@ func (a *App) UploadCertificate(hostname, certPEM string) error {
 	}
 
 	if err := certificateService.UploadCertificate(a.ctx, hostname, certPEM); err != nil {
-		logger.Error("Certificate upload failed: %v", err)
+		log.Error("certificate upload failed", logger.Err(err))
 		return err
 	}
 
-	logger.Info("Certificate uploaded successfully for: %s", hostname)
+	log.Info("certificate uploaded successfully")
 	return nil
 }
 
@@ -786,7 +844,8 @@ func (a *App) ImportCertificate(req models.ImportRequest) error {
 		return err
 	}
 
-	logger.Info("Importing certificate...")
+	_, log := logger.WithOperation(a.ctx, "import_certificate")
+	log.Info("importing certificate")
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -799,11 +858,11 @@ func (a *App) ImportCertificate(req models.ImportRequest) error {
 	}
 
 	if err := certificateService.ImportCertificate(a.ctx, req, encryptionKey); err != nil {
-		logger.Error("Certificate import failed: %v", err)
+		log.Error("certificate import failed", logger.Err(err))
 		return err
 	}
 
-	logger.Info("Certificate imported successfully")
+	log.Info("certificate imported successfully")
 	return nil
 }
 
@@ -814,7 +873,8 @@ func (a *App) ListCertificates(filter models.CertificateFilter) ([]*models.Certi
 		return nil, err
 	}
 
-	logger.Debug("Listing certificates: filter=%+v", filter)
+	log := logger.WithComponent("app")
+	log.Debug("listing certificates", slog.Any("filter", filter))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -826,11 +886,11 @@ func (a *App) ListCertificates(filter models.CertificateFilter) ([]*models.Certi
 
 	certs, err := certificateService.ListCertificates(a.ctx, filter)
 	if err != nil {
-		logger.Error("List certificates failed: %v", err)
+		log.Error("list certificates failed", logger.Err(err))
 		return nil, err
 	}
 
-	logger.Debug("Listed %d certificates", len(certs))
+	log.Debug("listed certificates", slog.Int("count", len(certs)))
 	return certs, nil
 }
 
@@ -841,7 +901,8 @@ func (a *App) GetCertificate(hostname string) (*models.Certificate, error) {
 		return nil, err
 	}
 
-	logger.Debug("Getting certificate details for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Debug("getting certificate details", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -853,7 +914,7 @@ func (a *App) GetCertificate(hostname string) (*models.Certificate, error) {
 
 	cert, err := certificateService.GetCertificate(a.ctx, hostname)
 	if err != nil {
-		logger.Error("Get certificate failed: %v", err)
+		log.Error("get certificate failed", slog.String("hostname", hostname), logger.Err(err))
 		return nil, err
 	}
 
@@ -868,7 +929,8 @@ func (a *App) GetCertificateChain(hostname string) ([]models.ChainCertificateInf
 		return nil, err
 	}
 
-	logger.Debug("Getting certificate chain for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Debug("getting certificate chain", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -880,11 +942,11 @@ func (a *App) GetCertificateChain(hostname string) ([]models.ChainCertificateInf
 
 	chain, err := certificateService.GetCertificateChain(a.ctx, hostname)
 	if err != nil {
-		logger.Error("Get certificate chain failed: %v", err)
+		log.Error("get certificate chain failed", slog.String("hostname", hostname), logger.Err(err))
 		return nil, err
 	}
 
-	logger.Debug("Certificate chain retrieved: %d certificates", len(chain))
+	log.Debug("certificate chain retrieved", slog.String("hostname", hostname), slog.Int("count", len(chain)))
 	return chain, nil
 }
 
@@ -895,7 +957,9 @@ func (a *App) DeleteCertificate(hostname string) error {
 		return err
 	}
 
-	logger.Info("Deleting certificate: %s", hostname)
+	_, log := logger.WithOperation(a.ctx, "delete_certificate")
+	log = logger.WithHostname(log, hostname)
+	log.Info("deleting certificate")
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -906,11 +970,11 @@ func (a *App) DeleteCertificate(hostname string) error {
 	}
 
 	if err := certificateService.DeleteCertificate(a.ctx, hostname); err != nil {
-		logger.Error("Delete certificate failed: %v", err)
+		log.Error("delete certificate failed", logger.Err(err))
 		return err
 	}
 
-	logger.Info("Certificate deleted successfully: %s", hostname)
+	log.Info("certificate deleted successfully")
 	return nil
 }
 
@@ -920,7 +984,11 @@ func (a *App) SetCertificateReadOnly(hostname string, readOnly bool) error {
 		return err
 	}
 
-	logger.Info("Setting certificate read-only status: %s -> %v", hostname, readOnly)
+	log := logger.WithComponent("app")
+	log.Info("setting certificate read-only status",
+		slog.String("hostname", hostname),
+		slog.Bool("read_only", readOnly),
+	)
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -931,11 +999,17 @@ func (a *App) SetCertificateReadOnly(hostname string, readOnly bool) error {
 	}
 
 	if err := certificateService.SetCertificateReadOnly(a.ctx, hostname, readOnly); err != nil {
-		logger.Error("Set certificate read-only failed: %v", err)
+		log.Error("set certificate read-only failed",
+			slog.String("hostname", hostname),
+			logger.Err(err),
+		)
 		return err
 	}
 
-	logger.Info("Certificate read-only status updated: %s -> %v", hostname, readOnly)
+	log.Info("certificate read-only status updated",
+		slog.String("hostname", hostname),
+		slog.Bool("read_only", readOnly),
+	)
 	return nil
 }
 
@@ -950,7 +1024,8 @@ func (a *App) SaveCSRToFile(hostname string) error {
 		return err
 	}
 
-	logger.Info("Downloading CSR for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Info("downloading CSR", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -962,7 +1037,7 @@ func (a *App) SaveCSRToFile(hostname string) error {
 
 	csr, err := certificateService.GetCSRForDownload(a.ctx, hostname)
 	if err != nil {
-		logger.Error("Get CSR failed: %v", err)
+		log.Error("get CSR failed", slog.String("hostname", hostname), logger.Err(err))
 		return err
 	}
 
@@ -977,21 +1052,21 @@ func (a *App) SaveCSRToFile(hostname string) error {
 	})
 
 	if err != nil {
-		logger.Error("File dialog error: %v", err)
+		log.Error("file dialog error", logger.Err(err))
 		return fmt.Errorf("file dialog error: %w", err)
 	}
 
 	if path == "" {
-		logger.Info("User cancelled CSR save dialog")
+		log.Info("user cancelled CSR save dialog")
 		return nil
 	}
 
 	if err := os.WriteFile(path, []byte(csr), 0600); err != nil {
-		logger.Error("Failed to write CSR file: %v", err)
+		log.Error("failed to write CSR file", slog.String("path", path), logger.Err(err))
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	logger.Info("CSR saved to: %s", path)
+	log.Info("CSR saved", slog.String("path", path))
 	return nil
 }
 
@@ -1002,7 +1077,8 @@ func (a *App) SaveCertificateToFile(hostname string) error {
 		return err
 	}
 
-	logger.Info("Downloading certificate for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Info("downloading certificate", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -1014,7 +1090,7 @@ func (a *App) SaveCertificateToFile(hostname string) error {
 
 	cert, err := certificateService.GetCertificateForDownload(a.ctx, hostname)
 	if err != nil {
-		logger.Error("Get certificate failed: %v", err)
+		log.Error("get certificate failed", slog.String("hostname", hostname), logger.Err(err))
 		return err
 	}
 
@@ -1029,21 +1105,21 @@ func (a *App) SaveCertificateToFile(hostname string) error {
 	})
 
 	if err != nil {
-		logger.Error("File dialog error: %v", err)
+		log.Error("file dialog error", logger.Err(err))
 		return fmt.Errorf("file dialog error: %w", err)
 	}
 
 	if path == "" {
-		logger.Info("User cancelled certificate save dialog")
+		log.Info("user cancelled certificate save dialog")
 		return nil
 	}
 
 	if err := os.WriteFile(path, []byte(cert), 0644); err != nil {
-		logger.Error("Failed to write certificate file: %v", err)
+		log.Error("failed to write certificate file", slog.String("path", path), logger.Err(err))
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	logger.Info("Certificate saved to: %s", path)
+	log.Info("certificate saved", slog.String("path", path))
 	return nil
 }
 
@@ -1055,7 +1131,8 @@ func (a *App) SaveChainToFile(hostname string) error {
 		return err
 	}
 
-	logger.Info("Downloading certificate chain for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Info("downloading certificate chain", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -1067,7 +1144,7 @@ func (a *App) SaveChainToFile(hostname string) error {
 
 	chainPEM, err := certificateService.GetChainPEMForDownload(a.ctx, hostname)
 	if err != nil {
-		logger.Error("Get chain failed: %v", err)
+		log.Error("get chain failed", slog.String("hostname", hostname), logger.Err(err))
 		return err
 	}
 
@@ -1082,21 +1159,21 @@ func (a *App) SaveChainToFile(hostname string) error {
 	})
 
 	if err != nil {
-		logger.Error("File dialog error: %v", err)
+		log.Error("file dialog error", logger.Err(err))
 		return fmt.Errorf("file dialog error: %w", err)
 	}
 
 	if path == "" {
-		logger.Info("User cancelled chain save dialog")
+		log.Info("user cancelled chain save dialog")
 		return nil
 	}
 
 	if err := os.WriteFile(path, []byte(chainPEM), 0644); err != nil {
-		logger.Error("Failed to write chain file: %v", err)
+		log.Error("failed to write chain file", slog.String("path", path), logger.Err(err))
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	logger.Info("Chain saved to: %s", path)
+	log.Info("chain saved", slog.String("path", path))
 	return nil
 }
 
@@ -1106,7 +1183,8 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 		return err
 	}
 
-	logger.Info("Downloading private key for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Info("downloading private key", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -1120,7 +1198,7 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 
 	key, err := certificateService.GetPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
 	if err != nil {
-		logger.Error("Get private key failed: %v", err)
+		log.Error("get private key failed", slog.String("hostname", hostname), logger.Err(err))
 		return err
 	}
 
@@ -1135,21 +1213,21 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 	})
 
 	if err != nil {
-		logger.Error("File dialog error: %v", err)
+		log.Error("file dialog error", logger.Err(err))
 		return fmt.Errorf("file dialog error: %w", err)
 	}
 
 	if path == "" {
-		logger.Info("User cancelled private key save dialog")
+		log.Info("user cancelled private key save dialog")
 		return nil
 	}
 
 	if err := os.WriteFile(path, []byte(key), 0600); err != nil {
-		logger.Error("Failed to write private key file: %v", err)
+		log.Error("failed to write private key file", slog.String("path", path), logger.Err(err))
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	logger.Info("Private key saved to: %s", path)
+	log.Info("private key saved", slog.String("path", path))
 	return nil
 }
 
@@ -1159,7 +1237,8 @@ func (a *App) GetPrivateKeyPEM(hostname string) (string, error) {
 		return "", err
 	}
 
-	logger.Debug("Getting private key PEM for: %s", hostname)
+	log := logger.WithComponent("app")
+	log.Debug("getting private key PEM", slog.String("hostname", hostname))
 
 	a.mu.RLock()
 	certificateService := a.certificateService
@@ -1173,7 +1252,7 @@ func (a *App) GetPrivateKeyPEM(hostname string) (string, error) {
 
 	privateKeyPEM, err := certificateService.GetPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
 	if err != nil {
-		logger.Error("Get private key PEM failed: %v", err)
+		log.Error("get private key PEM failed", slog.String("hostname", hostname), logger.Err(err))
 		return "", err
 	}
 
@@ -1198,7 +1277,8 @@ func (a *App) ExportBackup(includeKeys bool) error {
 		}
 	}
 
-	logger.Info("Exporting backup (includeKeys=%v)...", includeKeys)
+	_, log := logger.WithOperation(a.ctx, "export_backup")
+	log.Info("exporting backup", slog.Bool("include_keys", includeKeys))
 
 	a.mu.RLock()
 	backupService := a.backupService
@@ -1210,7 +1290,7 @@ func (a *App) ExportBackup(includeKeys bool) error {
 
 	backup, err := backupService.ExportBackup(a.ctx, includeKeys)
 	if err != nil {
-		logger.Error("Export backup failed: %v", err)
+		log.Error("export backup failed", logger.Err(err))
 		return err
 	}
 
@@ -1225,28 +1305,102 @@ func (a *App) ExportBackup(includeKeys bool) error {
 	})
 
 	if err != nil {
-		logger.Error("File dialog error: %v", err)
+		log.Error("file dialog error", logger.Err(err))
 		return fmt.Errorf("file dialog error: %w", err)
 	}
 
 	if path == "" {
-		logger.Info("User cancelled backup export")
+		log.Info("user cancelled backup export")
 		return nil
 	}
 
 	data, err := json.MarshalIndent(backup, "", "  ")
 	if err != nil {
-		logger.Error("Failed to marshal backup: %v", err)
+		log.Error("failed to marshal backup", logger.Err(err))
 		return fmt.Errorf("failed to marshal backup: %w", err)
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {
-		logger.Error("Failed to write backup file: %v", err)
+		log.Error("failed to write backup file", slog.String("path", path), logger.Err(err))
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
-	logger.Info("Backup exported to: %s (%d certificates)", path, len(backup.Certificates))
+	log.Info("backup exported", slog.String("path", path), slog.Int("certificates", len(backup.Certificates)))
 	return nil
+}
+
+// ============================================================================
+// Log Export Operations
+// ============================================================================
+
+// GetLogInfo returns information about log files for display in UI
+func (a *App) GetLogInfo() (*logger.LogFileInfo, error) {
+	return logger.GetLogFileInfo()
+}
+
+// ExportLogs creates a ZIP archive of all log files and prompts user to save
+func (a *App) ExportLogs() error {
+	log := logger.WithComponent("app")
+	log.Info("exporting application logs")
+
+	// Generate temp file path
+	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf(
+		"paddockcontrol-logs-%s.zip",
+		time.Now().Format("20060102-150405"),
+	))
+
+	// Export logs to temp file
+	if err := logger.ExportLogs(tempFile); err != nil {
+		log.Error("failed to create log archive", logger.Err(err))
+		return fmt.Errorf("failed to create log archive: %w", err)
+	}
+	defer os.Remove(tempFile) // Clean up temp file
+
+	// Show save dialog
+	path, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
+		DefaultFilename: filepath.Base(tempFile),
+		Title:           "Export Application Logs",
+		Filters: []wailsruntime.FileFilter{
+			{DisplayName: "ZIP Archives (*.zip)", Pattern: "*.zip"},
+		},
+	})
+
+	if err != nil {
+		log.Error("file dialog error", logger.Err(err))
+		return fmt.Errorf("file dialog error: %w", err)
+	}
+
+	if path == "" {
+		log.Info("user cancelled log export")
+		return nil
+	}
+
+	// Copy temp file to selected location
+	if err := copyFile(tempFile, path); err != nil {
+		log.Error("failed to save log archive", slog.String("path", path), logger.Err(err))
+		return fmt.Errorf("failed to save log archive: %w", err)
+	}
+
+	log.Info("logs exported successfully", slog.String("path", path))
+	return nil
+}
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	return err
 }
 
 // ============================================================================
@@ -1255,10 +1409,11 @@ func (a *App) ExportBackup(includeKeys bool) error {
 
 // CopyToClipboard copies text to system clipboard
 func (a *App) CopyToClipboard(text string) error {
-	logger.Debug("Copying to clipboard (%d bytes)", len(text))
+	log := logger.WithComponent("app")
+	log.Debug("copying to clipboard", slog.Int("bytes", len(text)))
 
 	if err := wailsruntime.ClipboardSetText(a.ctx, text); err != nil {
-		logger.Error("Clipboard copy failed: %v", err)
+		log.Error("clipboard copy failed", logger.Err(err))
 		return err
 	}
 
@@ -1289,6 +1444,8 @@ func (a *App) OpenDataDirectory() error {
 	dataDir := a.dataDir
 	a.mu.RUnlock()
 
+	log := logger.WithComponent("app")
+
 	if dataDir == "" {
 		return fmt.Errorf("data directory not initialized")
 	}
@@ -1311,11 +1468,11 @@ func (a *App) OpenDataDirectory() error {
 	}
 
 	if err := cmd.Start(); err != nil {
-		logger.Error("Failed to open data directory: %v", err)
+		log.Error("failed to open data directory", logger.Err(err))
 		return fmt.Errorf("failed to open directory: %w", err)
 	}
 
-	logger.Info("Opened data directory in file explorer: %s", dataDir)
+	log.Info("opened data directory in file explorer", slog.String("path", dataDir))
 	return nil
 }
 
@@ -1334,14 +1491,15 @@ func (a *App) ResetDatabase() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logger.Info("Resetting database - deleting all data...")
+	_, log := logger.WithOperation(a.ctx, "reset_database")
+	log.Info("resetting database - deleting all data")
 
 	// Handle in-memory database differently (for testing)
 	if a.dataDir == ":memory:" {
 		// For in-memory database, use migrations to reset schema
 		if a.db != nil {
 			if err := a.db.ResetWithMigrations(); err != nil {
-				logger.Error("Failed to reset in-memory database: %v", err)
+				log.Error("failed to reset in-memory database", logger.Err(err))
 				return fmt.Errorf("failed to reset in-memory database: %w", err)
 			}
 		}
@@ -1349,7 +1507,7 @@ func (a *App) ResetDatabase() error {
 		// For file-based database, close and delete files
 		if a.db != nil {
 			if err := a.db.Close(); err != nil {
-				logger.Error("Failed to close database: %v", err)
+				log.Error("failed to close database", logger.Err(err))
 			}
 			a.db = nil
 		}
@@ -1364,9 +1522,9 @@ func (a *App) ResetDatabase() error {
 
 		for _, f := range filesToDelete {
 			if err := os.Remove(f); err != nil && !os.IsNotExist(err) {
-				logger.Error("Failed to delete %s: %v", f, err)
+				log.Error("failed to delete file", slog.String("file", f), logger.Err(err))
 			} else if err == nil {
-				logger.Info("Deleted: %s", f)
+				log.Info("deleted file", slog.String("file", f))
 			}
 		}
 
@@ -1374,7 +1532,7 @@ func (a *App) ResetDatabase() error {
 		var err error
 		a.db, err = db.NewDatabase(a.dataDir)
 		if err != nil {
-			logger.Error("Failed to reinitialize database: %v", err)
+			log.Error("failed to reinitialize database", logger.Err(err))
 			return fmt.Errorf("failed to reinitialize database: %w", err)
 		}
 	}
@@ -1395,7 +1553,7 @@ func (a *App) ResetDatabase() error {
 	// Reinitialize services without encryption key
 	a.initializeServicesWithoutKey()
 
-	logger.Info("Database reset complete. Ready for fresh setup.")
+	log.Info("database reset complete - ready for fresh setup")
 
 	return nil
 }

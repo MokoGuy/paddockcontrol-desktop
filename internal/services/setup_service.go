@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 
 	"paddockcontrol-desktop/internal/config"
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 )
 
@@ -17,6 +19,7 @@ type SetupService struct {
 	db            *db.Database
 	config        *config.Service
 	backupService *BackupService
+	log           *slog.Logger
 }
 
 // NewSetupService creates a new setup service
@@ -25,6 +28,7 @@ func NewSetupService(database *db.Database, configSvc *config.Service, backupSvc
 		db:            database,
 		config:        configSvc,
 		backupService: backupSvc,
+		log:           logger.WithComponent("setup"),
 	}
 }
 
@@ -35,10 +39,19 @@ func (s *SetupService) IsConfigured(ctx context.Context) (bool, error) {
 
 // SetupFromScratch creates a new configuration from scratch
 func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupRequest) error {
+	ctx, log := logger.WithOperation(ctx, "setup_fresh")
+	log.Info("starting fresh setup",
+		slog.String("owner_email", req.OwnerEmail),
+		slog.String("ca_name", req.CAName),
+		slog.String("hostname_suffix", req.HostnameSuffix),
+	)
+
 	// Validate setup request
 	if err := s.validateSetupRequest(req); err != nil {
+		log.Error("setup request validation failed", logger.Err(err))
 		return err
 	}
+	log.Debug("setup request validated")
 
 	// Create config record in database
 	err := s.db.Queries().CreateConfig(ctx, sqlc.CreateConfigParams{
@@ -54,15 +67,19 @@ func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupReq
 		ValidityPeriodDays:        int64(req.ValidityPeriodDays),
 	})
 	if err != nil {
+		log.Error("failed to create configuration", logger.Err(err))
 		return fmt.Errorf("failed to create configuration: %w", err)
 	}
+	log.Debug("configuration record created")
 
 	// Mark as configured
 	err = s.config.SetConfigured(ctx)
 	if err != nil {
+		log.Error("failed to mark as configured", logger.Err(err))
 		return fmt.Errorf("failed to mark as configured: %w", err)
 	}
 
+	log.Info("fresh setup completed successfully")
 	return nil
 }
 
@@ -70,33 +87,49 @@ func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupReq
 // If backup contains encrypted keys, validates encryption key can decrypt them
 // If backup lacks encrypted keys, skips key validation
 func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.BackupData, encryptionKey []byte) error {
+	ctx, log := logger.WithOperation(ctx, "setup_restore")
+	log.Info("starting setup from backup",
+		slog.String("backup_version", backup.Version),
+		slog.Int("certificates", len(backup.Certificates)),
+	)
+
 	if backup == nil {
+		log.Error("backup data is nil")
 		return fmt.Errorf("backup data is nil")
 	}
 
 	// Check if backup contains encrypted keys
 	hasEncryptedKeys := s.backupHasEncryptedKeys(backup)
+	log.Debug("backup encryption check", slog.Bool("has_encrypted_keys", hasEncryptedKeys))
 
 	// If backup has encrypted keys, validate encryption key can decrypt them
 	if hasEncryptedKeys {
+		log.Debug("validating encryption key against backup")
 		if err := s.validateEncryptionKey(backup, encryptionKey); err != nil {
+			log.Error("encryption key validation failed", logger.Err(err))
 			return err
 		}
+		log.Debug("encryption key validated successfully")
 	}
 
 	// Import all certificates from backup with strict validation
-	_, err := s.backupService.ImportBackup(ctx, backup, encryptionKey)
+	log.Info("importing certificates from backup")
+	result, err := s.backupService.ImportBackup(ctx, backup, encryptionKey)
 	if err != nil {
+		log.Error("backup import failed", logger.Err(err))
 		return fmt.Errorf("backup import failed: %w", err)
 	}
+	log.Info("certificates imported", slog.Int("count", result.Success))
 
 	// Create config record in database if not exists
 	configExists, err := s.db.Queries().ConfigExists(ctx)
 	if err != nil {
+		log.Error("failed to check configuration existence", logger.Err(err))
 		return fmt.Errorf("failed to check configuration: %w", err)
 	}
 
 	if configExists == 0 {
+		log.Debug("creating new configuration from backup")
 		err = s.db.Queries().CreateConfig(ctx, sqlc.CreateConfigParams{
 			OwnerEmail:                backup.Config.OwnerEmail,
 			CaName:                    backup.Config.CAName,
@@ -110,9 +143,11 @@ func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.Backu
 			ValidityPeriodDays:        int64(backup.Config.ValidityPeriodDays),
 		})
 		if err != nil {
+			log.Error("failed to create configuration", logger.Err(err))
 			return fmt.Errorf("failed to create configuration: %w", err)
 		}
 	} else {
+		log.Debug("updating existing configuration from backup")
 		// Update existing config with backup values
 		err = s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
 			OwnerEmail:                backup.Config.OwnerEmail,
@@ -127,6 +162,7 @@ func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.Backu
 			ValidityPeriodDays:        int64(backup.Config.ValidityPeriodDays),
 		})
 		if err != nil {
+			log.Error("failed to update configuration", logger.Err(err))
 			return fmt.Errorf("failed to update configuration: %w", err)
 		}
 	}
@@ -134,9 +170,13 @@ func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.Backu
 	// Mark as configured
 	err = s.config.SetConfigured(ctx)
 	if err != nil {
+		log.Error("failed to mark as configured", logger.Err(err))
 		return fmt.Errorf("failed to mark as configured: %w", err)
 	}
 
+	log.Info("setup from backup completed successfully",
+		slog.Int("certificates_restored", result.Success),
+	)
 	return nil
 }
 

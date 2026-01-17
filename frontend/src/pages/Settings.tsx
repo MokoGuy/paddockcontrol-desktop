@@ -37,7 +37,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { formatDateTime } from "@/lib/theme";
-import { GetBuildInfo, OpenDataDirectory } from "../../wailsjs/go/main/App";
+import { GetBuildInfo, OpenDataDirectory, ExportLogs, GetLogInfo } from "../../wailsjs/go/main/App";
+import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
@@ -72,6 +73,8 @@ export function Settings() {
     const [buildInfo, setBuildInfo] = useState<Record<string, string> | null>(
         null,
     );
+    const [logInfo, setLogInfo] = useState<logger.LogFileInfo | null>(null);
+    const [logExportLoading, setLogExportLoading] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -95,6 +98,14 @@ export function Settings() {
                 setBuildInfo(info);
             } catch (err) {
                 console.error("Failed to load build info:", err);
+            }
+
+            // Load log info
+            try {
+                const logs = await GetLogInfo();
+                setLogInfo(logs);
+            } catch (err) {
+                console.error("Failed to load log info:", err);
             }
         };
 
@@ -135,6 +146,27 @@ export function Settings() {
             setResetLoading(false);
             setResetConfirming(false);
         }
+    };
+
+    const handleExportLogs = async () => {
+        setLogExportLoading(true);
+        try {
+            await ExportLogs();
+            toast.success("Logs exported successfully");
+        } catch (err) {
+            console.error("Export logs error:", err);
+            toast.error(`Failed to export logs: ${err instanceof Error ? err.message : "Unknown error"}`);
+        } finally {
+            setLogExportLoading(false);
+        }
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
     const handleEditConfig = async (data: UpdateConfigRequest) => {
@@ -355,6 +387,66 @@ export function Settings() {
                             All certificate data, backups, and application files
                             are stored in this directory.
                         </p>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Application Logs */}
+            {logInfo && (
+                <Card className="mt-6 shadow-sm border-border">
+                    <CardHeader>
+                        <CardTitle>Application Logs</CardTitle>
+                        <CardDescription>
+                            Export logs for debugging and bug reports
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Current Log Size
+                                </p>
+                                <p className="font-mono text-foreground">
+                                    {formatFileSize(logInfo.currentLogSize)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Rotated Logs
+                                </p>
+                                <p className="font-mono text-muted-foreground">
+                                    {logInfo.rotatedLogCount} files
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Total Size
+                                </p>
+                                <p className="font-mono text-muted-foreground">
+                                    {formatFileSize(logInfo.totalLogsSize)}
+                                </p>
+                            </div>
+                            {logInfo.oldestLogDate && (
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                        Oldest Log
+                                    </p>
+                                    <p className="font-mono text-muted-foreground">
+                                        {formatDateTime(logInfo.oldestLogDate)}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Creates a ZIP archive of all log files for troubleshooting
+                            and bug reports.
+                        </p>
+                        <Button
+                            onClick={handleExportLogs}
+                            disabled={logExportLoading}
+                        >
+                            {logExportLoading ? "Exporting..." : "Export Logs as ZIP"}
+                        </Button>
                     </CardContent>
                 </Card>
             )}

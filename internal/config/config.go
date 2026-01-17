@@ -4,35 +4,48 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 )
 
 // Service handles configuration management
 type Service struct {
-	db *db.Database
+	db  *db.Database
+	log *slog.Logger
 }
 
 // NewService creates a new config service
 func NewService(database *db.Database) *Service {
 	return &Service{
-		db: database,
+		db:  database,
+		log: logger.WithComponent("config"),
 	}
 }
 
 // GetConfig loads configuration from database
 func (s *Service) GetConfig(ctx context.Context) (*sqlc.Config, error) {
+	log := logger.FromContext(ctx).With(slog.String("component", "config"))
+	log.Debug("fetching configuration")
+
 	cfg, err := s.db.Queries().GetConfig(ctx)
 	if err != nil {
+		log.Error("failed to get config", logger.Err(err))
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
+
+	log.Debug("configuration fetched successfully")
 	return &cfg, nil
 }
 
 // SaveConfig updates configuration in database
 func (s *Service) SaveConfig(ctx context.Context, cfg *sqlc.Config) error {
-	return s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
+	log := logger.FromContext(ctx).With(slog.String("component", "config"))
+	log.Debug("saving configuration")
+
+	err := s.db.Queries().UpdateConfig(ctx, sqlc.UpdateConfigParams{
 		OwnerEmail:                cfg.OwnerEmail,
 		CaName:                    cfg.CaName,
 		HostnameSuffix:            cfg.HostnameSuffix,
@@ -44,6 +57,14 @@ func (s *Service) SaveConfig(ctx context.Context, cfg *sqlc.Config) error {
 		DefaultKeySize:            cfg.DefaultKeySize,
 		ValidityPeriodDays:        cfg.ValidityPeriodDays,
 	})
+
+	if err != nil {
+		log.Error("failed to save config", logger.Err(err))
+		return err
+	}
+
+	log.Debug("configuration saved successfully")
+	return nil
 }
 
 // IsConfigured checks if initial setup is complete
@@ -54,6 +75,7 @@ func (s *Service) IsConfigured(ctx context.Context) (bool, error) {
 		if err.Error() == "sql: no rows in result set" {
 			return false, nil
 		}
+		s.log.Error("failed to check if configured", logger.Err(err))
 		return false, fmt.Errorf("failed to check if configured: %w", err)
 	}
 	return configured == 1, nil
@@ -61,11 +83,27 @@ func (s *Service) IsConfigured(ctx context.Context) (bool, error) {
 
 // SetConfigured marks setup as complete in database
 func (s *Service) SetConfigured(ctx context.Context) error {
-	return s.db.Queries().SetConfigured(ctx)
+	log := logger.FromContext(ctx).With(slog.String("component", "config"))
+	log.Debug("marking application as configured")
+
+	err := s.db.Queries().SetConfigured(ctx)
+	if err != nil {
+		log.Error("failed to set configured flag", logger.Err(err))
+		return err
+	}
+
+	log.Info("application marked as configured")
+	return nil
 }
 
 // UpdateConfig updates configuration in database
 func (s *Service) UpdateConfig(ctx context.Context, req *models.UpdateConfigRequest) (*models.Config, error) {
+	ctx, log := logger.WithOperation(ctx, "config_update")
+	log.Info("updating configuration",
+		slog.String("owner_email", req.OwnerEmail),
+		slog.String("ca_name", req.CAName),
+	)
+
 	// Convert UpdateConfigRequest to UpdateConfigParams
 	params := sqlc.UpdateConfigParams{
 		OwnerEmail:          req.OwnerEmail,
@@ -86,14 +124,18 @@ func (s *Service) UpdateConfig(ctx context.Context, req *models.UpdateConfigRequ
 	// Update configuration
 	err := s.db.Queries().UpdateConfig(ctx, params)
 	if err != nil {
+		log.Error("failed to update config", logger.Err(err))
 		return nil, fmt.Errorf("failed to update config: %w", err)
 	}
 
 	// Fetch and return updated config
 	cfg, err := s.db.Queries().GetConfig(ctx)
 	if err != nil {
+		log.Error("failed to fetch updated config", logger.Err(err))
 		return nil, fmt.Errorf("failed to fetch updated config: %w", err)
 	}
+
+	log.Info("configuration updated successfully")
 
 	// Convert sqlc.Config to models.Config
 	return convertSqlcToModelsConfig(&cfg), nil
