@@ -353,66 +353,6 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Application Logs */}
-            {logInfo && (
-                <Card className="mt-6 shadow-sm border-border">
-                    <CardHeader>
-                        <CardTitle>Application Logs</CardTitle>
-                        <CardDescription>
-                            Export logs for debugging and bug reports
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Current Log Size
-                                </p>
-                                <p className="font-mono text-foreground">
-                                    {formatFileSize(logInfo.currentLogSize)}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Rotated Logs
-                                </p>
-                                <p className="font-mono text-muted-foreground">
-                                    {logInfo.rotatedLogCount} files
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                    Total Size
-                                </p>
-                                <p className="font-mono text-muted-foreground">
-                                    {formatFileSize(logInfo.totalLogsSize)}
-                                </p>
-                            </div>
-                            {logInfo.oldestLogDate && (
-                                <div>
-                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
-                                        Oldest Log
-                                    </p>
-                                    <p className="font-mono text-muted-foreground">
-                                        {formatDateTime(logInfo.oldestLogDate)}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Creates a ZIP archive of all log files for troubleshooting
-                            and bug reports.
-                        </p>
-                        <Button
-                            onClick={handleExportLogs}
-                            disabled={logExportLoading}
-                        >
-                            {logExportLoading ? "Exporting..." : "Export Logs as ZIP"}
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-
             {/* Build Information */}
             {buildInfo && (
                 <Card className="mt-6 shadow-sm border-border">
@@ -461,14 +401,42 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Backup Management */}
-            <Card className="mt-6 border-blue-500/30 bg-blue-500/5">
+            {/* Application Logs */}
+            <Card className="mt-6 border-action/30 bg-action-muted">
                 <CardContent className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        <p className="text-sm font-medium text-action">
+                            Application Logs
+                        </p>
+                        <p className="text-xs text-action/70 mt-1">
+                            Export logs as ZIP for troubleshooting and bug reports.
+                            {logInfo && logInfo.totalLogsSize > 0 && (
+                                <span className="ml-1 font-mono">
+                                    ({formatFileSize(logInfo.totalLogsSize)})
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-action/50 text-action hover:bg-action/20"
+                        onClick={handleExportLogs}
+                        disabled={logExportLoading}
+                    >
+                        {logExportLoading ? "Exporting..." : "Export Logs"}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {/* Backup Management */}
+            <Card className="mt-4 border-action/30 bg-action-muted">
+                <CardContent className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-action">
                             Backup Management
                         </p>
-                        <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                        <p className="text-xs text-action/70 mt-1">
                             Create an encrypted backup of your CA configuration and
                             certificates.
                         </p>
@@ -481,7 +449,7 @@ export function Settings() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="border-blue-500/50 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400 dark:hover:bg-blue-500/20"
+                        className="border-action/50 text-action hover:bg-action/20"
                         onClick={() => setExportConfirming(true)}
                         disabled={backupLoading}
                     >

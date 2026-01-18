@@ -48,12 +48,15 @@
     --info-foreground: oklch(0.97 0.014 254.604);
     --admin: oklch(0.577 0.245 27.325);
     --admin-foreground: oklch(0.971 0.013 17.38);
+    --action: oklch(0.546 0.214 255.115);
+    --action-foreground: oklch(0.97 0.014 254.604);
 
     /* Muted variants for badges/pills */
     --success-muted: oklch(0.912 0.044 155.995);
     --warning-muted: oklch(0.945 0.088 95.85);
     --info-muted: oklch(0.932 0.032 255.508);
     --admin-muted: oklch(0.936 0.032 17.717);
+    --action-muted: oklch(0.932 0.032 255.508);
 }
 
 .dark {
@@ -98,12 +101,15 @@
     --info-foreground: oklch(0.97 0.014 254.604);
     --admin: oklch(0.704 0.191 22.216);
     --admin-foreground: oklch(0.971 0.013 17.38);
+    --action: oklch(0.623 0.214 255.115);
+    --action-foreground: oklch(0.97 0.014 254.604);
 
     /* Muted variants for badges/pills - dark mode */
     --success-muted: oklch(0.266 0.065 152.934);
     --warning-muted: oklch(0.268 0.063 53.813);
     --info-muted: oklch(0.268 0.069 264.695);
     --admin-muted: oklch(0.258 0.061 22.216);
+    --action-muted: oklch(0.268 0.069 255.115);
 }
 
 @theme inline {
@@ -160,6 +166,9 @@
     --color-admin: var(--admin);
     --color-admin-foreground: var(--admin-foreground);
     --color-admin-muted: var(--admin-muted);
+    --color-action: var(--action);
+    --color-action-foreground: var(--action-foreground);
+    --color-action-muted: var(--action-muted);
 }
 
 @layer base {
