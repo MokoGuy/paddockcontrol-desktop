@@ -189,16 +189,14 @@ export function detectSANType(value: string): SANType {
   return 'dns';
 }
 
-// CSR Request
+// CSR Form Input - fields managed by the form
+// Note: sans, is_renewal, skip_suffix_validation are managed separately
+// and added to the request in onSubmit
 export const csrRequestSchema = z.object({
   hostname: z
     .string()
     .min(1, 'Hostname is required')
     .max(255, 'Hostname is too long'),
-  sans: z
-    .array(sanEntrySchema)
-    .optional()
-    .default([]),
   organization: z
     .string()
     .min(1, 'Organization is required')
@@ -230,12 +228,6 @@ export const csrRequestSchema = z.object({
     .max(500, 'Note is too long')
     .optional()
     .or(z.literal('')),
-  is_renewal: z
-    .boolean()
-    .default(false),
-  skip_suffix_validation: z
-    .boolean()
-    .default(false),
 });
 
 export type CSRRequestInput = z.infer<typeof csrRequestSchema>;

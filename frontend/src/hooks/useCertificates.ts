@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import {
     Certificate,
@@ -37,7 +37,7 @@ export function useCertificates(): UseCertificatesReturn {
     const [error, setError] = useState<string | null>(null);
     const { certificates, setCertificates } = useCertificateStore();
 
-    const handleError = (err: unknown) => {
+    const handleError = useCallback((err: unknown) => {
         // Wails returns error messages as strings, not Error objects
         const message =
             err instanceof Error ? err.message :
@@ -45,9 +45,9 @@ export function useCertificates(): UseCertificatesReturn {
             "An error occurred";
         setError(message);
         console.error("Certificate operation error:", err);
-    };
+    }, []);
 
-    const listCertificates = async (filter: CertificateFilter = {}) => {
+    const listCertificates = useCallback(async (filter: CertificateFilter = {}) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -58,9 +58,9 @@ export function useCertificates(): UseCertificatesReturn {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [setCertificates, handleError]);
 
-    const getCertificate = async (
+    const getCertificate = useCallback(async (
         hostname: string,
     ): Promise<Certificate | null> => {
         setIsLoading(true);
@@ -73,9 +73,9 @@ export function useCertificates(): UseCertificatesReturn {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [handleError]);
 
-    const generateCSR = async (
+    const generateCSR = useCallback(async (
         req: CSRRequest,
     ): Promise<CSRResponse | null> => {
         setIsLoading(true);
@@ -88,48 +88,51 @@ export function useCertificates(): UseCertificatesReturn {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [handleError]);
 
-    const uploadCertificate = async (hostname: string, certPEM: string) => {
+    const uploadCertificate = useCallback(async (hostname: string, certPEM: string) => {
         setIsLoading(true);
         setError(null);
         try {
             await api.uploadCertificate(hostname, certPEM);
-            await listCertificates();
+            const certs = await api.listCertificates({});
+            setCertificates(certs || []);
         } catch (err) {
             handleError(err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [setCertificates, handleError]);
 
-    const importCertificate = async (req: ImportRequest) => {
+    const importCertificate = useCallback(async (req: ImportRequest) => {
         setIsLoading(true);
         setError(null);
         try {
             await api.importCertificate(req);
-            await listCertificates();
+            const certs = await api.listCertificates({});
+            setCertificates(certs || []);
         } catch (err) {
             handleError(err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [setCertificates, handleError]);
 
-    const deleteCertificate = async (hostname: string) => {
+    const deleteCertificate = useCallback(async (hostname: string) => {
         setIsLoading(true);
         setError(null);
         try {
             await api.deleteCertificate(hostname);
-            await listCertificates();
+            const certs = await api.listCertificates({});
+            setCertificates(certs || []);
         } catch (err) {
             handleError(err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [setCertificates, handleError]);
 
-    const setCertificateReadOnly = async (hostname: string, readOnly: boolean) => {
+    const setCertificateReadOnly = useCallback(async (hostname: string, readOnly: boolean) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -139,38 +142,41 @@ export function useCertificates(): UseCertificatesReturn {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [handleError]);
 
-    const downloadCSR = async (hostname: string) => {
+    const downloadCSR = useCallback(async (hostname: string) => {
         setError(null);
         try {
             await api.saveCSRToFile(hostname);
         } catch (err) {
             handleError(err);
         }
-    };
+    }, [handleError]);
 
-    const downloadCertificate = async (hostname: string) => {
+    const downloadCertificate = useCallback(async (hostname: string) => {
         setError(null);
         try {
             await api.saveCertificateToFile(hostname);
         } catch (err) {
             handleError(err);
         }
-    };
+    }, [handleError]);
 
-    const downloadPrivateKey = async (hostname: string) => {
+    const downloadPrivateKey = useCallback(async (hostname: string) => {
         setError(null);
         try {
             await api.savePrivateKeyToFile(hostname);
         } catch (err) {
             handleError(err);
         }
-    };
+    }, [handleError]);
 
-    const refresh = async () => {
-        await listCertificates();
-    };
+    const refresh = useCallback(async () => {
+        const certs = await api.listCertificates({});
+        setCertificates(certs || []);
+    }, [setCertificates]);
+
+    const clearError = useCallback(() => setError(null), []);
 
     return {
         certificates,
@@ -186,7 +192,7 @@ export function useCertificates(): UseCertificatesReturn {
         downloadCSR,
         downloadCertificate,
         downloadPrivateKey,
-        clearError: () => setError(null),
+        clearError,
         refresh,
     };
 }
