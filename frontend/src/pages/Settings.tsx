@@ -353,6 +353,56 @@ export function Settings() {
                 </Card>
             )}
 
+            {/* Application Logs Summary */}
+            {logInfo && (
+                <Card className="mt-6 shadow-sm border-border">
+                    <CardHeader>
+                        <CardTitle>Application Logs</CardTitle>
+                        <CardDescription>
+                            Log files for debugging and troubleshooting
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Current Log Size
+                                </p>
+                                <p className="font-mono text-foreground">
+                                    {formatFileSize(logInfo.currentLogSize)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Rotated Logs
+                                </p>
+                                <p className="font-mono text-muted-foreground">
+                                    {logInfo.rotatedLogCount} files
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                    Total Size
+                                </p>
+                                <p className="font-mono text-muted-foreground">
+                                    {formatFileSize(logInfo.totalLogsSize)}
+                                </p>
+                            </div>
+                            {logInfo.oldestLogDate && (
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
+                                        Oldest Log
+                                    </p>
+                                    <p className="font-mono text-muted-foreground">
+                                        {formatDateTime(logInfo.oldestLogDate)}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Build Information */}
             {buildInfo && (
                 <Card className="mt-6 shadow-sm border-border">
@@ -401,20 +451,15 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Application Logs */}
+            {/* Export Logs */}
             <Card className="mt-6 border-action/30 bg-action-muted">
                 <CardContent className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-action">
-                            Application Logs
+                            Export Logs
                         </p>
                         <p className="text-xs text-action/70 mt-1">
-                            Export logs as ZIP for troubleshooting and bug reports.
-                            {logInfo && logInfo.totalLogsSize > 0 && (
-                                <span className="ml-1 font-mono">
-                                    ({formatFileSize(logInfo.totalLogsSize)})
-                                </span>
-                            )}
+                            Download all log files as ZIP archive for bug reports.
                         </p>
                     </div>
                     <Button
