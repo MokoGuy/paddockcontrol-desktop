@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 	"time"
@@ -154,6 +155,30 @@ func (s *CertificateService) SetCertificateReadOnly(ctx context.Context, hostnam
 	return s.db.Queries().UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
 		ReadOnly: readOnlyValue,
 		Hostname: hostname,
+	})
+}
+
+// UpdateCertificateNote updates the note for a certificate
+func (s *CertificateService) UpdateCertificateNote(ctx context.Context, hostname string, note string) error {
+	var noteValue sql.NullString
+	if note != "" {
+		noteValue = sql.NullString{String: note, Valid: true}
+	}
+	return s.db.Queries().UpdateCertificateNote(ctx, sqlc.UpdateCertificateNoteParams{
+		Note:     noteValue,
+		Hostname: hostname,
+	})
+}
+
+// UpdatePendingNote updates the pending note for a certificate
+func (s *CertificateService) UpdatePendingNote(ctx context.Context, hostname string, note string) error {
+	var noteValue sql.NullString
+	if note != "" {
+		noteValue = sql.NullString{String: note, Valid: true}
+	}
+	return s.db.Queries().UpdatePendingNote(ctx, sqlc.UpdatePendingNoteParams{
+		PendingNote: noteValue,
+		Hostname:    hostname,
 	})
 }
 

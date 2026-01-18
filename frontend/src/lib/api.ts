@@ -84,6 +84,10 @@ export const api = {
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
     setCertificateReadOnly: (hostname: string, readOnly: boolean) =>
         App.SetCertificateReadOnly(hostname, readOnly),
+    updateCertificateNote: (hostname: string, note: string) =>
+        App.UpdateCertificateNote(hostname, note),
+    updatePendingNote: (hostname: string, note: string) =>
+        App.UpdatePendingNote(hostname, note),
 
     // File operations
     saveCSRToFile: (hostname: string) => App.SaveCSRToFile(hostname),

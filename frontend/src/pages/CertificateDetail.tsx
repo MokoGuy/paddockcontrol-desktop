@@ -23,7 +23,7 @@ import { CertificateSubjectInfo } from "@/components/certificate/CertificateSubj
 import { PendingCSRSection } from "@/components/certificate/PendingCSRSection";
 import { CertificatePEMSection } from "@/components/certificate/CertificatePEMSection";
 import { PrivateKeySection } from "@/components/certificate/PrivateKeySection";
-import { CertificateNotesSection } from "@/components/certificate/CertificateNotesSection";
+import { CertificateDescriptionEditor } from "@/components/certificate/CertificateDescriptionEditor";
 import { useCertificateDetail } from "@/hooks/useCertificateDetail";
 import {
     Tooltip,
@@ -65,11 +65,13 @@ export function CertificateDetail() {
         showKeyDialog,
         setShowKeyDialog,
         isTogglingReadOnly,
+        isSavingNote,
         handleDelete,
         handleUploadCertificate,
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
+        handleSaveNote,
         closeUploadDialog,
         navigate,
     } = useCertificateDetail({ hostname });
@@ -232,6 +234,17 @@ export function CertificateDetail() {
                 />
             )}
 
+            {/* Description Editor */}
+            <CertificateDescriptionEditor
+                hostname={certificate.hostname}
+                note={certificate.note || ""}
+                pendingNote={certificate.pending_note}
+                hasPendingCSR={!!certificate.pending_csr}
+                onSave={handleSaveNote}
+                isSaving={isSavingNote}
+                disabled={certificate.read_only}
+            />
+
             {/* Status and Basic Info */}
             <CertificateStatusSection certificate={certificate} />
 
@@ -273,9 +286,6 @@ export function CertificateDetail() {
                 onUnlockClick={() => setShowKeyDialog(true)}
                 onDownloadClick={handleDownloadPrivateKey}
             />
-
-            {/* Notes */}
-            <CertificateNotesSection certificate={certificate} />
 
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog

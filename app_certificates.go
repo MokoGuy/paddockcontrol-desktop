@@ -248,3 +248,61 @@ func (a *App) SetCertificateReadOnly(hostname string, readOnly bool) error {
 	)
 	return nil
 }
+
+// UpdateCertificateNote updates the description/note for a certificate
+func (a *App) UpdateCertificateNote(hostname string, note string) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	log := logger.WithComponent("app")
+	log.Info("updating certificate note", slog.String("hostname", hostname))
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	if err := certificateService.UpdateCertificateNote(a.ctx, hostname, note); err != nil {
+		log.Error("update certificate note failed",
+			slog.String("hostname", hostname),
+			logger.Err(err),
+		)
+		return err
+	}
+
+	log.Info("certificate note updated", slog.String("hostname", hostname))
+	return nil
+}
+
+// UpdatePendingNote updates the pending description/note for a certificate
+func (a *App) UpdatePendingNote(hostname string, note string) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	log := logger.WithComponent("app")
+	log.Info("updating pending note", slog.String("hostname", hostname))
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	if err := certificateService.UpdatePendingNote(a.ctx, hostname, note); err != nil {
+		log.Error("update pending note failed",
+			slog.String("hostname", hostname),
+			logger.Err(err),
+		)
+		return err
+	}
+
+	log.Info("pending note updated", slog.String("hostname", hostname))
+	return nil
+}

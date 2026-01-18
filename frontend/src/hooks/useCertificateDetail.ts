@@ -52,6 +52,9 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
     // Read-only toggle state
     const [isTogglingReadOnly, setIsTogglingReadOnly] = useState(false);
 
+    // Note saving state
+    const [isSavingNote, setIsSavingNote] = useState(false);
+
     // Load certificate
     const loadCertificate = useCallback(async () => {
         if (!hostname) return;
@@ -209,6 +212,31 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [certificate, downloadPrivateKey]);
 
+    const handleSaveNote = useCallback(
+        async (note: string, isPending: boolean) => {
+            if (!hostname) return;
+            setIsSavingNote(true);
+            try {
+                if (isPending) {
+                    await api.updatePendingNote(hostname, note);
+                } else {
+                    await api.updateCertificateNote(hostname, note);
+                }
+                // Optimistically update local state
+                if (certificate) {
+                    setCertificate({
+                        ...certificate,
+                        note: isPending ? certificate.note : note,
+                        pending_note: isPending ? note : certificate.pending_note,
+                    });
+                }
+            } finally {
+                setIsSavingNote(false);
+            }
+        },
+        [hostname, certificate]
+    );
+
     const closeUploadDialog = useCallback(() => {
         setUploadDialogOpen(false);
         setUploadCertPEM("");
@@ -251,12 +279,16 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         // Read-only state
         isTogglingReadOnly,
 
+        // Note state
+        isSavingNote,
+
         // Handlers
         handleDelete,
         handleUploadCertificate,
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
+        handleSaveNote,
         closeUploadDialog,
         navigate,
     };
