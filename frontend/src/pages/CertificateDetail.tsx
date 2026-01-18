@@ -24,6 +24,7 @@ import { PendingCSRSection } from "@/components/certificate/PendingCSRSection";
 import { CertificatePEMSection } from "@/components/certificate/CertificatePEMSection";
 import { PrivateKeySection } from "@/components/certificate/PrivateKeySection";
 import { CertificateDescriptionEditor } from "@/components/certificate/CertificateDescriptionEditor";
+import { CertificateHistoryCard } from "@/components/certificate/CertificateHistoryCard";
 import { useCertificateDetail } from "@/hooks/useCertificateDetail";
 import {
     Tooltip,
@@ -53,6 +54,9 @@ export function CertificateDetail() {
         privateKeyPEM,
         privateKeyLoading,
         privateKeyError,
+        history,
+        historyLoading,
+        historyError,
         deleteConfirming,
         setDeleteConfirming,
         uploadDialogOpen,
@@ -285,6 +289,13 @@ export function CertificateDetail() {
                 privateKeyError={privateKeyError}
                 onUnlockClick={() => setShowKeyDialog(true)}
                 onDownloadClick={handleDownloadPrivateKey}
+            />
+
+            {/* Activity History */}
+            <CertificateHistoryCard
+                history={history}
+                isLoading={historyLoading}
+                error={historyError}
             />
 
             {/* Delete Confirmation Dialog */}

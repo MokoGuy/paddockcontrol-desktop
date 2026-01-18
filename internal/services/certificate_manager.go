@@ -138,6 +138,9 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname str
 		return fmt.Errorf("certificate is read-only and cannot be deleted")
 	}
 
+	// Log history entry before delete (will be cascade deleted with certificate)
+	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateDeleted, "Certificate deleted")
+
 	err = s.db.Queries().DeleteCertificate(ctx, hostname)
 	if err != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
@@ -152,10 +155,24 @@ func (s *CertificateService) SetCertificateReadOnly(ctx context.Context, hostnam
 	if readOnly {
 		readOnlyValue = 1
 	}
-	return s.db.Queries().UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
+	err := s.db.Queries().UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
 		ReadOnly: readOnlyValue,
 		Hostname: hostname,
 	})
+	if err != nil {
+		return err
+	}
+
+	// Log history entry
+	eventType := models.EventReadOnlyDisabled
+	message := "Read-only protection removed"
+	if readOnly {
+		eventType = models.EventReadOnlyEnabled
+		message = "Marked as read-only"
+	}
+	_ = s.history.LogEvent(ctx, hostname, eventType, message)
+
+	return nil
 }
 
 // UpdateCertificateNote updates the note for a certificate

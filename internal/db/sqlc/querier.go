@@ -12,6 +12,9 @@ type Querier interface {
 	// Activate certificate after upload (unified for initial or renewal)
 	// Move pending key to active column, store certificate, clear pending columns
 	ActivateCertificate(ctx context.Context, arg ActivateCertificateParams) error
+	// Certificate history queries
+	// Add a new history entry for a certificate
+	AddHistoryEntry(ctx context.Context, arg AddHistoryEntryParams) error
 	// Check if certificate exists by hostname
 	CertificateExists(ctx context.Context, hostname string) (int64, error)
 	// Clear pending CSR and pending key without deleting the certificate
@@ -26,8 +29,12 @@ type Querier interface {
 	DeleteAllCertificates(ctx context.Context) error
 	// Delete a certificate
 	DeleteCertificate(ctx context.Context, hostname string) error
+	// Delete all history entries for a certificate (used when certificate is deleted)
+	DeleteCertificateHistory(ctx context.Context, hostname string) error
 	// Get a certificate by hostname
 	GetCertificateByHostname(ctx context.Context, hostname string) (Certificate, error)
+	// Get history entries for a certificate, ordered by most recent first
+	GetCertificateHistory(ctx context.Context, arg GetCertificateHistoryParams) ([]CertificateHistory, error)
 	// Get the configuration (single row)
 	GetConfig(ctx context.Context) (Config, error)
 	// Check if initial setup is complete

@@ -140,6 +140,18 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 		return nil, fmt.Errorf("failed to store CSR: %w", err)
 	}
 
+	// Log history entry
+	eventType := models.EventCSRGenerated
+	message := fmt.Sprintf("CSR generated (%d-bit key, %d SANs)", req.KeySize, len(req.SANs))
+	if req.IsRenewal {
+		eventType = models.EventCSRRegenerated
+		message = fmt.Sprintf("CSR regenerated for renewal (%d-bit key, %d SANs)", req.KeySize, len(req.SANs))
+	}
+	if err := s.history.LogEvent(ctx, req.Hostname, eventType, message); err != nil {
+		log.Warn("failed to log history entry", logger.Err(err))
+		// Don't fail the operation for history logging errors
+	}
+
 	log.Info("CSR generated successfully",
 		slog.Duration("total_duration", time.Since(start)),
 		slog.Int("csr_size", len(csrPEM)),

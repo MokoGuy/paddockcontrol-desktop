@@ -4,7 +4,7 @@ import { useCertificates } from "@/hooks/useCertificates";
 import { useBackup } from "@/hooks/useBackup";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
-import type { Certificate, ChainCertificateInfo } from "@/types";
+import type { Certificate, ChainCertificateInfo, HistoryEntry } from "@/types";
 
 interface UseCertificateDetailOptions {
     hostname?: string;
@@ -54,6 +54,11 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
 
     // Note saving state
     const [isSavingNote, setIsSavingNote] = useState(false);
+
+    // History state
+    const [history, setHistory] = useState<HistoryEntry[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
 
     // Load certificate
     const loadCertificate = useCallback(async () => {
@@ -120,6 +125,26 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [hostname, isEncryptionKeyProvided]);
 
+    // Load certificate history
+    const loadHistory = useCallback(async () => {
+        if (!hostname) return;
+
+        setHistoryLoading(true);
+        setHistoryError(null);
+        try {
+            const historyData = await api.getCertificateHistory(hostname);
+            setHistory(historyData || []);
+        } catch (err) {
+            setHistoryError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to load history",
+            );
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [hostname]);
+
     // Load certificate on hostname change
     useEffect(() => {
         loadCertificate();
@@ -138,6 +163,13 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
             loadPrivateKey();
         }
     }, [certificate, isEncryptionKeyProvided, loadPrivateKey]);
+
+    // Load history when certificate is available
+    useEffect(() => {
+        if (certificate) {
+            loadHistory();
+        }
+    }, [certificate, loadHistory]);
 
     // Event handlers
     const handleDelete = useCallback(async () => {
@@ -262,6 +294,11 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         privateKeyPEM,
         privateKeyLoading,
         privateKeyError,
+
+        // History data
+        history,
+        historyLoading,
+        historyError,
 
         // Dialog states
         deleteConfirming,

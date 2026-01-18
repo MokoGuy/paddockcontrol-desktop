@@ -27,6 +27,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.activateCertificateStmt, err = db.PrepareContext(ctx, activateCertificate); err != nil {
 		return nil, fmt.Errorf("error preparing query ActivateCertificate: %w", err)
 	}
+	if q.addHistoryEntryStmt, err = db.PrepareContext(ctx, addHistoryEntry); err != nil {
+		return nil, fmt.Errorf("error preparing query AddHistoryEntry: %w", err)
+	}
 	if q.certificateExistsStmt, err = db.PrepareContext(ctx, certificateExists); err != nil {
 		return nil, fmt.Errorf("error preparing query CertificateExists: %w", err)
 	}
@@ -48,8 +51,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteCertificateStmt, err = db.PrepareContext(ctx, deleteCertificate); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteCertificate: %w", err)
 	}
+	if q.deleteCertificateHistoryStmt, err = db.PrepareContext(ctx, deleteCertificateHistory); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteCertificateHistory: %w", err)
+	}
 	if q.getCertificateByHostnameStmt, err = db.PrepareContext(ctx, getCertificateByHostname); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCertificateByHostname: %w", err)
+	}
+	if q.getCertificateHistoryStmt, err = db.PrepareContext(ctx, getCertificateHistory); err != nil {
+		return nil, fmt.Errorf("error preparing query GetCertificateHistory: %w", err)
 	}
 	if q.getConfigStmt, err = db.PrepareContext(ctx, getConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetConfig: %w", err)
@@ -94,6 +103,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing activateCertificateStmt: %w", cerr)
 		}
 	}
+	if q.addHistoryEntryStmt != nil {
+		if cerr := q.addHistoryEntryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addHistoryEntryStmt: %w", cerr)
+		}
+	}
 	if q.certificateExistsStmt != nil {
 		if cerr := q.certificateExistsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing certificateExistsStmt: %w", cerr)
@@ -129,9 +143,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteCertificateStmt: %w", cerr)
 		}
 	}
+	if q.deleteCertificateHistoryStmt != nil {
+		if cerr := q.deleteCertificateHistoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteCertificateHistoryStmt: %w", cerr)
+		}
+	}
 	if q.getCertificateByHostnameStmt != nil {
 		if cerr := q.getCertificateByHostnameStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getCertificateByHostnameStmt: %w", cerr)
+		}
+	}
+	if q.getCertificateHistoryStmt != nil {
+		if cerr := q.getCertificateHistoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getCertificateHistoryStmt: %w", cerr)
 		}
 	}
 	if q.getConfigStmt != nil {
@@ -229,6 +253,7 @@ type Queries struct {
 	db                            DBTX
 	tx                            *sql.Tx
 	activateCertificateStmt       *sql.Stmt
+	addHistoryEntryStmt           *sql.Stmt
 	certificateExistsStmt         *sql.Stmt
 	clearPendingCSRStmt           *sql.Stmt
 	configExistsStmt              *sql.Stmt
@@ -236,7 +261,9 @@ type Queries struct {
 	createConfigStmt              *sql.Stmt
 	deleteAllCertificatesStmt     *sql.Stmt
 	deleteCertificateStmt         *sql.Stmt
+	deleteCertificateHistoryStmt  *sql.Stmt
 	getCertificateByHostnameStmt  *sql.Stmt
+	getCertificateHistoryStmt     *sql.Stmt
 	getConfigStmt                 *sql.Stmt
 	isConfiguredStmt              *sql.Stmt
 	listAllCertificatesStmt       *sql.Stmt
@@ -255,6 +282,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db:                            tx,
 		tx:                            tx,
 		activateCertificateStmt:       q.activateCertificateStmt,
+		addHistoryEntryStmt:           q.addHistoryEntryStmt,
 		certificateExistsStmt:         q.certificateExistsStmt,
 		clearPendingCSRStmt:           q.clearPendingCSRStmt,
 		configExistsStmt:              q.configExistsStmt,
@@ -262,7 +290,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createConfigStmt:              q.createConfigStmt,
 		deleteAllCertificatesStmt:     q.deleteAllCertificatesStmt,
 		deleteCertificateStmt:         q.deleteCertificateStmt,
+		deleteCertificateHistoryStmt:  q.deleteCertificateHistoryStmt,
 		getCertificateByHostnameStmt:  q.getCertificateByHostnameStmt,
+		getCertificateHistoryStmt:     q.getCertificateHistoryStmt,
 		getConfigStmt:                 q.getConfigStmt,
 		isConfiguredStmt:              q.isConfiguredStmt,
 		listAllCertificatesStmt:       q.listAllCertificatesStmt,

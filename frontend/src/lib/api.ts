@@ -15,6 +15,7 @@ import {
     BackupValidationResult,
     KeyValidationResult,
     ChainCertificateInfo,
+    HistoryEntry,
     Config,
     UpdateConfigRequest,
 } from "../types";
@@ -88,6 +89,8 @@ export const api = {
         App.UpdateCertificateNote(hostname, note),
     updatePendingNote: (hostname: string, note: string) =>
         App.UpdatePendingNote(hostname, note),
+    getCertificateHistory: (hostname: string, limit?: number) =>
+        App.GetCertificateHistory(hostname, limit || 50) as Promise<HistoryEntry[]>,
 
     // File operations
     saveCSRToFile: (hostname: string) => App.SaveCSRToFile(hostname),

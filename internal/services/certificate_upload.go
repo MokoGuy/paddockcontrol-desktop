@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db/sqlc"
@@ -51,6 +52,11 @@ func (s *CertificateService) UploadCertificate(ctx context.Context, hostname, ce
 	if err != nil {
 		return fmt.Errorf("failed to activate certificate: %w", err)
 	}
+
+	// Log history entry
+	expiresDate := time.Unix(expiresAt, 0).Format("2006-01-02")
+	message := fmt.Sprintf("Certificate uploaded (expires %s)", expiresDate)
+	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateUploaded, message)
 
 	return nil
 }
@@ -116,6 +122,11 @@ func (s *CertificateService) ImportCertificate(ctx context.Context, req models.I
 	if err != nil {
 		return fmt.Errorf("failed to import certificate: %w", err)
 	}
+
+	// Log history entry
+	expiresDate := time.Unix(expiresAt, 0).Format("2006-01-02")
+	message := fmt.Sprintf("Certificate imported (expires %s)", expiresDate)
+	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateImported, message)
 
 	return nil
 }

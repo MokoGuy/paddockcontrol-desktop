@@ -306,3 +306,36 @@ func (a *App) UpdatePendingNote(hostname string, note string) error {
 	log.Info("pending note updated", slog.String("hostname", hostname))
 	return nil
 }
+
+// GetCertificateHistory returns the activity history for a certificate
+func (a *App) GetCertificateHistory(hostname string, limit int) ([]models.HistoryEntry, error) {
+	if err := a.requireSetupOnly(); err != nil {
+		return nil, err
+	}
+
+	log := logger.WithComponent("app")
+	log.Debug("getting certificate history", slog.String("hostname", hostname), slog.Int("limit", limit))
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return nil, fmt.Errorf("certificate service not initialized")
+	}
+
+	history, err := certificateService.GetHistory(a.ctx, hostname, limit)
+	if err != nil {
+		log.Error("get certificate history failed",
+			slog.String("hostname", hostname),
+			logger.Err(err),
+		)
+		return nil, err
+	}
+
+	log.Debug("certificate history retrieved",
+		slog.String("hostname", hostname),
+		slog.Int("count", len(history)),
+	)
+	return history, nil
+}

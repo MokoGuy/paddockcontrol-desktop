@@ -15,15 +15,17 @@ import (
 
 // BackupService handles backup export and import operations
 type BackupService struct {
-	db  *db.Database
-	log *slog.Logger
+	db      *db.Database
+	history *HistoryService
+	log     *slog.Logger
 }
 
 // NewBackupService creates a new backup service
 func NewBackupService(database *db.Database) *BackupService {
 	return &BackupService{
-		db:  database,
-		log: logger.WithComponent("backup"),
+		db:      database,
+		history: NewHistoryService(database),
+		log:     logger.WithComponent("backup"),
 	}
 }
 
@@ -218,6 +220,16 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 			certLog.Error("failed to import certificate", logger.Err(err))
 			return nil, fmt.Errorf("failed to import certificate %s: %w. Restore aborted", cert.Hostname, err)
 		}
+
+		// Log history entry for restored certificate
+		message := "Certificate restored from backup"
+		if cert.ExpiresAt != nil {
+			expiresDate := time.Unix(*cert.ExpiresAt, 0).Format("2006-01-02")
+			message = fmt.Sprintf("Certificate restored from backup (expires %s)", expiresDate)
+		} else if cert.PendingCSR != "" {
+			message = "Pending CSR restored from backup"
+		}
+		_ = s.history.LogEvent(ctx, cert.Hostname, models.EventCertificateRestored, message)
 
 		certLog.Debug("certificate imported successfully")
 		result.Success++

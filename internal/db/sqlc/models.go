@@ -22,6 +22,14 @@ type Certificate struct {
 	ReadOnly                   int64          `json:"read_only"`
 }
 
+type CertificateHistory struct {
+	ID        int64  `json:"id"`
+	Hostname  string `json:"hostname"`
+	EventType string `json:"event_type"`
+	Message   string `json:"message"`
+	CreatedAt int64  `json:"created_at"`
+}
+
 type Config struct {
 	ID                        int64          `json:"id"`
 	OwnerEmail                string         `json:"owner_email"`
