@@ -408,3 +408,14 @@
     margin-left: 4px;
     margin-right: 4px;
 }
+
+/* ==========================================
+   Stars Background Theme Transition
+   ========================================== */
+
+/* Disable transitions on stars background for instant theme change */
+.stars-bg-container,
+.stars-bg-container * {
+    transition: none !important;
+}
+

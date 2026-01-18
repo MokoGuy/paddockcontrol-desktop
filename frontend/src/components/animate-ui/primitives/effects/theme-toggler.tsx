@@ -91,7 +91,9 @@ function ThemeToggler({
         return;
       }
 
-      if (!document.startViewTransition) {
+      // Skip View Transitions API when animated backgrounds are present
+      const hasAnimatedBackground = document.querySelector('.stars-bg-container');
+      if (!document.startViewTransition || hasAnimatedBackground) {
         flushSync(() => {
           setPreview({ effective: theme, resolved });
         });

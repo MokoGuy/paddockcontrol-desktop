@@ -18,7 +18,7 @@ import { StarsBackground } from "../animate-ui/backgrounds/stars-background";
 export function FloatingSetupLayout() {
     return (
         <StarsBackground
-            className="relative flex flex-col h-screen"
+            className="stars-bg-container relative flex flex-col h-screen"
             style={{ "--wails-draggable": "drag" } as React.CSSProperties}
             speed={80}
             factor={0.03}
