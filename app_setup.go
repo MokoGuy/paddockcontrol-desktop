@@ -158,6 +158,8 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 		slog.Int("certificates", len(backup.Certificates)),
 	)
 
+	a.performAutoBackup("restore_backup")
+
 	a.mu.RLock()
 	setupService := a.setupService
 	encryptionKey := make([]byte, len(a.encryptionKey))

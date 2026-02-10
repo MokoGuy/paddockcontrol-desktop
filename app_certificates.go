@@ -57,6 +57,8 @@ func (a *App) UploadCertificate(hostname, certPEM string) error {
 	log = logger.WithHostname(log, hostname)
 	log.Info("uploading certificate")
 
+	a.performAutoBackup("upload_certificate")
+
 	a.mu.RLock()
 	certificateService := a.certificateService
 	encryptionKey := make([]byte, len(a.encryptionKey))
@@ -229,6 +231,8 @@ func (a *App) DeleteCertificate(hostname string) error {
 	_, log := logger.WithOperation(a.ctx, "delete_certificate")
 	log = logger.WithHostname(log, hostname)
 	log.Info("deleting certificate")
+
+	a.performAutoBackup("delete_certificate")
 
 	a.mu.RLock()
 	certificateService := a.certificateService

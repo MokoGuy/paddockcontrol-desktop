@@ -26,6 +26,7 @@ type App struct {
 	db                 *db.Database
 	certificateService *services.CertificateService
 	backupService      *services.BackupService
+	autoBackupService  *services.AutoBackupService
 	setupService       *services.SetupService
 	configService      *config.Service
 
@@ -187,6 +188,9 @@ func (a *App) initializeServicesWithoutKey() {
 	a.backupService = services.NewBackupService(a.db)
 	a.certificateService = services.NewCertificateService(a.db, a.configService)
 	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
+	if a.dataDir != ":memory:" {
+		a.autoBackupService = services.NewAutoBackupService(a.db.DB(), a.dataDir)
+	}
 
 	log := logger.WithComponent("app")
 	log.Debug("services initialized without encryption key (limited access)")
@@ -239,4 +243,28 @@ func (a *App) requireSetupComplete() error {
 	}
 
 	return a.requireEncryptionKey()
+}
+
+// ============================================================================
+// Auto-Backup
+// ============================================================================
+
+// performAutoBackup creates an automatic database backup before a destructive operation.
+// Failures are logged but never block the caller's operation.
+func (a *App) performAutoBackup(operation string) {
+	a.mu.RLock()
+	autoBackup := a.autoBackupService
+	a.mu.RUnlock()
+
+	if autoBackup == nil {
+		return
+	}
+
+	if _, err := autoBackup.CreateBackup(operation); err != nil {
+		log := logger.WithComponent("app")
+		log.Error("auto-backup failed, proceeding with operation",
+			slog.String("operation", operation),
+			logger.Err(err),
+		)
+	}
 }
