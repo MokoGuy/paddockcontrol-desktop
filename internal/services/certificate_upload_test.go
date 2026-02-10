@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
-	"encoding/hex"
 	"encoding/pem"
 	"math/big"
 	"testing"
@@ -16,17 +15,8 @@ import (
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db"
 	"paddockcontrol-desktop/internal/db/sqlc"
+	"paddockcontrol-desktop/internal/testutil"
 )
-
-// randomEncryptionKey generates a random 32-byte hex-encoded encryption key for testing
-func randomEncryptionKey(t *testing.T) string {
-	t.Helper()
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		t.Fatalf("failed to generate random encryption key: %v", err)
-	}
-	return hex.EncodeToString(b)
-}
 
 // selfSignCertFromCSR creates a self-signed certificate using the CSR's public key
 func selfSignCertFromCSR(csrPEM []byte, signerKey *rsa.PrivateKey) (string, error) {
@@ -104,7 +94,7 @@ func TestUploadCertificate_NewCSR_PreservesPrivateKey(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Generate CSR and key
 	csrPEM, encryptedKey, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -169,7 +159,7 @@ func TestUploadCertificate_Renewal_PreservesPrivateKey(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Create an existing active certificate (simulating pre-renewal state)
 	originalKey, _ := crypto.GenerateRSAKey(2048)
@@ -240,7 +230,7 @@ func TestUploadCertificate_MissingPendingKey_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Generate CSR and key but only store CSR (simulating the bug scenario)
 	csrPEM, _, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -299,7 +289,7 @@ func TestUploadCertificate_NoCSR_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Create certificate with no pending CSR
 	err := database.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
@@ -325,7 +315,7 @@ func TestUploadCertificate_KeyMismatch_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Generate CSR and key for the pending state
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -378,7 +368,7 @@ func TestPreviewCertificateUpload(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Generate CSR and key
 	csrPEM, encryptedKey, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -427,7 +417,7 @@ func TestPreviewCertificateUpload_KeyMismatch(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := randomEncryptionKey(t)
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Generate CSR and key for pending state
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)

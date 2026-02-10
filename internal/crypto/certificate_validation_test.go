@@ -7,10 +7,12 @@ import (
 	"math/big"
 	"testing"
 	"time"
+
+	"paddockcontrol-desktop/internal/testutil"
 )
 
 func TestValidateKeyMatches_MatchingCSR(t *testing.T) {
-	encryptionKey := "test-key-123"
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	key, err := GenerateRSAKey(2048)
 	if err != nil {
@@ -53,7 +55,7 @@ func TestValidateKeyMatches_MatchingCSR(t *testing.T) {
 }
 
 func TestValidateKeyMatches_MatchingCert(t *testing.T) {
-	encryptionKey := "test-key-123"
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	key, err := GenerateRSAKey(2048)
 	if err != nil {
@@ -98,7 +100,7 @@ func TestValidateKeyMatches_MatchingCert(t *testing.T) {
 }
 
 func TestValidateKeyMatches_MismatchingCert(t *testing.T) {
-	encryptionKey := "test-key-123"
+	encryptionKey := testutil.RandomEncryptionKey(t)
 
 	// Key A — the encrypted key
 	keyA, err := GenerateRSAKey(2048)
