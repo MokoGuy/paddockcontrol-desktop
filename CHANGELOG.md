@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.2.1...v0.2.2) (2026-02-10)
+
+
+### Tests
+
+* update backup tests for backups/ subdirectory ([a0fc5ad](https://github.com/MokoGuy/paddockcontrol-desktop/commit/a0fc5add640be576042064d3c665e23642bfd9d5))
+
 ## [0.2.1](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.2.0...v0.2.1) (2026-02-10)
 
 
