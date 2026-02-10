@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.2.0...v0.2.1) (2026-02-10)
+
+
+### Features
+
+* move local backups into backups/ subdirectory ([e823b24](https://github.com/MokoGuy/paddockcontrol-desktop/commit/e823b24212512ef09f54951641464b9d6ee63929))
+
 ## [0.2.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.1.2...v0.2.0) (2026-02-10)
 
 
