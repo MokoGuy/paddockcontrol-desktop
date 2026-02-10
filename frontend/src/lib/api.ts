@@ -20,6 +20,8 @@ import {
     UpdateConfigRequest,
     CertificateUploadPreview,
     LocalBackupInfo,
+    UpdateInfo,
+    UpdateHistoryEntry,
 } from "../types";
 
 // Encryption Key Management
@@ -118,6 +120,15 @@ export const api = {
         App.RestoreLocalBackup(filename),
     deleteLocalBackup: (filename: string) =>
         App.DeleteLocalBackup(filename),
+
+    // Update operations
+    checkForUpdate: () => App.CheckForUpdate() as Promise<UpdateInfo>,
+    checkForUpdateManual: () =>
+        App.CheckForUpdateManual() as Promise<UpdateInfo>,
+    downloadAndApplyUpdate: () => App.DownloadAndApplyUpdate(),
+    restartApp: () => App.RestartApp(),
+    getUpdateHistory: (limit: number) =>
+        App.GetUpdateHistory(limit) as Promise<UpdateHistoryEntry[]>,
 
     // Utilities
     copyToClipboard: (text: string) => App.CopyToClipboard(text),

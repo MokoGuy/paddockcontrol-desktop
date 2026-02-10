@@ -21,6 +21,8 @@ export type KeyValidationResult = models.KeyValidationResult;
 export type ChainCertificateInfo = models.ChainCertificateInfo;
 export type HistoryEntry = models.HistoryEntry;
 export type LocalBackupInfo = models.LocalBackupInfo;
+export type UpdateInfo = models.UpdateInfo;
+export type UpdateHistoryEntry = models.UpdateHistoryEntry;
 
 // Stricter type definitions for status/enum fields
 // (Wails generates 'string', these provide better type safety)

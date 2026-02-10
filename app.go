@@ -29,6 +29,7 @@ type App struct {
 	autoBackupService  *services.AutoBackupService
 	setupService       *services.SetupService
 	configService      *config.Service
+	updateService      *services.UpdateService
 
 	// Runtime state
 	encryptionKey           []byte
@@ -107,6 +108,9 @@ func (a *App) domReady(ctx context.Context) {
 	log := logger.WithComponent("app")
 	log.Info("DOM ready, emitting wails:ready event")
 	wailsruntime.EventsEmit(ctx, "wails:ready")
+
+	// Check for updates in the background (production only)
+	a.startBackgroundUpdateCheck(ctx)
 }
 
 // shutdown is called when the app exits
@@ -191,6 +195,7 @@ func (a *App) initializeServicesWithoutKey() {
 	if a.dataDir != ":memory:" {
 		a.autoBackupService = services.NewAutoBackupService(a.db.DB(), a.dataDir)
 	}
+	a.updateService = services.NewUpdateService(Version, a.db)
 
 	log := logger.WithComponent("app")
 	log.Debug("services initialized without encryption key (limited access)")

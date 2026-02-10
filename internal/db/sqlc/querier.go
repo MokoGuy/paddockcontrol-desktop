@@ -38,10 +38,15 @@ type Querier interface {
 	GetCertificateHistory(ctx context.Context, arg GetCertificateHistoryParams) ([]CertificateHistory, error)
 	// Get the configuration (single row)
 	GetConfig(ctx context.Context) (Config, error)
+	// Get recent update history entries, newest first
+	GetUpdateHistory(ctx context.Context, limit int64) ([]UpdateHistory, error)
 	// Check if initial setup is complete
 	IsConfigured(ctx context.Context) (int64, error)
 	// List all certificates ordered by creation date
 	ListAllCertificates(ctx context.Context) ([]Certificate, error)
+	// Update history queries
+	// Record an update attempt (success or failure)
+	RecordUpdate(ctx context.Context, arg RecordUpdateParams) error
 	// Restore a complete certificate from backup in a single operation
 	RestoreCertificate(ctx context.Context, arg RestoreCertificateParams) error
 	// Mark setup as complete
