@@ -11,6 +11,7 @@ import { toast, Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { EventsOnce, EventsOn } from "../wailsjs/runtime/runtime";
 import { useAppStore } from "@/stores/useAppStore";
+import { useUpdateStore } from "@/stores/useUpdateStore";
 import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { api } from "@/lib/api";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -123,6 +124,44 @@ function AppContent() {
         );
 
         return cleanup;
+    }, []);
+
+    // Listen for update events from the backend
+    useEffect(() => {
+        const { setUpdateInfo, setErrorMessage, setUpdateState } =
+            useUpdateStore.getState();
+
+        const cleanupAvailable = EventsOn(
+            "update:available",
+            (info: unknown) => {
+                setUpdateInfo(info as import("@/types").UpdateInfo);
+                toast.info("Update available", {
+                    description: `Version ${(info as { latest_version: string }).latest_version} is available`,
+                    action: {
+                        label: "View",
+                        onClick: () => {
+                            window.location.hash = "#/settings";
+                        },
+                    },
+                });
+            },
+        );
+
+        const cleanupError = EventsOn(
+            "update:error",
+            (errMsg: string) => {
+                setErrorMessage(errMsg);
+                setUpdateState("error");
+                toast.error("Update failed", {
+                    description: errMsg,
+                });
+            },
+        );
+
+        return () => {
+            cleanupAvailable();
+            cleanupError();
+        };
     }, []);
 
     // Determine layout group for exit animations

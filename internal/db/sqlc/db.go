@@ -63,11 +63,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getConfigStmt, err = db.PrepareContext(ctx, getConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetConfig: %w", err)
 	}
+	if q.getUpdateHistoryStmt, err = db.PrepareContext(ctx, getUpdateHistory); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUpdateHistory: %w", err)
+	}
 	if q.isConfiguredStmt, err = db.PrepareContext(ctx, isConfigured); err != nil {
 		return nil, fmt.Errorf("error preparing query IsConfigured: %w", err)
 	}
 	if q.listAllCertificatesStmt, err = db.PrepareContext(ctx, listAllCertificates); err != nil {
 		return nil, fmt.Errorf("error preparing query ListAllCertificates: %w", err)
+	}
+	if q.recordUpdateStmt, err = db.PrepareContext(ctx, recordUpdate); err != nil {
+		return nil, fmt.Errorf("error preparing query RecordUpdate: %w", err)
 	}
 	if q.restoreCertificateStmt, err = db.PrepareContext(ctx, restoreCertificate); err != nil {
 		return nil, fmt.Errorf("error preparing query RestoreCertificate: %w", err)
@@ -163,6 +169,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getConfigStmt: %w", cerr)
 		}
 	}
+	if q.getUpdateHistoryStmt != nil {
+		if cerr := q.getUpdateHistoryStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUpdateHistoryStmt: %w", cerr)
+		}
+	}
 	if q.isConfiguredStmt != nil {
 		if cerr := q.isConfiguredStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing isConfiguredStmt: %w", cerr)
@@ -171,6 +182,11 @@ func (q *Queries) Close() error {
 	if q.listAllCertificatesStmt != nil {
 		if cerr := q.listAllCertificatesStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listAllCertificatesStmt: %w", cerr)
+		}
+	}
+	if q.recordUpdateStmt != nil {
+		if cerr := q.recordUpdateStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing recordUpdateStmt: %w", cerr)
 		}
 	}
 	if q.restoreCertificateStmt != nil {
@@ -265,8 +281,10 @@ type Queries struct {
 	getCertificateByHostnameStmt  *sql.Stmt
 	getCertificateHistoryStmt     *sql.Stmt
 	getConfigStmt                 *sql.Stmt
+	getUpdateHistoryStmt          *sql.Stmt
 	isConfiguredStmt              *sql.Stmt
 	listAllCertificatesStmt       *sql.Stmt
+	recordUpdateStmt              *sql.Stmt
 	restoreCertificateStmt        *sql.Stmt
 	setConfiguredStmt             *sql.Stmt
 	updateCertificateNoteStmt     *sql.Stmt
@@ -294,8 +312,10 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getCertificateByHostnameStmt:  q.getCertificateByHostnameStmt,
 		getCertificateHistoryStmt:     q.getCertificateHistoryStmt,
 		getConfigStmt:                 q.getConfigStmt,
+		getUpdateHistoryStmt:          q.getUpdateHistoryStmt,
 		isConfiguredStmt:              q.isConfiguredStmt,
 		listAllCertificatesStmt:       q.listAllCertificatesStmt,
+		recordUpdateStmt:              q.recordUpdateStmt,
 		restoreCertificateStmt:        q.restoreCertificateStmt,
 		setConfiguredStmt:             q.setConfiguredStmt,
 		updateCertificateNoteStmt:     q.updateCertificateNoteStmt,

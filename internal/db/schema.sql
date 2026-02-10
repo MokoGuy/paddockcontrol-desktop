@@ -65,3 +65,14 @@ CREATE TABLE certificate_history (
 -- Create indexes for efficient queries
 CREATE INDEX idx_certificate_history_hostname ON certificate_history(hostname);
 CREATE INDEX idx_certificate_history_created_at ON certificate_history(created_at);
+
+-- Create update_history table for tracking application updates
+CREATE TABLE update_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_version TEXT NOT NULL,
+    to_version TEXT NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('success', 'failed', 'rolled_back')),
+    error_message TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+CREATE INDEX idx_update_history_created_at ON update_history(created_at);

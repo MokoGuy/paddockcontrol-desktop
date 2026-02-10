@@ -28,8 +28,11 @@ cd frontend && npx shadcn@latest add [component-name]
 # Regenerate sqlc types after modifying SQL
 cd internal/db && sqlc generate
 
-# Lint frontend
+# Lint frontend (ESLint)
 cd frontend && npm run lint
+
+# Type-check frontend (tsc)
+cd frontend && npm run typecheck
 ```
 
 ## Architecture

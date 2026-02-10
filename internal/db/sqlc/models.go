@@ -46,3 +46,12 @@ type Config struct {
 	CreatedAt                 int64          `json:"created_at"`
 	LastModified              int64          `json:"last_modified"`
 }
+
+type UpdateHistory struct {
+	ID           int64          `json:"id"`
+	FromVersion  string         `json:"from_version"`
+	ToVersion    string         `json:"to_version"`
+	Status       string         `json:"status"`
+	ErrorMessage sql.NullString `json:"error_message"`
+	CreatedAt    int64          `json:"created_at"`
+}

@@ -37,6 +37,7 @@ import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
 import { LocalBackupsCard } from "@/components/settings/LocalBackupsCard";
+import { UpdateCard } from "@/components/settings/UpdateCard";
 import { DangerZoneCard } from "@/components/shared/DangerZoneCard";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
@@ -479,6 +480,9 @@ export function Settings() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Application Updates */}
+            <UpdateCard />
 
             {/* Change Encryption Key */}
             <DangerZoneCard
