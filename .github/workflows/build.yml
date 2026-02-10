@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Windows executable
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${GITHUB_REF_NAME}"
           BUILDTIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
           GITCOMMIT=$(git rev-parse --short HEAD)
           wails build -platform windows/amd64 -ldflags \
