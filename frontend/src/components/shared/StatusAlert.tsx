@@ -56,4 +56,5 @@ export function StatusAlert({
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- variant config is tightly coupled to this component
 export { statusAlertVariants };

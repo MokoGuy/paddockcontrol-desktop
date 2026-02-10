@@ -24,7 +24,7 @@ import { FloatingSetupLayout } from "@/components/layout/FloatingSetupLayout";
 const waitForWails = (timeout = 2000): Promise<void> => {
     return new Promise((resolve, reject) => {
         // Check immediately - bindings may already be ready
-        if (typeof window !== "undefined" && (window as any).go?.main?.App) {
+        if (typeof window !== "undefined" && window.go?.main?.App) {
             resolve();
             return;
         }
@@ -32,7 +32,7 @@ const waitForWails = (timeout = 2000): Promise<void> => {
         // Set up timeout fallback
         const timer = setTimeout(() => {
             // Fallback: check if bindings became available during wait
-            if ((window as any).go?.main?.App) {
+            if (window.go?.main?.App) {
                 resolve();
             } else {
                 reject(new Error("Wails bindings not available after timeout"));

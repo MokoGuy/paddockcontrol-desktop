@@ -60,9 +60,8 @@ export function SetupWizard() {
     const [currentStep, setCurrentStep] = useState<WizardStep>("email");
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadDefaults();
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+    useEffect(() => { loadDefaults(); }, []);
 
     const {
         register,

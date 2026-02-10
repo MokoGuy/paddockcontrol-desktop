@@ -37,6 +37,7 @@ export function ImportCertificate() {
         resolver: zodResolver(importCertificateSchema),
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() is inherently non-memoizable
     const certificatePem = watch("certificate_pem");
     const privateKeyPem = watch("private_key_pem");
 

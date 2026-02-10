@@ -46,7 +46,7 @@ export const api = {
     validateBackupFile: (path: string) =>
         App.ValidateBackupFile(path) as Promise<BackupValidationResult>,
     validateEncryptionKeyForBackup: (backup: BackupData, key: string) =>
-        App.ValidateEncryptionKeyForBackup(backup as any, key),
+        App.ValidateEncryptionKeyForBackup(backup, key),
     restoreFromBackup: (backup: BackupData) => {
         console.log("📡 [api.restoreFromBackup] Calling Wails backend...");
         console.log("📦 [api.restoreFromBackup] Backup data:", {
@@ -55,7 +55,7 @@ export const api = {
             hasConfig: !!backup.config,
             hasEncryptionKey: !!backup.encryption_key,
         });
-        return App.RestoreFromBackup(backup as any)
+        return App.RestoreFromBackup(backup)
             .then(() => {
                 console.log("✅ [api.restoreFromBackup] Wails call succeeded");
             })
@@ -70,13 +70,13 @@ export const api = {
 
     // Certificate operations
     generateCSR: (req: CSRRequest) =>
-        App.GenerateCSR(req as any) as Promise<CSRResponse>,
+        App.GenerateCSR(req) as Promise<CSRResponse>,
     uploadCertificate: (hostname: string, certPEM: string) =>
         App.UploadCertificate(hostname, certPEM),
     importCertificate: (req: ImportRequest) =>
-        App.ImportCertificate(req as any),
+        App.ImportCertificate(req),
     listCertificates: (filter: CertificateFilter) =>
-        App.ListCertificates(filter as any) as Promise<CertificateListItem[]>,
+        App.ListCertificates(filter) as Promise<CertificateListItem[]>,
     getCertificate: (hostname: string) =>
         App.GetCertificate(hostname) as Promise<Certificate>,
     getCertificateChain: (hostname: string) =>

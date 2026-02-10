@@ -65,6 +65,7 @@ export function AppHeader({
     const { normalColor, adminColor } = useMemo(() => ({
         normalColor: getCssColorAsRgb('--foreground'),
         adminColor: getCssColorAsRgb('--admin'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isDarkMode triggers recomputation of CSS variables on theme change
     }), [isDarkMode]);
 
     useEffect(() => {

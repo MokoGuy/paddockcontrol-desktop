@@ -5,6 +5,7 @@ export const TEST_ENCRYPTION_KEY = "test-encryption-key-1234";
 // Wait for Wails bindings to be ready
 export async function waitForWails(page: Page): Promise<void> {
     await page.waitForFunction(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         () => (window as any).go?.main?.App?.ResetDatabase,
         { timeout: 15000 }
     );
@@ -14,6 +15,7 @@ export async function waitForWails(page: Page): Promise<void> {
 export async function resetDatabase(page: Page): Promise<void> {
     await page.goto("/");
     await waitForWails(page);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await page.evaluate(() => (window as any).go.main.App.ResetDatabase());
     // Reload to let React app recognize the unconfigured state
     await page.reload();

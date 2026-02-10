@@ -67,19 +67,6 @@ export function Dashboard() {
         }, 300);
     };
 
-    useEffect(() => {
-        loadCertificates();
-    }, []);
-
-    useEffect(() => {
-        loadCertificates();
-    }, [statusFilter, sortBy, sortOrder]);
-
-    // Reset animation state when filters change
-    useEffect(() => {
-        setSelectedHostname(null);
-    }, [statusFilter, searchTerm]);
-
     const loadCertificates = async () => {
         const filter: CertificateFilter = {
             status: statusFilter,
@@ -89,7 +76,14 @@ export function Dashboard() {
         await listCertificates(filter);
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+    useEffect(() => { loadCertificates(); }, []);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change, loadCertificates is stable
+    useEffect(() => { loadCertificates(); }, [statusFilter, sortBy, sortOrder]);
+
     const handleStatusFilterChange = (status: string) => {
+        setSelectedHostname(null);
         setStatusFilter(
             status as "all" | "pending" | "active" | "expiring" | "expired",
         );
@@ -219,7 +213,7 @@ export function Dashboard() {
                             <InputGroupInput
                                 placeholder="Search by hostname or SAN..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => { setSelectedHostname(null); setSearchTerm(e.target.value); }}
                             />
                         </InputGroup>
 

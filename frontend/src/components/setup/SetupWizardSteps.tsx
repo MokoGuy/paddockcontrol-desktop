@@ -68,4 +68,5 @@ export function SetupWizardSteps({ currentStep }: SetupWizardStepsProps) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- co-located step config used only by this component
 export { STEPS, getStepIndex };
