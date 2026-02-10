@@ -16,7 +16,7 @@ A desktop application for paddock control built with Wails, Vite, React, Tailwin
 ## 📦 Installation
 
 ```bash
-git clone ssh://git@gitlab-erp-pas.dedalus.lan:2222/erp-pas/paddockcontrol/paddockcontrol-desktop.git
+git clone git@github.com:MokoGuy/paddockcontrol-desktop.git
 cd paddockcontrol-desktop
 ```
 

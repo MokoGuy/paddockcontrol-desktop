@@ -44,9 +44,9 @@ func (a *App) OpenURL(url string) error {
 	return nil
 }
 
-// OpenBugReport opens the GitLab issues page for bug reporting
+// OpenBugReport opens the GitHub issues page for bug reporting
 func (a *App) OpenBugReport() error {
-	return a.OpenURL("https://gitlab-erp-pas.dedalus.lan/erp-pas/paddockcontrol/paddockcontrol-desktop/-/issues")
+	return a.OpenURL("https://github.com/MokoGuy/paddockcontrol-desktop/issues")
 }
 
 // OpenDataDirectory opens the data directory in the OS file explorer
