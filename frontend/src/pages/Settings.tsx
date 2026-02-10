@@ -15,11 +15,6 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
@@ -42,6 +37,7 @@ import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
 import { LocalBackupsCard } from "@/components/settings/LocalBackupsCard";
+import { DangerZoneCard } from "@/components/shared/DangerZoneCard";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 export function Settings() {
@@ -52,7 +48,6 @@ export function Settings() {
         setIsAdminModeEnabled,
         setIsSetupComplete,
         setIsWaitingForEncryptionKey,
-        isEncryptionKeyProvided,
         setIsEncryptionKeyProvided,
     } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
@@ -367,7 +362,6 @@ export function Settings() {
                 localBackups={localBackups}
                 isLoading={backupLoading}
                 isLoadingBackups={isLoadingBackups}
-                isAdminModeEnabled={isAdminModeEnabled}
                 error={backupError}
                 onCreateManualBackup={createManualBackup}
                 onRestoreBackup={handleRestoreBackup}
@@ -487,82 +481,26 @@ export function Settings() {
             )}
 
             {/* Change Encryption Key */}
-            <Card
-                className={`mt-6 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
-            >
-                <CardContent className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-destructive">
-                            Danger Zone - Change Encryption Key
-                        </p>
-                        <p className="text-xs text-admin/80 mt-1">
-                            Re-encrypt all private keys with a new encryption
-                            key.
-                        </p>
-                    </div>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-admin/50 text-admin hover:bg-admin/20"
-                                    onClick={() => setChangeKeyOpen(true)}
-                                    disabled={
-                                        !isAdminModeEnabled ||
-                                        !isEncryptionKeyProvided
-                                    }
-                                >
-                                    Change Key
-                                </Button>
-                            </span>
-                        </TooltipTrigger>
-                        {!isAdminModeEnabled && (
-                            <TooltipContent>Admin mode required</TooltipContent>
-                        )}
-                        {isAdminModeEnabled && !isEncryptionKeyProvided && (
-                            <TooltipContent>
-                                Encryption key required
-                            </TooltipContent>
-                        )}
-                    </Tooltip>
-                </CardContent>
-            </Card>
+            <DangerZoneCard
+                className="mt-6"
+                title="Danger Zone - Change Encryption Key"
+                description="Re-encrypt all private keys with a new encryption key."
+                buttonLabel="Change Key"
+                onClick={() => setChangeKeyOpen(true)}
+                isAdminModeEnabled={isAdminModeEnabled}
+                requireEncryptionKey
+            />
 
             {/* Danger Zone - Reset Database */}
-            <Card
-                className={`mt-4 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
-            >
-                <CardContent className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-destructive">
-                            Danger Zone - Reset Database
-                        </p>
-                        <p className="text-xs text-admin/80 mt-1">
-                            Permanently delete all certificates, configuration,
-                            and encryption keys. A backup is created automatically.
-                        </p>
-                    </div>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-admin/50 text-admin hover:bg-admin/20"
-                                    onClick={() => setResetConfirming(true)}
-                                    disabled={!isAdminModeEnabled || resetLoading}
-                                >
-                                    {resetLoading ? "Resetting..." : "Reset Database"}
-                                </Button>
-                            </span>
-                        </TooltipTrigger>
-                        {!isAdminModeEnabled && (
-                            <TooltipContent>Admin mode required</TooltipContent>
-                        )}
-                    </Tooltip>
-                </CardContent>
-            </Card>
+            <DangerZoneCard
+                className="mt-4"
+                title="Danger Zone - Reset Database"
+                description="Permanently delete all certificates, configuration, and encryption keys. A backup is created automatically."
+                buttonLabel={resetLoading ? "Resetting..." : "Reset Database"}
+                onClick={() => setResetConfirming(true)}
+                isAdminModeEnabled={isAdminModeEnabled}
+                disabled={resetLoading}
+            />
 
             {/* Footer */}
             <div className="mt-8 text-center text-sm text-muted-foreground">

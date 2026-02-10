@@ -32,6 +32,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
     RefreshIcon,
@@ -159,38 +160,28 @@ export function CertificateDetail() {
                         animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span className="inline-flex">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            navigate("/certificates/generate", {
-                                                state: certificate.pending_csr
-                                                    ? { regenerate: certificate.hostname }
-                                                    : { renewal: certificate.hostname },
-                                            })
-                                        }
-                                        disabled={!isEncryptionKeyProvided || certificate.read_only}
-                                    >
-                                        <HugeiconsIcon
-                                            icon={RefreshIcon}
-                                            className="w-4 h-4 mr-1"
-                                            strokeWidth={2}
-                                        />
-                                        {certificate.pending_csr ? "Regenerate" : "Renew"}
-                                    </Button>
-                                </span>
-                            </TooltipTrigger>
-                            {(certificate.read_only || !isEncryptionKeyProvided) && (
-                                <TooltipContent>
-                                    {certificate.read_only
-                                        ? "Certificate is read-only"
-                                        : "Encryption key required"}
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
+                        <AdminGatedButton
+                            variant="outline"
+                            size="sm"
+                            requireAdminMode={false}
+                            requireEncryptionKey
+                            disabled={certificate.read_only}
+                            disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
+                            onClick={() =>
+                                navigate("/certificates/generate", {
+                                    state: certificate.pending_csr
+                                        ? { regenerate: certificate.hostname }
+                                        : { renewal: certificate.hostname },
+                                })
+                            }
+                        >
+                            <HugeiconsIcon
+                                icon={RefreshIcon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            {certificate.pending_csr ? "Regenerate" : "Renew"}
+                        </AdminGatedButton>
                     </motion.div>
                     <motion.div
                         animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
@@ -275,7 +266,6 @@ export function CertificateDetail() {
             {/* Pending CSR */}
             <PendingCSRSection
                 certificate={certificate}
-                isEncryptionKeyProvided={isEncryptionKeyProvided}
                 onUploadClick={() => setUploadDialogOpen(true)}
                 onCancelRenewal={handleCancelRenewal}
                 cancelRenewalConfirming={cancelRenewalConfirming}

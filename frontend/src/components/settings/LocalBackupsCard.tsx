@@ -8,11 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -29,7 +25,6 @@ interface LocalBackupsCardProps {
     localBackups: LocalBackupInfo[];
     isLoading: boolean;
     isLoadingBackups: boolean;
-    isAdminModeEnabled: boolean;
     error: string | null;
     onCreateManualBackup: () => Promise<void>;
     onRestoreBackup: (filename: string) => Promise<void>;
@@ -42,7 +37,6 @@ export function LocalBackupsCard({
     localBackups,
     isLoading,
     isLoadingBackups,
-    isAdminModeEnabled,
     error,
     onCreateManualBackup,
     onRestoreBackup,
@@ -184,68 +178,40 @@ export function LocalBackupsCard({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0 ml-2">
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span className="inline-flex">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            setRestoreTarget(
-                                                                backup.filename,
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            !isAdminModeEnabled ||
-                                                            isLoading
-                                                        }
-                                                    >
-                                                        <HugeiconsIcon
-                                                            icon={DatabaseRestoreIcon}
-                                                            className="size-3.5 mr-1"
-                                                            strokeWidth={2}
-                                                        />
-                                                        Restore
-                                                    </Button>
-                                                </span>
-                                            </TooltipTrigger>
-                                            {!isAdminModeEnabled && (
-                                                <TooltipContent>
-                                                    Admin mode required
-                                                </TooltipContent>
-                                            )}
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span className="inline-flex">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="text-destructive hover:bg-destructive/10"
-                                                        onClick={() =>
-                                                            setDeleteTarget(
-                                                                backup.filename,
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            !isAdminModeEnabled ||
-                                                            isLoading
-                                                        }
-                                                    >
-                                                        <HugeiconsIcon
-                                                            icon={Delete02Icon}
-                                                            className="size-3.5"
-                                                            strokeWidth={2}
-                                                        />
-                                                    </Button>
-                                                </span>
-                                            </TooltipTrigger>
-                                            {!isAdminModeEnabled && (
-                                                <TooltipContent>
-                                                    Admin mode required
-                                                </TooltipContent>
-                                            )}
-                                        </Tooltip>
+                                        <AdminGatedButton
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                setRestoreTarget(
+                                                    backup.filename,
+                                                )
+                                            }
+                                            disabled={isLoading}
+                                        >
+                                            <HugeiconsIcon
+                                                icon={DatabaseRestoreIcon}
+                                                className="size-3.5 mr-1"
+                                                strokeWidth={2}
+                                            />
+                                            Restore
+                                        </AdminGatedButton>
+                                        <AdminGatedButton
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-destructive hover:bg-destructive/10"
+                                            onClick={() =>
+                                                setDeleteTarget(
+                                                    backup.filename,
+                                                )
+                                            }
+                                            disabled={isLoading}
+                                        >
+                                            <HugeiconsIcon
+                                                icon={Delete02Icon}
+                                                className="size-3.5"
+                                                strokeWidth={2}
+                                            />
+                                        </AdminGatedButton>
                                     </div>
                                 </div>
                             ))}

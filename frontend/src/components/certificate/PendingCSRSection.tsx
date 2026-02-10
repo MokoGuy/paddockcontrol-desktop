@@ -13,6 +13,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Download04Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
@@ -20,7 +21,6 @@ import type { Certificate } from "@/types";
 
 interface PendingCSRSectionProps {
     certificate: Certificate;
-    isEncryptionKeyProvided: boolean;
     onUploadClick: () => void;
     onCancelRenewal: () => void;
     cancelRenewalConfirming: boolean;
@@ -30,7 +30,6 @@ interface PendingCSRSectionProps {
 
 export function PendingCSRSection({
     certificate,
-    isEncryptionKeyProvided,
     onUploadClick,
     onCancelRenewal,
     cancelRenewalConfirming,
@@ -80,27 +79,17 @@ export function PendingCSRSection({
                                 animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="inline-flex">
-                                            <Button
-                                                variant="default"
-                                                size="sm"
-                                                onClick={onUploadClick}
-                                                disabled={certificate.read_only || !isEncryptionKeyProvided}
-                                            >
-                                                Upload Signed Certificate
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    {(certificate.read_only || !isEncryptionKeyProvided) && (
-                                        <TooltipContent>
-                                            {certificate.read_only
-                                                ? "Certificate is read-only"
-                                                : "Encryption key required"}
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
+                                <AdminGatedButton
+                                    variant="default"
+                                    size="sm"
+                                    requireAdminMode={false}
+                                    requireEncryptionKey
+                                    disabled={certificate.read_only}
+                                    disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
+                                    onClick={onUploadClick}
+                                >
+                                    Upload Signed Certificate
+                                </AdminGatedButton>
                             </motion.div>
                             <motion.div
                                 animate={{ opacity: certificate.read_only ? 0.5 : 1 }}

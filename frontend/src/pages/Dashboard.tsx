@@ -18,12 +18,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { StatusAlert } from "@/components/shared/StatusAlert";
@@ -132,37 +128,21 @@ export function Dashboard() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                                <Button
-                                    onClick={() => navigate("/certificates/generate")}
-                                    disabled={!isEncryptionKeyProvided}
-                                >
-                                    Generate CSR
-                                </Button>
-                            </span>
-                        </TooltipTrigger>
-                        {!isEncryptionKeyProvided && (
-                            <TooltipContent>Encryption key required</TooltipContent>
-                        )}
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => navigate("/certificates/import")}
-                                    disabled={!isEncryptionKeyProvided}
-                                >
-                                    Import Certificate
-                                </Button>
-                            </span>
-                        </TooltipTrigger>
-                        {!isEncryptionKeyProvided && (
-                            <TooltipContent>Encryption key required</TooltipContent>
-                        )}
-                    </Tooltip>
+                    <AdminGatedButton
+                        requireAdminMode={false}
+                        requireEncryptionKey
+                        onClick={() => navigate("/certificates/generate")}
+                    >
+                        Generate CSR
+                    </AdminGatedButton>
+                    <AdminGatedButton
+                        variant="outline"
+                        requireAdminMode={false}
+                        requireEncryptionKey
+                        onClick={() => navigate("/certificates/import")}
+                    >
+                        Import Certificate
+                    </AdminGatedButton>
                     <Button
                         variant="outline"
                         onClick={() => navigate("/settings")}
