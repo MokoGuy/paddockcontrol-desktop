@@ -6,6 +6,9 @@ import (
 	"testing"
 )
 
+// BackupsSubdir is the subdirectory name where backup files are stored.
+const BackupsSubdir = "backups"
+
 // RandomEncryptionKey generates a random 32-byte hex-encoded encryption key for testing.
 func RandomEncryptionKey(t *testing.T) string {
 	t.Helper()

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"paddockcontrol-desktop/internal/db"
+	"paddockcontrol-desktop/internal/testutil"
 )
 
 // setupAutoBackupTest creates a real file-based SQLite database in a temp directory
@@ -51,20 +52,20 @@ func seedTestData(t *testing.T, database *db.Database, certCount int) {
 	}
 }
 
-// countAutoBackups returns the number of auto-backup files in the directory.
+// countAutoBackups returns the number of auto-backup files in the backups subdirectory.
 func countAutoBackups(t *testing.T, dir string) int {
 	t.Helper()
-	matches, err := filepath.Glob(filepath.Join(dir, autoBackupPrefix+"*"))
+	matches, err := filepath.Glob(filepath.Join(dir, testutil.BackupsSubdir, autoBackupPrefix+"*"))
 	if err != nil {
 		t.Fatalf("failed to glob auto-backups: %v", err)
 	}
 	return len(matches)
 }
 
-// countManualBackups returns the number of manual backup files in the directory.
+// countManualBackups returns the number of manual backup files in the backups subdirectory.
 func countManualBackups(t *testing.T, dir string) int {
 	t.Helper()
-	matches, err := filepath.Glob(filepath.Join(dir, manualBackupPrefix+"*"))
+	matches, err := filepath.Glob(filepath.Join(dir, testutil.BackupsSubdir, manualBackupPrefix+"*"))
 	if err != nil {
 		t.Fatalf("failed to glob manual backups: %v", err)
 	}
@@ -95,9 +96,10 @@ func TestCreateBackup_CreatesFile(t *testing.T) {
 		t.Fatal("backup file is empty")
 	}
 
-	// Verify file is in the expected directory
-	if filepath.Dir(path) != tmpDir {
-		t.Errorf("backup not in expected directory: got %s, want %s", filepath.Dir(path), tmpDir)
+	// Verify file is in the expected backups subdirectory
+	expectedDir := filepath.Join(tmpDir, testutil.BackupsSubdir)
+	if filepath.Dir(path) != expectedDir {
+		t.Errorf("backup not in expected directory: got %s, want %s", filepath.Dir(path), expectedDir)
 	}
 
 	// Verify filename matches expected pattern
@@ -311,8 +313,9 @@ func TestCreateManualBackup_CreatesFile(t *testing.T) {
 		t.Fatal("backup file is empty")
 	}
 
-	if filepath.Dir(path) != tmpDir {
-		t.Errorf("backup not in expected directory: got %s, want %s", filepath.Dir(path), tmpDir)
+	expectedDir := filepath.Join(tmpDir, testutil.BackupsSubdir)
+	if filepath.Dir(path) != expectedDir {
+		t.Errorf("backup not in expected directory: got %s, want %s", filepath.Dir(path), expectedDir)
 	}
 
 	base := filepath.Base(path)
