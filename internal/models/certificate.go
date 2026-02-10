@@ -138,6 +138,19 @@ type BackupValidationResult struct {
 	ExportedAt       int64  `json:"exported_at"`
 }
 
+// CertificateUploadPreview represents a preview of a signed certificate before upload
+type CertificateUploadPreview struct {
+	Hostname  string   `json:"hostname"`
+	IssuerCN  string   `json:"issuer_cn"`
+	IssuerO   string   `json:"issuer_o"`
+	NotBefore int64    `json:"not_before"`
+	NotAfter  int64    `json:"not_after"`
+	SANs      []string `json:"sans,omitempty"`
+	KeySize   int      `json:"key_size"`
+	CSRMatch  bool     `json:"csr_match"`
+	KeyMatch  bool     `json:"key_match"` // cert public key matches pending private key
+}
+
 // ChainCertificateInfo represents metadata for a single certificate in the chain
 type ChainCertificateInfo struct {
 	SubjectCN          string `json:"subject_cn"`           // Subject Common Name

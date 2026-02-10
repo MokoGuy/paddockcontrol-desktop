@@ -260,6 +260,34 @@ func (a *App) GetPrivateKeyPEM(hostname string) (string, error) {
 	return privateKeyPEM, nil
 }
 
+// GetPendingPrivateKeyPEM returns the decrypted pending private key PEM for display in UI
+func (a *App) GetPendingPrivateKeyPEM(hostname string) (string, error) {
+	if err := a.requireSetupComplete(); err != nil {
+		return "", err
+	}
+
+	log := logger.WithComponent("app")
+	log.Debug("getting pending private key PEM", slog.String("hostname", hostname))
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	encryptionKey := make([]byte, len(a.encryptionKey))
+	copy(encryptionKey, a.encryptionKey)
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return "", fmt.Errorf("certificate service not initialized")
+	}
+
+	privateKeyPEM, err := certificateService.GetPendingPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
+	if err != nil {
+		log.Error("get pending private key PEM failed", slog.String("hostname", hostname), logger.Err(err))
+		return "", err
+	}
+
+	return privateKeyPEM, nil
+}
+
 // ============================================================================
 // Backup Export Operations
 // ============================================================================

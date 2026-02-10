@@ -18,6 +18,7 @@ import {
     HistoryEntry,
     Config,
     UpdateConfigRequest,
+    CertificateUploadPreview,
 } from "../types";
 
 // Encryption Key Management
@@ -82,6 +83,10 @@ export const api = {
         App.GetCertificateChain(hostname) as Promise<ChainCertificateInfo[]>,
     getPrivateKeyPEM: (hostname: string) =>
         App.GetPrivateKeyPEM(hostname) as Promise<string>,
+    getPendingPrivateKeyPEM: (hostname: string) =>
+        App.GetPendingPrivateKeyPEM(hostname) as Promise<string>,
+    previewCertificateUpload: (hostname: string, certPEM: string) =>
+        App.PreviewCertificateUpload(hostname, certPEM) as Promise<CertificateUploadPreview>,
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
     setCertificateReadOnly: (hostname: string, readOnly: boolean) =>
         App.SetCertificateReadOnly(hostname, readOnly),

@@ -35,7 +35,7 @@ func (s *CertificateService) GetCertificateForDownload(ctx context.Context, host
 	return cert.CertificatePem.String, nil
 }
 
-// GetPrivateKeyForDownload returns the decrypted private key PEM for download
+// GetPrivateKeyForDownload returns the decrypted active private key PEM for download
 func (s *CertificateService) GetPrivateKeyForDownload(ctx context.Context, hostname string, encryptionKey []byte) (string, error) {
 	cert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
 	if err != nil {
@@ -50,6 +50,26 @@ func (s *CertificateService) GetPrivateKeyForDownload(ctx context.Context, hostn
 	decryptedKey, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, string(encryptionKey))
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt private key: %w", err)
+	}
+
+	return string(decryptedKey), nil
+}
+
+// GetPendingPrivateKeyForDownload returns the decrypted pending private key PEM for download
+func (s *CertificateService) GetPendingPrivateKeyForDownload(ctx context.Context, hostname string, encryptionKey []byte) (string, error) {
+	cert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
+	if err != nil {
+		return "", fmt.Errorf("failed to get certificate: %w", err)
+	}
+
+	if len(cert.PendingEncryptedPrivateKey) == 0 {
+		return "", fmt.Errorf("no pending private key for hostname: %s", hostname)
+	}
+
+	// Decrypt pending private key
+	decryptedKey, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, string(encryptionKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt pending private key: %w", err)
 	}
 
 	return string(decryptedKey), nil

@@ -94,29 +94,19 @@ export function useCSRForm(options: UseCSRFormOptions = {}) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingHostname]);
 
-    // Helper to strip hostname suffix
-    const stripHostnameSuffix = (hostname: string, suffix: string) => {
-        if (suffix && hostname.endsWith(suffix)) {
-            return hostname.slice(0, -suffix.length);
-        }
-        return hostname;
-    };
-
     // Reset form with appropriate values based on mode
     useEffect(() => {
         if (!config) return;
         if ((isRenewalMode || isRegenerateMode) && !existingCertificate) return;
 
-        const suffix = config.hostname_suffix || "";
-
         if (isRegenerateMode && existingCertificate) {
-            const baseHostname = stripHostnameSuffix(existingCertificate.hostname, suffix);
+            const baseHostname = existingCertificate.hostname;
             const additionalSans = (existingCertificate.pending_sans || []).filter(
                 (san) => san !== existingCertificate.hostname
             );
             setSanInputs(
                 additionalSans.map((san) => ({
-                    value: stripHostnameSuffix(san, suffix),
+                    value: san,
                     type: detectSANType(san),
                 }))
             );
@@ -134,13 +124,13 @@ export function useCSRForm(options: UseCSRFormOptions = {}) {
             reset(formValues);
             setTimeout(() => setValue("key_size", formValues.key_size), 0);
         } else if (isRenewalMode && existingCertificate) {
-            const baseHostname = stripHostnameSuffix(existingCertificate.hostname, suffix);
+            const baseHostname = existingCertificate.hostname;
             const additionalSans = (existingCertificate.sans || []).filter(
                 (san) => san !== existingCertificate.hostname
             );
             setSanInputs(
                 additionalSans.map((san) => ({
-                    value: stripHostnameSuffix(san, suffix),
+                    value: san,
                     type: detectSANType(san),
                 }))
             );

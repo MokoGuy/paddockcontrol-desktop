@@ -4,7 +4,7 @@ import { useCertificates } from "@/hooks/useCertificates";
 import { useBackup } from "@/hooks/useBackup";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
-import type { Certificate, ChainCertificateInfo, HistoryEntry } from "@/types";
+import type { Certificate, ChainCertificateInfo, HistoryEntry, CertificateUploadPreview } from "@/types";
 
 interface UseCertificateDetailOptions {
     hostname?: string;
@@ -35,16 +35,24 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
     const [uploadCertPEM, setUploadCertPEM] = useState("");
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadStep, setUploadStep] = useState<"input" | "preview">("input");
+    const [uploadPreview, setUploadPreview] = useState<CertificateUploadPreview | null>(null);
+    const [isPreviewing, setIsPreviewing] = useState(false);
 
     // Certificate chain state
     const [chain, setChain] = useState<ChainCertificateInfo[]>([]);
     const [chainLoading, setChainLoading] = useState(false);
     const [chainError, setChainError] = useState<string | null>(null);
 
-    // Private key state
+    // Active private key state
     const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null);
     const [privateKeyLoading, setPrivateKeyLoading] = useState(false);
     const [privateKeyError, setPrivateKeyError] = useState<string | null>(null);
+
+    // Pending private key state
+    const [pendingPrivateKeyPEM, setPendingPrivateKeyPEM] = useState<string | null>(null);
+    const [pendingPrivateKeyLoading, setPendingPrivateKeyLoading] = useState(false);
+    const [pendingPrivateKeyError, setPendingPrivateKeyError] = useState<string | null>(null);
 
     // Encryption key dialog state
     const [showKeyDialog, setShowKeyDialog] = useState(false);
@@ -125,6 +133,28 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [hostname, isEncryptionKeyProvided]);
 
+    // Load pending private key
+    const loadPendingPrivateKey = useCallback(async () => {
+        if (!hostname || !isEncryptionKeyProvided || !certificate?.pending_csr) return;
+
+        setPendingPrivateKeyLoading(true);
+        setPendingPrivateKeyError(null);
+        try {
+            const pem = await api.getPendingPrivateKeyPEM(hostname);
+            setPendingPrivateKeyPEM(pem);
+        } catch (err) {
+            const message =
+                typeof err === "string"
+                    ? err
+                    : err instanceof Error
+                      ? err.message
+                      : "Failed to load pending private key";
+            setPendingPrivateKeyError(message);
+        } finally {
+            setPendingPrivateKeyLoading(false);
+        }
+    }, [hostname, isEncryptionKeyProvided, certificate?.pending_csr]);
+
     // Load certificate history
     const loadHistory = useCallback(async () => {
         if (!hostname) return;
@@ -164,6 +194,13 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [certificate, isEncryptionKeyProvided, loadPrivateKey]);
 
+    // Load pending private key when certificate has pending CSR and encryption key is available
+    useEffect(() => {
+        if (certificate?.pending_csr && isEncryptionKeyProvided) {
+            loadPendingPrivateKey();
+        }
+    }, [certificate?.pending_csr, isEncryptionKeyProvided, loadPendingPrivateKey]);
+
     // Load history when certificate is available
     useEffect(() => {
         if (certificate) {
@@ -186,13 +223,32 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [hostname, deleteCertificate, navigate]);
 
-    const handleUploadCertificate = useCallback(async () => {
+    const handlePreviewUpload = useCallback(async () => {
         if (!hostname || !uploadCertPEM.trim()) return;
 
         if (!uploadCertPEM.includes("-----BEGIN CERTIFICATE-----")) {
             setUploadError("Invalid certificate format. Must be PEM encoded.");
             return;
         }
+
+        setIsPreviewing(true);
+        setUploadError(null);
+
+        try {
+            const preview = await api.previewCertificateUpload(hostname, uploadCertPEM.trim());
+            setUploadPreview(preview);
+            setUploadStep("preview");
+        } catch (err) {
+            setUploadError(
+                err instanceof Error ? err.message : "Preview failed",
+            );
+        } finally {
+            setIsPreviewing(false);
+        }
+    }, [hostname, uploadCertPEM]);
+
+    const handleUploadCertificate = useCallback(async () => {
+        if (!hostname || !uploadCertPEM.trim()) return;
 
         setIsUploading(true);
         setUploadError(null);
@@ -201,6 +257,8 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
             await uploadCertificate(hostname, uploadCertPEM.trim());
             setUploadDialogOpen(false);
             setUploadCertPEM("");
+            setUploadStep("input");
+            setUploadPreview(null);
             await loadCertificate();
         } catch (err) {
             setUploadError(
@@ -244,6 +302,16 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [certificate, downloadPrivateKey]);
 
+    const handleDownloadPendingPrivateKey = useCallback(() => {
+        if (!pendingPrivateKeyPEM || !certificate) return;
+        const link = document.createElement("a");
+        link.href =
+            "data:text/plain;charset=utf-8," +
+            encodeURIComponent(pendingPrivateKeyPEM);
+        link.download = `${certificate.hostname}.pending.key`;
+        link.click();
+    }, [pendingPrivateKeyPEM, certificate]);
+
     const handleSaveNote = useCallback(
         async (note: string, isPending: boolean) => {
             if (!hostname) return;
@@ -273,6 +341,8 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         setUploadDialogOpen(false);
         setUploadCertPEM("");
         setUploadError(null);
+        setUploadStep("input");
+        setUploadPreview(null);
     }, []);
 
     return {
@@ -290,10 +360,15 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         chainLoading,
         chainError,
 
-        // Private key data
+        // Active private key data
         privateKeyPEM,
         privateKeyLoading,
         privateKeyError,
+
+        // Pending private key data
+        pendingPrivateKeyPEM,
+        pendingPrivateKeyLoading,
+        pendingPrivateKeyError,
 
         // History data
         history,
@@ -310,6 +385,10 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         uploadError,
         setUploadError,
         isUploading,
+        uploadStep,
+        setUploadStep,
+        uploadPreview,
+        isPreviewing,
         showKeyDialog,
         setShowKeyDialog,
 
@@ -321,10 +400,12 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
 
         // Handlers
         handleDelete,
+        handlePreviewUpload,
         handleUploadCertificate,
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
+        handleDownloadPendingPrivateKey,
         handleSaveNote,
         closeUploadDialog,
         navigate,

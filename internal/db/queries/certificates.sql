@@ -33,8 +33,9 @@ WHERE hostname = ?;
 -- name: ActivateCertificate :exec
 -- Activate certificate after upload (unified for initial or renewal)
 -- Move pending key to active column, store certificate, clear pending columns
+-- COALESCE ensures existing key is preserved if pending key is somehow NULL
 UPDATE certificates
-SET encrypted_private_key = pending_encrypted_private_key,
+SET encrypted_private_key = COALESCE(pending_encrypted_private_key, encrypted_private_key),
     certificate_pem = ?,
     pending_csr_pem = NULL,
     pending_encrypted_private_key = NULL,

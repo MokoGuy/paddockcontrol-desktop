@@ -12,7 +12,7 @@ import (
 
 const activateCertificate = `-- name: ActivateCertificate :exec
 UPDATE certificates
-SET encrypted_private_key = pending_encrypted_private_key,
+SET encrypted_private_key = COALESCE(pending_encrypted_private_key, encrypted_private_key),
     certificate_pem = ?,
     pending_csr_pem = NULL,
     pending_encrypted_private_key = NULL,
@@ -30,6 +30,7 @@ type ActivateCertificateParams struct {
 
 // Activate certificate after upload (unified for initial or renewal)
 // Move pending key to active column, store certificate, clear pending columns
+// COALESCE ensures existing key is preserved if pending key is somehow NULL
 func (q *Queries) ActivateCertificate(ctx context.Context, arg ActivateCertificateParams) error {
 	_, err := q.exec(ctx, q.activateCertificateStmt, activateCertificate, arg.CertificatePem, arg.ExpiresAt, arg.Hostname)
 	return err

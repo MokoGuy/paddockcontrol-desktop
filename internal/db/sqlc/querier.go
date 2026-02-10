@@ -11,6 +11,7 @@ import (
 type Querier interface {
 	// Activate certificate after upload (unified for initial or renewal)
 	// Move pending key to active column, store certificate, clear pending columns
+	// COALESCE ensures existing key is preserved if pending key is somehow NULL
 	ActivateCertificate(ctx context.Context, arg ActivateCertificateParams) error
 	// Certificate history queries
 	// Add a new history entry for a certificate

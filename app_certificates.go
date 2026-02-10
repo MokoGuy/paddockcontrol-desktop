@@ -47,9 +47,9 @@ func (a *App) GenerateCSR(req models.CSRRequest) (*models.CSRResponse, error) {
 }
 
 // UploadCertificate activates a signed certificate
-// Does NOT require encryption key - just adds cert PEM to existing entry
+// Requires encryption key to validate cert matches pending private key
 func (a *App) UploadCertificate(hostname, certPEM string) error {
-	if err := a.requireSetupOnly(); err != nil {
+	if err := a.requireSetupComplete(); err != nil {
 		return err
 	}
 
@@ -59,19 +59,52 @@ func (a *App) UploadCertificate(hostname, certPEM string) error {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
+	encryptionKey := make([]byte, len(a.encryptionKey))
+	copy(encryptionKey, a.encryptionKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
 		return fmt.Errorf("certificate service not initialized")
 	}
 
-	if err := certificateService.UploadCertificate(a.ctx, hostname, certPEM); err != nil {
+	if err := certificateService.UploadCertificate(a.ctx, hostname, certPEM, encryptionKey); err != nil {
 		log.Error("certificate upload failed", logger.Err(err))
 		return err
 	}
 
 	log.Info("certificate uploaded successfully")
 	return nil
+}
+
+// PreviewCertificateUpload validates a signed certificate and returns its metadata
+// Requires encryption key to validate cert matches pending private key
+func (a *App) PreviewCertificateUpload(hostname, certPEM string) (*models.CertificateUploadPreview, error) {
+	if err := a.requireSetupComplete(); err != nil {
+		return nil, err
+	}
+
+	_, log := logger.WithOperation(a.ctx, "preview_certificate_upload")
+	log = logger.WithHostname(log, hostname)
+	log.Info("previewing certificate upload")
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	encryptionKey := make([]byte, len(a.encryptionKey))
+	copy(encryptionKey, a.encryptionKey)
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return nil, fmt.Errorf("certificate service not initialized")
+	}
+
+	preview, err := certificateService.PreviewCertificateUpload(a.ctx, hostname, certPEM, encryptionKey)
+	if err != nil {
+		log.Error("certificate upload preview failed", logger.Err(err))
+		return nil, err
+	}
+
+	log.Info("certificate upload preview generated")
+	return preview, nil
 }
 
 // ImportCertificate imports certificate with private key

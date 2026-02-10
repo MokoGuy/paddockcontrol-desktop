@@ -125,12 +125,13 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 		})
 	} else {
 		// Create new certificate record
+		// Key stored in pending column — ActivateCertificate moves it to active on upload
 		err = s.db.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
-			Hostname:            req.Hostname,
-			EncryptedPrivateKey: encryptedKey,
-			PendingCsrPem:       sql.NullString{String: string(csrPEM), Valid: true},
-			Note:                sql.NullString{String: req.Note, Valid: req.Note != ""},
-			ReadOnly:            0,
+			Hostname:                   req.Hostname,
+			PendingEncryptedPrivateKey: encryptedKey,
+			PendingCsrPem:              sql.NullString{String: string(csrPEM), Valid: true},
+			Note:                       sql.NullString{String: req.Note, Valid: req.Note != ""},
+			ReadOnly:                   0,
 		})
 	}
 	log.Debug("profile: Database write", slog.Duration("duration", time.Since(t)))

@@ -28,6 +28,19 @@ export type CertificateSortBy = "created" | "expiring" | "hostname";
 export type SortOrder = "asc" | "desc";
 export type ChainCertType = "leaf" | "intermediate" | "root";
 
+// Certificate upload preview (matches Go models.CertificateUploadPreview)
+export interface CertificateUploadPreview {
+    hostname: string;
+    issuer_cn: string;
+    issuer_o: string;
+    not_before: number;
+    not_after: number;
+    sans?: string[];
+    key_size: number;
+    csr_match: boolean;
+    key_match: boolean;
+}
+
 // Frontend-only types (not in Go backend)
 export interface ImportResult {
     success: number;

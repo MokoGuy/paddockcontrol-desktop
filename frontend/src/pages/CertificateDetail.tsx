@@ -23,6 +23,7 @@ import { CertificateSubjectInfo } from "@/components/certificate/CertificateSubj
 import { PendingCSRSection } from "@/components/certificate/PendingCSRSection";
 import { CertificatePEMSection } from "@/components/certificate/CertificatePEMSection";
 import { PrivateKeySection } from "@/components/certificate/PrivateKeySection";
+import { PendingPrivateKeySection } from "@/components/certificate/PendingPrivateKeySection";
 import { CertificateDescriptionEditor } from "@/components/certificate/CertificateDescriptionEditor";
 import { CertificateHistoryCard } from "@/components/certificate/CertificateHistoryCard";
 import { useCertificateDetail } from "@/hooks/useCertificateDetail";
@@ -36,7 +37,11 @@ import {
     RefreshIcon,
     Delete02Icon,
     AlertCircleIcon,
+    CheckmarkCircle02Icon,
+    Cancel01Icon,
+    Link04Icon,
 } from "@hugeicons/core-free-icons";
+import { formatDateTime } from "@/lib/theme";
 
 export function CertificateDetail() {
     const { hostname } = useParams<{ hostname: string }>();
@@ -54,6 +59,9 @@ export function CertificateDetail() {
         privateKeyPEM,
         privateKeyLoading,
         privateKeyError,
+        pendingPrivateKeyPEM,
+        pendingPrivateKeyLoading,
+        pendingPrivateKeyError,
         history,
         historyLoading,
         historyError,
@@ -66,15 +74,21 @@ export function CertificateDetail() {
         uploadError,
         setUploadError,
         isUploading,
+        uploadStep,
+        setUploadStep,
+        uploadPreview,
+        isPreviewing,
         showKeyDialog,
         setShowKeyDialog,
         isTogglingReadOnly,
         isSavingNote,
         handleDelete,
+        handlePreviewUpload,
         handleUploadCertificate,
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
+        handleDownloadPendingPrivateKey,
         handleSaveNote,
         closeUploadDialog,
         navigate,
@@ -262,6 +276,30 @@ export function CertificateDetail() {
                 onUploadClick={() => setUploadDialogOpen(true)}
             />
 
+            {/* Chain connector: Pending CSR ↔ Pending Private Key */}
+            {certificate.pending_csr && isEncryptionKeyProvided && pendingPrivateKeyPEM && (
+                <div className="flex items-center justify-center gap-2 -mt-4 mb-2 text-xs text-info/70 dark:text-chart-2/70">
+                    <div className="h-px flex-1 bg-info/20 dark:bg-chart-2/20" />
+                    <HugeiconsIcon
+                        icon={Link04Icon}
+                        className="size-3.5 shrink-0"
+                        strokeWidth={2}
+                    />
+                    <span className="shrink-0">Cryptographically paired</span>
+                    <div className="h-px flex-1 bg-info/20 dark:bg-chart-2/20" />
+                </div>
+            )}
+
+            {/* Pending Private Key */}
+            <PendingPrivateKeySection
+                hasPendingCSR={!!certificate.pending_csr}
+                isEncryptionKeyProvided={isEncryptionKeyProvided}
+                pendingPrivateKeyPEM={pendingPrivateKeyPEM}
+                pendingPrivateKeyLoading={pendingPrivateKeyLoading}
+                pendingPrivateKeyError={pendingPrivateKeyError}
+                onDownloadClick={handleDownloadPendingPrivateKey}
+            />
+
             {/* Certificate Path - only for active certificates */}
             {certificate.certificate_pem && (
                 <CertificatePath
@@ -281,15 +319,31 @@ export function CertificateDetail() {
                 />
             )}
 
-            {/* Private Key (PEM) */}
-            <PrivateKeySection
-                isEncryptionKeyProvided={isEncryptionKeyProvided}
-                privateKeyPEM={privateKeyPEM}
-                privateKeyLoading={privateKeyLoading}
-                privateKeyError={privateKeyError}
-                onUnlockClick={() => setShowKeyDialog(true)}
-                onDownloadClick={handleDownloadPrivateKey}
-            />
+            {/* Chain connector: Certificate PEM ↔ Active Private Key */}
+            {certificate.certificate_pem && isEncryptionKeyProvided && privateKeyPEM && (
+                <div className="flex items-center justify-center gap-2 -mt-4 mb-2 text-xs text-muted-foreground">
+                    <div className="h-px flex-1 bg-border" />
+                    <HugeiconsIcon
+                        icon={Link04Icon}
+                        className="size-3.5 shrink-0"
+                        strokeWidth={2}
+                    />
+                    <span className="shrink-0">Cryptographically paired</span>
+                    <div className="h-px flex-1 bg-border" />
+                </div>
+            )}
+
+            {/* Active Private Key (PEM) - only for active certificates */}
+            {certificate.certificate_pem && (
+                <PrivateKeySection
+                    isEncryptionKeyProvided={isEncryptionKeyProvided}
+                    privateKeyPEM={privateKeyPEM}
+                    privateKeyLoading={privateKeyLoading}
+                    privateKeyError={privateKeyError}
+                    onUnlockClick={() => setShowKeyDialog(true)}
+                    onDownloadClick={handleDownloadPrivateKey}
+                />
+            )}
 
             {/* Activity History */}
             <CertificateHistoryCard
@@ -311,57 +365,147 @@ export function CertificateDetail() {
                 onCancel={() => setDeleteConfirming(false)}
             />
 
-            {/* Upload Certificate Dialog */}
+            {/* Upload Certificate Dialog (2-step: input → preview) */}
             <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                 <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Upload Signed Certificate</DialogTitle>
-                        <DialogDescription>
-                            Paste the signed certificate or drag and drop a file
-                            (.crt, .pem).
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        {uploadError && (
-                            <StatusAlert
-                                variant="destructive"
-                                icon={
-                                    <HugeiconsIcon
-                                        icon={AlertCircleIcon}
-                                        className="size-4"
-                                        strokeWidth={2}
-                                    />
-                                }
-                            >
-                                {uploadError}
-                            </StatusAlert>
-                        )}
-                        <FileDropTextarea
-                            value={uploadCertPEM}
-                            onChange={setUploadCertPEM}
-                            onError={setUploadError}
-                            placeholder={`-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----`}
-                            className="font-mono text-xs h-64"
-                            acceptedExtensions={[".crt", ".pem", ".cer"]}
-                            dropLabel="Drop certificate file here"
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={closeUploadDialog}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleUploadCertificate}
-                            disabled={isUploading || !uploadCertPEM.trim()}
-                        >
-                            {isUploading
-                                ? "Uploading..."
-                                : "Upload Certificate"}
-                        </Button>
-                    </DialogFooter>
+                    {uploadStep === "input" ? (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Upload Signed Certificate</DialogTitle>
+                                <DialogDescription>
+                                    Paste the signed certificate or drag and drop a file
+                                    (.crt, .pem).
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                {uploadError && (
+                                    <StatusAlert
+                                        variant="destructive"
+                                        icon={
+                                            <HugeiconsIcon
+                                                icon={AlertCircleIcon}
+                                                className="size-4"
+                                                strokeWidth={2}
+                                            />
+                                        }
+                                    >
+                                        {uploadError}
+                                    </StatusAlert>
+                                )}
+                                <FileDropTextarea
+                                    value={uploadCertPEM}
+                                    onChange={setUploadCertPEM}
+                                    onError={setUploadError}
+                                    placeholder={`-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----`}
+                                    className="font-mono text-xs h-64"
+                                    acceptedExtensions={[".crt", ".pem", ".cer"]}
+                                    dropLabel="Drop certificate file here"
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    variant="outline"
+                                    onClick={closeUploadDialog}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handlePreviewUpload}
+                                    disabled={isPreviewing || !uploadCertPEM.trim()}
+                                >
+                                    {isPreviewing
+                                        ? "Validating..."
+                                        : "Preview"}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    ) : (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Confirm Certificate Upload</DialogTitle>
+                                <DialogDescription>
+                                    Review the certificate details before uploading.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                {uploadError && (
+                                    <StatusAlert
+                                        variant="destructive"
+                                        icon={
+                                            <HugeiconsIcon
+                                                icon={AlertCircleIcon}
+                                                className="size-4"
+                                                strokeWidth={2}
+                                            />
+                                        }
+                                    >
+                                        {uploadError}
+                                    </StatusAlert>
+                                )}
+                                {uploadPreview && (
+                                    <div className="rounded-none border border-border bg-muted/50 p-4 space-y-3 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <HugeiconsIcon
+                                                icon={uploadPreview.csr_match ? CheckmarkCircle02Icon : Cancel01Icon}
+                                                className={`size-5 ${uploadPreview.csr_match ? "text-emerald-500" : "text-destructive"}`}
+                                                strokeWidth={2}
+                                            />
+                                            <span className={uploadPreview.csr_match ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-destructive font-medium"}>
+                                                {uploadPreview.csr_match ? "Certificate matches pending CSR" : "Certificate does NOT match pending CSR"}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <HugeiconsIcon
+                                                icon={uploadPreview.key_match ? CheckmarkCircle02Icon : Cancel01Icon}
+                                                className={`size-5 ${uploadPreview.key_match ? "text-emerald-500" : "text-destructive"}`}
+                                                strokeWidth={2}
+                                            />
+                                            <span className={uploadPreview.key_match ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-destructive font-medium"}>
+                                                {uploadPreview.key_match ? "Certificate matches pending private key" : "Certificate does NOT match pending private key"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+                                            <span className="text-muted-foreground">Hostname</span>
+                                            <span className="font-mono">{uploadPreview.hostname}</span>
+                                            <span className="text-muted-foreground">Issuer</span>
+                                            <span>{uploadPreview.issuer_cn}{uploadPreview.issuer_o ? ` (${uploadPreview.issuer_o})` : ""}</span>
+                                            <span className="text-muted-foreground">Valid From</span>
+                                            <span>{formatDateTime(uploadPreview.not_before)}</span>
+                                            <span className="text-muted-foreground">Valid Until</span>
+                                            <span>{formatDateTime(uploadPreview.not_after)}</span>
+                                            <span className="text-muted-foreground">Key Size</span>
+                                            <span>{uploadPreview.key_size} bit</span>
+                                            {uploadPreview.sans && uploadPreview.sans.length > 0 && (
+                                                <>
+                                                    <span className="text-muted-foreground">SANs</span>
+                                                    <span>{uploadPreview.sans.join(", ")}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setUploadStep("input");
+                                        setUploadError(null);
+                                    }}
+                                >
+                                    Back
+                                </Button>
+                                <Button
+                                    onClick={handleUploadCertificate}
+                                    disabled={isUploading || !uploadPreview?.csr_match || !uploadPreview?.key_match}
+                                >
+                                    {isUploading
+                                        ? "Uploading..."
+                                        : "Confirm Upload"}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
                 </DialogContent>
             </Dialog>
 

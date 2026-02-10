@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Download04Icon,
@@ -23,78 +22,55 @@ import {
     ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 
-interface PrivateKeySectionProps {
+interface PendingPrivateKeySectionProps {
+    hasPendingCSR: boolean;
     isEncryptionKeyProvided: boolean;
-    privateKeyPEM: string | null;
-    privateKeyLoading: boolean;
-    privateKeyError: string | null;
-    onUnlockClick: () => void;
+    pendingPrivateKeyPEM: string | null;
+    pendingPrivateKeyLoading: boolean;
+    pendingPrivateKeyError: string | null;
     onDownloadClick: () => void;
 }
 
-export function PrivateKeySection({
+export function PendingPrivateKeySection({
+    hasPendingCSR,
     isEncryptionKeyProvided,
-    privateKeyPEM,
-    privateKeyLoading,
-    privateKeyError,
-    onUnlockClick,
+    pendingPrivateKeyPEM,
+    pendingPrivateKeyLoading,
+    pendingPrivateKeyError,
     onDownloadClick,
-}: PrivateKeySectionProps) {
+}: PendingPrivateKeySectionProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    if (!isEncryptionKeyProvided) {
-        return (
-            <StatusAlert
-                variant="warning"
-                className="mb-6"
-                icon={
-                    <HugeiconsIcon
-                        icon={Key01Icon}
-                        className="size-4"
-                        strokeWidth={2}
-                    />
-                }
-                title="Private Key (PEM)"
-                action={
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-warning/50 text-warning-foreground hover:bg-warning/20"
-                        onClick={onUnlockClick}
-                    >
-                        Unlock
-                    </Button>
-                }
-            >
-                Provide your encryption key to view and download the private key
-            </StatusAlert>
-        );
+    if (!hasPendingCSR || !isEncryptionKeyProvided) {
+        return null;
     }
 
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <Card className="mb-6 shadow-sm border-border">
+            <Card className="mb-6 shadow-sm border-info/30 bg-info/10">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                             <HugeiconsIcon
                                 icon={Key01Icon}
-                                className="w-5 h-5"
+                                className="w-5 h-5 text-info dark:text-chart-2"
                                 strokeWidth={2}
                             />
                             <div className="text-left">
-                                <CardTitle>Private Key (PEM)</CardTitle>
-                                <CardDescription>
-                                    RSA private key in PEM format
+                                <CardTitle className="text-info dark:text-chart-2">
+                                    Pending Private Key (PEM)
+                                </CardTitle>
+                                <CardDescription className="text-info/80 dark:text-chart-2/80">
+                                    RSA private key associated with the pending CSR
                                 </CardDescription>
                             </div>
                             <HugeiconsIcon
                                 icon={isOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                                className="w-4 h-4 ml-1 text-muted-foreground"
+                                className="w-4 h-4 ml-1 text-info/60 dark:text-chart-2/60"
                                 strokeWidth={2}
                             />
                         </CollapsibleTrigger>
-                        {privateKeyPEM && (
+                        {pendingPrivateKeyPEM && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -112,17 +88,17 @@ export function PrivateKeySection({
                 </CardHeader>
                 <CollapsibleContent>
                     <CardContent>
-                        {privateKeyLoading ? (
-                            <LoadingSpinner text="Decrypting private key..." />
-                        ) : privateKeyError ? (
+                        {pendingPrivateKeyLoading ? (
+                            <LoadingSpinner text="Decrypting pending private key..." />
+                        ) : pendingPrivateKeyError ? (
                             <p className="text-sm text-destructive">
-                                {privateKeyError}
+                                {pendingPrivateKeyError}
                             </p>
-                        ) : privateKeyPEM ? (
-                            <CodeBlock content={privateKeyPEM} />
+                        ) : pendingPrivateKeyPEM ? (
+                            <CodeBlock content={pendingPrivateKeyPEM} />
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                No private key available
+                            <p className="text-sm text-info/80 dark:text-chart-2/80">
+                                No pending private key available
                             </p>
                         )}
                     </CardContent>
