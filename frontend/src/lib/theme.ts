@@ -43,6 +43,17 @@ export function getRelativeTime(timestamp: number | null | undefined): string {
 }
 
 /**
+ * Format byte count to human-readable file size
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
  * Get computed RGB color from CSS variable
  * Works with OKLCH values by using browser's color computation
  */

@@ -20,6 +20,7 @@ export type BackupValidationResult = models.BackupValidationResult;
 export type KeyValidationResult = models.KeyValidationResult;
 export type ChainCertificateInfo = models.ChainCertificateInfo;
 export type HistoryEntry = models.HistoryEntry;
+export type LocalBackupInfo = models.LocalBackupInfo;
 
 // Stricter type definitions for status/enum fields
 // (Wails generates 'string', these provide better type safety)
@@ -27,6 +28,7 @@ export type CertificateStatus = "pending" | "active" | "expiring" | "expired";
 export type CertificateSortBy = "created" | "expiring" | "hostname";
 export type SortOrder = "asc" | "desc";
 export type ChainCertType = "leaf" | "intermediate" | "root";
+export type BackupType = "auto" | "manual";
 
 // Certificate upload preview (matches Go models.CertificateUploadPreview)
 export interface CertificateUploadPreview {

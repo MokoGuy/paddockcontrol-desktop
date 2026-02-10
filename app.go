@@ -266,5 +266,8 @@ func (a *App) performAutoBackup(operation string) {
 			slog.String("operation", operation),
 			logger.Err(err),
 		)
+		return
 	}
+
+	wailsruntime.EventsEmit(a.ctx, "backup:created", "auto", operation)
 }

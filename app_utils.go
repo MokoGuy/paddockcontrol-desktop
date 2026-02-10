@@ -105,6 +105,15 @@ func (a *App) ResetDatabase() error {
 	_, log := logger.WithOperation(a.ctx, "reset_database")
 	log.Info("resetting database - deleting all data")
 
+	// Create safety auto-backup before reset (best-effort, errors don't block reset)
+	if a.autoBackupService != nil {
+		if _, err := a.autoBackupService.CreateBackup("reset_database"); err != nil {
+			log.Error("pre-reset auto-backup failed", logger.Err(err))
+		} else {
+			wailsruntime.EventsEmit(a.ctx, "backup:created", "auto", "reset_database")
+		}
+	}
+
 	// Handle in-memory database differently (for testing)
 	if a.dataDir == ":memory:" {
 		// For in-memory database, use migrations to reset schema

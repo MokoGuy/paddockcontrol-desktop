@@ -7,9 +7,9 @@ import {
     useLocation,
 } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
-import { EventsOnce } from "../wailsjs/runtime/runtime";
+import { EventsOnce, EventsOn } from "../wailsjs/runtime/runtime";
 import { useAppStore } from "@/stores/useAppStore";
 import { useKonamiCode } from "@/hooks/useKonamiCode";
 import { api } from "@/lib/api";
@@ -103,6 +103,27 @@ function AppContent() {
 
         checkInitialState();
     }, [setIsEncryptionKeyProvided, setIsSetupComplete, setIsLoading]);
+
+    // Listen for backup events from the backend
+    useEffect(() => {
+        const formatOperation = (op: string) =>
+            op.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+        const cleanup = EventsOn(
+            "backup:created",
+            (type: string, operation: string) => {
+                if (type === "auto" && operation) {
+                    toast.info("Auto backup created", {
+                        description: `Before: ${formatOperation(operation)}`,
+                    });
+                } else if (type === "manual") {
+                    toast.success("Manual backup created");
+                }
+            },
+        );
+
+        return cleanup;
+    }, []);
 
     // Determine layout group for exit animations
     const isSetupSubPage =

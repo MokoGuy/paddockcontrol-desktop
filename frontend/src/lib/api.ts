@@ -19,6 +19,7 @@ import {
     Config,
     UpdateConfigRequest,
     CertificateUploadPreview,
+    LocalBackupInfo,
 } from "../types";
 
 // Encryption Key Management
@@ -106,8 +107,17 @@ export const api = {
     savePrivateKeyToFile: (hostname: string) =>
         App.SavePrivateKeyToFile(hostname),
 
-    // Backup export
+    // Backup export (JSON)
     exportBackup: () => App.ExportBackup(false),
+
+    // Local backup management
+    listLocalBackups: () =>
+        App.ListLocalBackups() as Promise<LocalBackupInfo[]>,
+    createManualBackup: () => App.CreateManualBackup(),
+    restoreLocalBackup: (filename: string) =>
+        App.RestoreLocalBackup(filename),
+    deleteLocalBackup: (filename: string) =>
+        App.DeleteLocalBackup(filename),
 
     // Utilities
     copyToClipboard: (text: string) => App.CopyToClipboard(text),

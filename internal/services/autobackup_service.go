@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"paddockcontrol-desktop/internal/logger"
+	"paddockcontrol-desktop/internal/models"
 )
 
 const (
@@ -18,6 +20,12 @@ const (
 
 	// autoBackupPrefix is the prefix used for auto-backup files
 	autoBackupPrefix = "certificates.db.autobackup."
+
+	// manualBackupPrefix is the prefix used for manual backup files
+	manualBackupPrefix = "certificates.db.backup.manual."
+
+	// timestampFormat is the Go time format used in backup filenames
+	timestampFormat = "20060102T150405"
 )
 
 // AutoBackupService handles automatic database backups before destructive operations
@@ -42,7 +50,7 @@ func NewAutoBackupService(db *sql.DB, dataDir string) *AutoBackupService {
 // The operation parameter is used for logging context (e.g., "upload_certificate").
 // Errors are returned so callers can log them, but callers should not block on errors.
 func (s *AutoBackupService) CreateBackup(operation string) (string, error) {
-	timestamp := time.Now().Format("20060102T150405")
+	timestamp := time.Now().Format(timestampFormat)
 	backupName := autoBackupPrefix + timestamp
 	backupPath := filepath.Join(s.dataDir, backupName)
 
@@ -102,4 +110,106 @@ func (s *AutoBackupService) rotateBackups() {
 			s.log.Info("removed old auto-backup", slog.String("path", path))
 		}
 	}
+}
+
+// CreateManualBackup creates a user-initiated database backup snapshot.
+// Manual backups are not subject to automatic rotation.
+func (s *AutoBackupService) CreateManualBackup() (string, error) {
+	timestamp := time.Now().Format(timestampFormat)
+	backupName := manualBackupPrefix + timestamp
+	backupPath := filepath.Join(s.dataDir, backupName)
+
+	s.log.Info("creating manual backup", slog.String("path", backupPath))
+
+	_, err := s.db.Exec(fmt.Sprintf(`VACUUM INTO '%s'`, backupPath))
+	if err != nil {
+		s.log.Error("manual backup failed", logger.Err(err))
+		return "", fmt.Errorf("manual backup failed: %w", err)
+	}
+
+	s.log.Info("manual backup created successfully", slog.String("path", backupPath))
+	return backupPath, nil
+}
+
+// ListBackups returns metadata for all local backup files (both auto and manual).
+// Results are sorted by timestamp descending (newest first).
+func (s *AutoBackupService) ListBackups() ([]models.LocalBackupInfo, error) {
+	var results []models.LocalBackupInfo
+
+	prefixes := []struct {
+		prefix     string
+		backupType string
+	}{
+		{autoBackupPrefix, "auto"},
+		{manualBackupPrefix, "manual"},
+	}
+
+	for _, p := range prefixes {
+		pattern := filepath.Join(s.dataDir, p.prefix+"*")
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			s.log.Error("failed to list backups", logger.Err(err))
+			return nil, fmt.Errorf("failed to list backups: %w", err)
+		}
+
+		for _, match := range matches {
+			info, err := os.Stat(match)
+			if err != nil {
+				s.log.Error("failed to stat backup file",
+					slog.String("path", match), logger.Err(err))
+				continue
+			}
+
+			filename := filepath.Base(match)
+			timestampStr := strings.TrimPrefix(filename, p.prefix)
+
+			t, err := time.Parse(timestampFormat, timestampStr)
+			if err != nil {
+				s.log.Error("failed to parse backup timestamp",
+					slog.String("filename", filename), logger.Err(err))
+				continue
+			}
+
+			results = append(results, models.LocalBackupInfo{
+				Filename:  filename,
+				Type:      p.backupType,
+				Timestamp: t.Unix(),
+				Size:      info.Size(),
+			})
+		}
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Timestamp > results[j].Timestamp
+	})
+
+	return results, nil
+}
+
+// DeleteBackup removes a local backup file.
+// Only files matching known backup prefixes are allowed.
+func (s *AutoBackupService) DeleteBackup(filename string) error {
+	if !strings.HasPrefix(filename, autoBackupPrefix) &&
+		!strings.HasPrefix(filename, manualBackupPrefix) {
+		return fmt.Errorf("invalid backup filename")
+	}
+
+	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") || strings.Contains(filename, "..") {
+		return fmt.Errorf("invalid backup filename")
+	}
+
+	backupPath := filepath.Join(s.dataDir, filename)
+
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		return fmt.Errorf("backup file not found")
+	}
+
+	if err := os.Remove(backupPath); err != nil {
+		s.log.Error("failed to delete backup",
+			slog.String("path", backupPath), logger.Err(err))
+		return fmt.Errorf("failed to delete backup: %w", err)
+	}
+
+	s.log.Info("backup deleted", slog.String("filename", filename))
+	return nil
 }

@@ -36,11 +36,12 @@ import {
     AlertCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
-import { formatDateTime } from "@/lib/theme";
+import { formatDateTime, formatFileSize } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory, ExportLogs, GetLogInfo } from "../../wailsjs/go/main/App";
 import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
+import { LocalBackupsCard } from "@/components/settings/LocalBackupsCard";
 import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 export function Settings() {
@@ -63,9 +64,14 @@ export function Settings() {
         error: backupError,
         exportBackup,
         getDataDirectory,
+        localBackups,
+        isLoadingBackups,
+        listLocalBackups,
+        createManualBackup,
+        restoreLocalBackup,
+        deleteLocalBackup,
     } = useBackup();
     const [dataDir, setDataDir] = useState<string | null>(null);
-    const [exportConfirming, setExportConfirming] = useState(false);
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
     const [changeKeyOpen, setChangeKeyOpen] = useState(false);
@@ -107,6 +113,9 @@ export function Settings() {
             } catch (err) {
                 console.error("Failed to load log info:", err);
             }
+
+            // Load local backups
+            await listLocalBackups();
         };
 
         loadData();
@@ -121,13 +130,21 @@ export function Settings() {
         }
     };
 
-    const handleExportBackup = async () => {
+    const handleRestoreBackup = async (filename: string) => {
+        await restoreLocalBackup(filename);
+        // Reset frontend state — the restored DB may have different state
+        setIsEncryptionKeyProvided(false);
+        toast.info(
+            "Backup restored. You may need to re-provide your encryption key.",
+        );
+        // Re-load settings data
         try {
-            await exportBackup();
-            setExportConfirming(false);
-        } catch (err) {
-            console.error("Export error:", err);
+            const cfg = await api.getConfig();
+            setConfig(cfg);
+        } catch {
+            // Config may not exist in restored DB
         }
+        await listLocalBackups();
     };
 
     const handleResetDatabase = async () => {
@@ -159,14 +176,6 @@ export function Settings() {
         } finally {
             setLogExportLoading(false);
         }
-    };
-
-    const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     };
 
     const handleEditConfig = async (data: UpdateConfigRequest) => {
@@ -353,14 +362,40 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Application Logs Summary */}
+            {/* Local Backups */}
+            <LocalBackupsCard
+                localBackups={localBackups}
+                isLoading={backupLoading}
+                isLoadingBackups={isLoadingBackups}
+                isAdminModeEnabled={isAdminModeEnabled}
+                error={backupError}
+                onCreateManualBackup={createManualBackup}
+                onRestoreBackup={handleRestoreBackup}
+                onDeleteBackup={deleteLocalBackup}
+                onExportBackup={exportBackup}
+                backupLoading={backupLoading}
+            />
+
+            {/* Application Logs */}
             {logInfo && (
                 <Card className="mt-6 shadow-sm border-border">
                     <CardHeader>
-                        <CardTitle>Application Logs</CardTitle>
-                        <CardDescription>
-                            Log files for debugging and troubleshooting
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Application Logs</CardTitle>
+                                <CardDescription>
+                                    Log files for debugging and troubleshooting
+                                </CardDescription>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleExportLogs}
+                                disabled={logExportLoading}
+                            >
+                                {logExportLoading ? "Exporting..." : "Export Logs"}
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -451,58 +486,6 @@ export function Settings() {
                 </Card>
             )}
 
-            {/* Export Logs */}
-            <Card className="mt-6 border-action/30 bg-action-muted">
-                <CardContent className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-action">
-                            Export Logs
-                        </p>
-                        <p className="text-xs text-action/70 mt-1">
-                            Download all log files as ZIP archive for bug reports.
-                        </p>
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-action/50 text-action hover:bg-action/20"
-                        onClick={handleExportLogs}
-                        disabled={logExportLoading}
-                    >
-                        {logExportLoading ? "Exporting..." : "Export Logs"}
-                    </Button>
-                </CardContent>
-            </Card>
-
-            {/* Backup Management */}
-            <Card className="mt-4 border-action/30 bg-action-muted">
-                <CardContent className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-action">
-                            Backup Management
-                        </p>
-                        <p className="text-xs text-action/70 mt-1">
-                            Create an encrypted backup of your CA configuration and
-                            certificates.
-                        </p>
-                        {backupError && (
-                            <p className="text-xs text-destructive mt-1">
-                                {backupError}
-                            </p>
-                        )}
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-action/50 text-action hover:bg-action/20"
-                        onClick={() => setExportConfirming(true)}
-                        disabled={backupLoading}
-                    >
-                        {backupLoading ? "Exporting..." : "Export Backup"}
-                    </Button>
-                </CardContent>
-            </Card>
-
             {/* Change Encryption Key */}
             <Card
                 className={`mt-6 border-admin/30 bg-admin-muted ${!isAdminModeEnabled ? "opacity-60" : ""}`}
@@ -557,7 +540,7 @@ export function Settings() {
                         </p>
                         <p className="text-xs text-admin/80 mt-1">
                             Permanently delete all certificates, configuration,
-                            and encryption keys.
+                            and encryption keys. A backup is created automatically.
                         </p>
                     </div>
                     <Tooltip>
@@ -589,23 +572,11 @@ export function Settings() {
                 </p>
             </div>
 
-            {/* Export Confirmation Dialog */}
-            <ConfirmDialog
-                open={exportConfirming}
-                title="Export Backup"
-                description="Create a backup of your CA configuration and certificates?"
-                confirmText="Export"
-                cancelText="Cancel"
-                isLoading={backupLoading}
-                onConfirm={handleExportBackup}
-                onCancel={() => setExportConfirming(false)}
-            />
-
             {/* Reset Confirmation Dialog */}
             <ConfirmDialog
                 open={resetConfirming}
                 title="Reset Database"
-                description="This will permanently delete ALL data including certificates, configuration, and encryption keys. This action cannot be undone."
+                description="This will permanently delete ALL data including certificates, configuration, and encryption keys. An automatic backup will be created before reset. This action cannot be undone."
                 confirmText="Reset"
                 cancelText="Cancel"
                 isDestructive={true}
