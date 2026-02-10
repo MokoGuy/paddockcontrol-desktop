@@ -555,6 +555,12 @@ func TestListBackups_ParsesMetadata(t *testing.T) {
 	if b.Size <= 0 {
 		t.Errorf("expected positive size, got %d", b.Size)
 	}
+	if b.CertificateCount != 1 {
+		t.Errorf("expected certificate_count 1, got %d", b.CertificateCount)
+	}
+	if b.CAName != "Test CA" {
+		t.Errorf("expected ca_name 'Test CA', got %q", b.CAName)
+	}
 }
 
 func TestListBackups_IgnoresUnrelatedFiles(t *testing.T) {
@@ -577,6 +583,82 @@ func TestListBackups_IgnoresUnrelatedFiles(t *testing.T) {
 	}
 	if len(backups) != 1 {
 		t.Errorf("expected 1 backup (excluding unrelated file), got %d", len(backups))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// peekBackupContent tests
+// ---------------------------------------------------------------------------
+
+func TestPeekBackupContent_WithData(t *testing.T) {
+	svc, database, _ := setupAutoBackupTest(t)
+	seedTestData(t, database, 5)
+
+	path, err := svc.CreateBackup("test_peek")
+	if err != nil {
+		t.Fatalf("CreateBackup failed: %v", err)
+	}
+
+	certCount, caName := svc.peekBackupContent(path)
+	if certCount != 5 {
+		t.Errorf("expected 5 certificates, got %d", certCount)
+	}
+	if caName != "Test CA" {
+		t.Errorf("expected ca_name 'Test CA', got %q", caName)
+	}
+}
+
+func TestPeekBackupContent_EmptyDatabase(t *testing.T) {
+	svc, _, _ := setupAutoBackupTest(t)
+
+	path, err := svc.CreateBackup("test_peek_empty")
+	if err != nil {
+		t.Fatalf("CreateBackup failed: %v", err)
+	}
+
+	certCount, caName := svc.peekBackupContent(path)
+	if certCount != 0 {
+		t.Errorf("expected 0 certificates, got %d", certCount)
+	}
+	if caName != "" {
+		t.Errorf("expected empty ca_name, got %q", caName)
+	}
+}
+
+func TestPeekBackupContent_InvalidPath(t *testing.T) {
+	svc, _, _ := setupAutoBackupTest(t)
+
+	certCount, caName := svc.peekBackupContent("/nonexistent/path/backup.db")
+	if certCount != 0 {
+		t.Errorf("expected 0 for invalid path, got %d", certCount)
+	}
+	if caName != "" {
+		t.Errorf("expected empty ca_name for invalid path, got %q", caName)
+	}
+}
+
+func TestListBackups_IncludesContentSummary(t *testing.T) {
+	svc, database, _ := setupAutoBackupTest(t)
+	seedTestData(t, database, 3)
+
+	if _, err := svc.CreateManualBackup(); err != nil {
+		t.Fatalf("CreateManualBackup failed: %v", err)
+	}
+
+	backups, err := svc.ListBackups()
+	if err != nil {
+		t.Fatalf("ListBackups failed: %v", err)
+	}
+	if len(backups) != 1 {
+		t.Fatalf("expected 1 backup, got %d", len(backups))
+	}
+
+	b := backups[0]
+	if b.CertificateCount != 3 {
+		t.Errorf("expected certificate_count 3, got %d", b.CertificateCount)
+	}
+	if b.CAName != "Test CA" {
+		t.Errorf("expected ca_name 'Test CA', got %q", b.CAName)
 	}
 }
 

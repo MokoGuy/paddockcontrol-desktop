@@ -152,11 +152,11 @@ export function LocalBackupsCard({
                                     <div className="flex items-center gap-3 min-w-0">
                                         <Badge
                                             variant="outline"
-                                            className={
+                                            className={`w-16 justify-center ${
                                                 backup.type === "manual"
                                                     ? "border-success/40 bg-success/10 text-success"
                                                     : "border-info/40 bg-info/10 text-info"
-                                            }
+                                            }`}
                                         >
                                             {backup.type === "manual"
                                                 ? "Manual"
@@ -174,6 +174,17 @@ export function LocalBackupsCard({
                                                 )}{" "}
                                                 &middot;{" "}
                                                 {formatFileSize(backup.size)}
+                                                {" "}&middot;{" "}
+                                                {backup.certificate_count}{" "}
+                                                {backup.certificate_count === 1
+                                                    ? "certificate"
+                                                    : "certificates"}
+                                                {backup.ca_name && (
+                                                    <>
+                                                        {" "}&middot;{" "}
+                                                        {backup.ca_name}
+                                                    </>
+                                                )}
                                             </p>
                                         </div>
                                     </div>

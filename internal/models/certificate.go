@@ -141,10 +141,12 @@ type BackupValidationResult struct {
 
 // LocalBackupInfo represents metadata about a local database backup file
 type LocalBackupInfo struct {
-	Filename  string `json:"filename"`  // Full filename
-	Type      string `json:"type"`      // "auto" or "manual"
-	Timestamp int64  `json:"timestamp"` // Unix timestamp parsed from filename
-	Size      int64  `json:"size"`      // File size in bytes
+	Filename         string `json:"filename"`                    // Full filename
+	Type             string `json:"type"`                        // "auto" or "manual"
+	Timestamp        int64  `json:"timestamp"`                   // Unix timestamp parsed from filename
+	Size             int64  `json:"size"`                        // File size in bytes
+	CertificateCount int    `json:"certificate_count"`           // Number of certificates in backup
+	CAName           string `json:"ca_name,omitempty"`           // CA name from config table
 }
 
 // CertificateUploadPreview represents a preview of a signed certificate before upload

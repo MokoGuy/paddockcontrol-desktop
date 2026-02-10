@@ -170,11 +170,15 @@ func (s *AutoBackupService) ListBackups() ([]models.LocalBackupInfo, error) {
 				continue
 			}
 
+			certCount, caName := s.peekBackupContent(match)
+
 			results = append(results, models.LocalBackupInfo{
-				Filename:  filename,
-				Type:      p.backupType,
-				Timestamp: t.Unix(),
-				Size:      info.Size(),
+				Filename:         filename,
+				Type:             p.backupType,
+				Timestamp:        t.Unix(),
+				Size:             info.Size(),
+				CertificateCount: certCount,
+				CAName:           caName,
 			})
 		}
 	}
@@ -184,6 +188,21 @@ func (s *AutoBackupService) ListBackups() ([]models.LocalBackupInfo, error) {
 	})
 
 	return results, nil
+}
+
+// peekBackupContent opens a backup SQLite file read-only and extracts summary info.
+// Errors are non-fatal; zero values are returned on failure.
+func (s *AutoBackupService) peekBackupContent(path string) (certCount int, caName string) {
+	db, err := sql.Open("sqlite", path+"?mode=ro&_journal_mode=OFF")
+	if err != nil {
+		return 0, ""
+	}
+	defer db.Close()
+
+	_ = db.QueryRow("SELECT COUNT(*) FROM certificates").Scan(&certCount)
+	_ = db.QueryRow("SELECT ca_name FROM config WHERE id = 1").Scan(&caName)
+
+	return certCount, caName
 }
 
 // DeleteBackup removes a local backup file.
