@@ -13,6 +13,7 @@ concurrency:
 jobs:
   go-test:
     name: Go Tests
+    if: ${{ github.event_name == 'push' || !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +26,7 @@ jobs:
 
   frontend-lint:
     name: Frontend Lint
+    if: ${{ github.event_name == 'push' || !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
