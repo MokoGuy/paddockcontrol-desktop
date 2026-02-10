@@ -30,20 +30,34 @@ const (
 
 // AutoBackupService handles automatic database backups before destructive operations
 type AutoBackupService struct {
-	db      *sql.DB
-	dataDir string
-	maxKeep int
-	log     *slog.Logger
+	db         *sql.DB
+	dataDir    string
+	backupsDir string
+	maxKeep    int
+	log        *slog.Logger
 }
 
 // NewAutoBackupService creates a new auto-backup service
 func NewAutoBackupService(db *sql.DB, dataDir string) *AutoBackupService {
-	return &AutoBackupService{
-		db:      db,
-		dataDir: dataDir,
-		maxKeep: DefaultMaxAutoBackups,
-		log:     logger.WithComponent("autobackup"),
+	log := logger.WithComponent("autobackup")
+	backupsDir := filepath.Join(dataDir, "backups")
+
+	if err := os.MkdirAll(backupsDir, 0700); err != nil {
+		log.Error("failed to create backups directory", logger.Err(err))
 	}
+
+	s := &AutoBackupService{
+		db:         db,
+		dataDir:    dataDir,
+		backupsDir: backupsDir,
+		maxKeep:    DefaultMaxAutoBackups,
+		log:        log,
+	}
+
+	// Migrate any existing backup files from the old location (dataDir) to backupsDir
+	s.migrateOldBackups()
+
+	return s
 }
 
 // CreateBackup creates a consistent snapshot of the database file using VACUUM INTO.
@@ -52,7 +66,7 @@ func NewAutoBackupService(db *sql.DB, dataDir string) *AutoBackupService {
 func (s *AutoBackupService) CreateBackup(operation string) (string, error) {
 	timestamp := time.Now().Format(timestampFormat)
 	backupName := autoBackupPrefix + timestamp
-	backupPath := filepath.Join(s.dataDir, backupName)
+	backupPath := filepath.Join(s.backupsDir, backupName)
 
 	s.log.Info("creating auto-backup",
 		slog.String("operation", operation),
@@ -84,7 +98,7 @@ func (s *AutoBackupService) CreateBackup(operation string) (string, error) {
 
 // rotateBackups removes the oldest backups if count exceeds maxKeep
 func (s *AutoBackupService) rotateBackups() {
-	pattern := filepath.Join(s.dataDir, autoBackupPrefix+"*")
+	pattern := filepath.Join(s.backupsDir, autoBackupPrefix+"*")
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		s.log.Error("failed to list auto-backups for rotation", logger.Err(err))
@@ -117,7 +131,7 @@ func (s *AutoBackupService) rotateBackups() {
 func (s *AutoBackupService) CreateManualBackup() (string, error) {
 	timestamp := time.Now().Format(timestampFormat)
 	backupName := manualBackupPrefix + timestamp
-	backupPath := filepath.Join(s.dataDir, backupName)
+	backupPath := filepath.Join(s.backupsDir, backupName)
 
 	s.log.Info("creating manual backup", slog.String("path", backupPath))
 
@@ -145,7 +159,7 @@ func (s *AutoBackupService) ListBackups() ([]models.LocalBackupInfo, error) {
 	}
 
 	for _, p := range prefixes {
-		pattern := filepath.Join(s.dataDir, p.prefix+"*")
+		pattern := filepath.Join(s.backupsDir, p.prefix+"*")
 		matches, err := filepath.Glob(pattern)
 		if err != nil {
 			s.log.Error("failed to list backups", logger.Err(err))
@@ -217,7 +231,7 @@ func (s *AutoBackupService) DeleteBackup(filename string) error {
 		return fmt.Errorf("invalid backup filename")
 	}
 
-	backupPath := filepath.Join(s.dataDir, filename)
+	backupPath := filepath.Join(s.backupsDir, filename)
 
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		return fmt.Errorf("backup file not found")
@@ -231,4 +245,33 @@ func (s *AutoBackupService) DeleteBackup(filename string) error {
 
 	s.log.Info("backup deleted", slog.String("filename", filename))
 	return nil
+}
+
+// migrateOldBackups moves backup files from the old location (dataDir) to the new backupsDir.
+func (s *AutoBackupService) migrateOldBackups() {
+	for _, prefix := range []string{autoBackupPrefix, manualBackupPrefix} {
+		pattern := filepath.Join(s.dataDir, prefix+"*")
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			s.log.Error("failed to scan for old backups", logger.Err(err))
+			continue
+		}
+
+		for _, oldPath := range matches {
+			filename := filepath.Base(oldPath)
+			newPath := filepath.Join(s.backupsDir, filename)
+
+			if err := os.Rename(oldPath, newPath); err != nil {
+				s.log.Error("failed to migrate backup",
+					slog.String("from", oldPath),
+					slog.String("to", newPath),
+					logger.Err(err),
+				)
+			} else {
+				s.log.Info("migrated backup to backups directory",
+					slog.String("filename", filename),
+				)
+			}
+		}
+	}
 }

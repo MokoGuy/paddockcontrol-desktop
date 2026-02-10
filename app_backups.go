@@ -83,7 +83,7 @@ func (a *App) RestoreLocalBackup(filename string) error {
 		return fmt.Errorf("invalid backup filename")
 	}
 
-	backupPath := filepath.Join(a.dataDir, filename)
+	backupPath := filepath.Join(a.dataDir, "backups", filename)
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		return fmt.Errorf("backup file not found")
 	}
