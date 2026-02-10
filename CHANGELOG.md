@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.1.2...v0.2.0) (2026-02-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* release asset renamed from paddockcontrol.exe to paddockcontrol_windows_amd64.exe for auto-update detection.
+
+### Features
+
+* consolidate CI pipeline with typecheck and unified release workflow ([59595d8](https://github.com/MokoGuy/paddockcontrol-desktop/commit/59595d82e7a7ab43a93c1c4c95818d6b767d4acb))
+
 ## [0.1.2](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v0.1.1...v0.1.2) (2026-02-10)
 
 
