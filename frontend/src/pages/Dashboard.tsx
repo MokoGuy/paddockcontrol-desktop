@@ -30,6 +30,7 @@ import { StatusAlert } from "@/components/shared/StatusAlert";
 import { LimitedModeNotice } from "@/components/shared/LimitedModeNotice";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
+import { RenewalBadge } from "@/components/certificate/RenewalBadge";
 import { formatDate } from "@/lib/theme";
 import { CertificateFilter } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -411,6 +412,7 @@ export function Dashboard() {
                                                                 cert.days_until_expiration
                                                             }
                                                         />
+                                                        {cert.has_pending_csr && cert.status !== "pending" && <RenewalBadge />}
                                                         {cert.read_only && <ReadOnlyBadge />}
                                                     </div>
 

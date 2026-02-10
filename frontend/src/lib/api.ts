@@ -88,6 +88,7 @@ export const api = {
     previewCertificateUpload: (hostname: string, certPEM: string) =>
         App.PreviewCertificateUpload(hostname, certPEM) as Promise<CertificateUploadPreview>,
     deleteCertificate: (hostname: string) => App.DeleteCertificate(hostname),
+    clearPendingCSR: (hostname: string) => App.ClearPendingCSR(hostname),
     setCertificateReadOnly: (hostname: string, readOnly: boolean) =>
         App.SetCertificateReadOnly(hostname, readOnly),
     updateCertificateNote: (hostname: string, note: string) =>

@@ -251,6 +251,36 @@ func (a *App) DeleteCertificate(hostname string) error {
 	return nil
 }
 
+// ClearPendingCSR removes the pending CSR data from a certificate while keeping the active certificate
+// Does NOT require encryption key - no decryption needed
+func (a *App) ClearPendingCSR(hostname string) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
+	_, log := logger.WithOperation(a.ctx, "clear_pending_csr")
+	log = logger.WithHostname(log, hostname)
+	log.Info("clearing pending CSR")
+
+	a.performAutoBackup("clear_pending_csr")
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	if err := certificateService.ClearPendingCSR(a.ctx, hostname); err != nil {
+		log.Error("clear pending CSR failed", logger.Err(err))
+		return err
+	}
+
+	log.Info("pending CSR cleared successfully")
+	return nil
+}
+
 // SetCertificateReadOnly sets the read-only status of a certificate
 func (a *App) SetCertificateReadOnly(hostname string, readOnly bool) error {
 	if err := a.requireSetupOnly(); err != nil {

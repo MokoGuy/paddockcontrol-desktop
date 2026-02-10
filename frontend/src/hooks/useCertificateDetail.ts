@@ -29,6 +29,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deleteConfirming, setDeleteConfirming] = useState(false);
+    const [cancelRenewalConfirming, setCancelRenewalConfirming] = useState(false);
 
     // Upload certificate dialog state
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -223,6 +224,22 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [hostname, deleteCertificate, navigate]);
 
+    const handleCancelRenewal = useCallback(async () => {
+        if (!hostname) return;
+        try {
+            await api.clearPendingCSR(hostname);
+            setCancelRenewalConfirming(false);
+            await loadCertificate();
+            await loadHistory();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to cancel renewal",
+            );
+        }
+    }, [hostname, loadCertificate, loadHistory]);
+
     const handlePreviewUpload = useCallback(async () => {
         if (!hostname || !uploadCertPEM.trim()) return;
 
@@ -378,6 +395,8 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         // Dialog states
         deleteConfirming,
         setDeleteConfirming,
+        cancelRenewalConfirming,
+        setCancelRenewalConfirming,
         uploadDialogOpen,
         setUploadDialogOpen,
         uploadCertPEM,
@@ -400,6 +419,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
 
         // Handlers
         handleDelete,
+        handleCancelRenewal,
         handlePreviewUpload,
         handleUploadCertificate,
         handleDownloadChain,

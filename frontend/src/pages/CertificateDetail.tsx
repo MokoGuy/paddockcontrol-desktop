@@ -67,6 +67,8 @@ export function CertificateDetail() {
         historyError,
         deleteConfirming,
         setDeleteConfirming,
+        cancelRenewalConfirming,
+        setCancelRenewalConfirming,
         uploadDialogOpen,
         setUploadDialogOpen,
         uploadCertPEM,
@@ -83,6 +85,7 @@ export function CertificateDetail() {
         isTogglingReadOnly,
         isSavingNote,
         handleDelete,
+        handleCancelRenewal,
         handlePreviewUpload,
         handleUploadCertificate,
         handleDownloadChain,
@@ -274,6 +277,10 @@ export function CertificateDetail() {
                 certificate={certificate}
                 isEncryptionKeyProvided={isEncryptionKeyProvided}
                 onUploadClick={() => setUploadDialogOpen(true)}
+                onCancelRenewal={handleCancelRenewal}
+                cancelRenewalConfirming={cancelRenewalConfirming}
+                setCancelRenewalConfirming={setCancelRenewalConfirming}
+                isLoading={certLoading}
             />
 
             {/* Chain connector: Pending CSR ↔ Pending Private Key */}

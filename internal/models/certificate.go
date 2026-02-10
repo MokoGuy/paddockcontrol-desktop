@@ -45,6 +45,7 @@ type CertificateListItem struct {
 	ExpiresAt           *int64   `json:"expires_at,omitempty"`
 	DaysUntilExpiration int      `json:"days_until_expiration,omitempty"`
 	ReadOnly            bool     `json:"read_only"`
+	HasPendingCSR       bool     `json:"has_pending_csr"`
 }
 
 // SANType constants for Subject Alternative Name types

@@ -149,6 +149,31 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname str
 	return nil
 }
 
+// ClearPendingCSR removes the pending CSR, pending private key, and pending note from a certificate
+func (s *CertificateService) ClearPendingCSR(ctx context.Context, hostname string) error {
+	cert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
+	if err != nil {
+		return fmt.Errorf("failed to get certificate: %w", err)
+	}
+
+	if cert.ReadOnly == 1 {
+		return fmt.Errorf("certificate is read-only and cannot be modified")
+	}
+
+	if !cert.PendingCsrPem.Valid || cert.PendingCsrPem.String == "" {
+		return fmt.Errorf("certificate has no pending CSR")
+	}
+
+	err = s.db.Queries().ClearPendingCSR(ctx, hostname)
+	if err != nil {
+		return fmt.Errorf("failed to clear pending CSR: %w", err)
+	}
+
+	_ = s.history.LogEvent(ctx, hostname, models.EventPendingCSRRemoved, "Pending renewal CSR cancelled")
+
+	return nil
+}
+
 // SetCertificateReadOnly sets the read-only status of a certificate
 func (s *CertificateService) SetCertificateReadOnly(ctx context.Context, hostname string, readOnly bool) error {
 	readOnlyValue := int64(0)
@@ -207,11 +232,12 @@ func (s *CertificateService) toCertificateListItem(cert *sqlc.Certificate, statu
 	}
 
 	item := &models.CertificateListItem{
-		Hostname:  cert.Hostname,
-		Status:    string(status),
-		CreatedAt: cert.CreatedAt,
-		ExpiresAt: expiresAt,
-		ReadOnly:  cert.ReadOnly > 0,
+		Hostname:      cert.Hostname,
+		Status:        string(status),
+		CreatedAt:     cert.CreatedAt,
+		ExpiresAt:     expiresAt,
+		ReadOnly:      cert.ReadOnly > 0,
+		HasPendingCSR: cert.PendingCsrPem.Valid && cert.PendingCsrPem.String != "",
 	}
 
 	// Parse cert/CSR for additional fields

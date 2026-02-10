@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
+import { RenewalBadge } from "@/components/certificate/RenewalBadge";
 import { formatDateTime } from "@/lib/theme";
 import type { Certificate } from "@/types";
 
@@ -34,6 +35,21 @@ export function CertificateStatusSection({ certificate }: CertificateStatusSecti
                             />
                         </motion.div>
                         <AnimatePresence mode="popLayout">
+                            {certificate.pending_csr && certificate.status !== "pending" && (
+                                <motion.div
+                                    key="renewal-badge"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{
+                                        type: 'spring',
+                                        stiffness: 500,
+                                        damping: 30,
+                                    }}
+                                >
+                                    <RenewalBadge />
+                                </motion.div>
+                            )}
                             {certificate.read_only && (
                                 <motion.div
                                     key="read-only-badge"

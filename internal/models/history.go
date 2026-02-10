@@ -19,4 +19,5 @@ const (
 	EventCertificateDeleted    = "certificate_deleted"
 	EventReadOnlyEnabled       = "readonly_enabled"
 	EventReadOnlyDisabled      = "readonly_disabled"
+	EventPendingCSRRemoved     = "pending_csr_removed"
 )
