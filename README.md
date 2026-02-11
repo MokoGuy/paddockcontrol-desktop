@@ -1,92 +1,58 @@
-# Paddockcontrol Desktop
+# PaddockControl Desktop
 
-A desktop application for paddock control built with Wails, Vite, React, Tailwind CSS v4, shadcn/ui, and TypeScript.
+A desktop certificate management app for teams that handle SSL/TLS certificates with internal CAs.
 
-## 🚀 Features
+[![CI](https://github.com/MokoGuy/paddockcontrol-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/MokoGuy/paddockcontrol-desktop/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/MokoGuy/paddockcontrol-desktop)](https://github.com/MokoGuy/paddockcontrol-desktop/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- **[Wails v2.11.0](https://wails.io/)** - Build desktop apps using Go & Web Technologies
-- **[React 18.3](https://react.dev/)** - Modern React with hooks
-- **[TypeScript 5.7](https://www.typescriptlang.org/)** - Type safety and better DX
-- **[Vite 5.4](https://vitejs.dev/)** - Lightning-fast HMR and build tool
-- **[Tailwind CSS v4](https://tailwindcss.com/)** - Latest Tailwind with new Vite plugin
-- **[shadcn/ui](https://ui.shadcn.com/)** - Beautiful, accessible component library
-- **[ESLint 9](https://eslint.org/)** - Code quality with flat config
-- **Cross-platform build scripts** - Easy builds for Windows, macOS, and Linux
+## About
 
-## 📦 Installation
+PaddockControl Desktop simplifies the certificate lifecycle for organizations using internal Certificate Authorities. Generate CSRs, track certificate status, store private keys with AES encryption, and never lose track of expiring certificates again. Built with Go and React, it runs natively on Windows with auto-updates.
 
-```bash
-git clone git@github.com:MokoGuy/paddockcontrol-desktop.git
-cd paddockcontrol-desktop
-```
+## Screenshots
 
-## 🛠️ Development
+### Welcome
 
-Run the app in development mode with hot reload:
+| Light | Dark |
+|-------|------|
+| ![Welcome Light](docs/screenshots/welcome-light.png) | ![Welcome Dark](docs/screenshots/welcome-dark.png) |
 
-```bash
-wails dev
-```
+### Dashboard
 
-The frontend dev server runs on http://localhost:5173 with Vite's fast HMR.
+| Light | Dark |
+|-------|------|
+| ![Dashboard Light](docs/screenshots/dashboard-light.png) | ![Dashboard Dark](docs/screenshots/dashboard-dark.png) |
 
-## 🏗️ Building
+### Certificate Detail
 
-### Current Platform
-```bash
-task dev
-```
+| Light | Dark |
+|-------|------|
+| ![Detail Light](docs/screenshots/certificate-detail-light.png) | ![Detail Dark](docs/screenshots/certificate-detail-dark.png) |
 
-### Windows Builds
-```bash
-# Build for Windows AMD64
-task build
-```
+## Features
 
-Built applications will be in `build/bin/`
+- Generate CSRs with RSA 4096-bit keys
+- Track certificate status (pending / active / expiring / expired)
+- Import existing certificates
+- AES-encrypted private key storage
+- Backup & restore
+- Dark / light theme
+- Auto-updates
+- Search & filter certificates
 
-## 🎨 shadcn/ui Components
+## Tech Stack
 
-This project includes pre-configured shadcn/ui components:
-- Button
-- Input
-- Label
-- Card
+Go &middot; Wails v2 &middot; React 19 &middot; TypeScript &middot; SQLite &middot; Tailwind CSS v4
 
-Add more components:
-```bash
-cd frontend/
-npx shadcn@latest add [component-name]
-```
+## Download
 
-Browse components at [ui.shadcn.com](https://ui.shadcn.com/)
+Download the latest Windows installer from [GitHub Releases](https://github.com/MokoGuy/paddockcontrol-desktop/releases/latest).
 
-## 📁 Project Structure
+## Contributing
 
-```
-.
-├── app.tmpl.go              # Main application logic
-├── main.tmpl.go             # Entry point
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx          # Main React component
-│   │   ├── components/ui/   # shadcn/ui components
-│   │   └── lib/utils.ts     # Utility functions
-│   ├── vite.config.ts       # Vite configuration
-│   └── package.json         # Frontend dependencies
-└── scripts/                 # Build scripts
-```
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, commands, and conventions.
 
-## 🔧 Configuration
+## License
 
-Project configuration is in `wails.json` (auto-generated on `wails init`). 
-
-See [Wails documentation](https://wails.io/docs/reference/project-config) for all options.
-
-## 📚 Learn More
-
-- [Wails Documentation](https://wails.io/docs/introduction)
-- [React Documentation](https://react.dev/)
-- [Vite Documentation](https://vitejs.dev/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
+MIT &mdash; see [LICENSE](LICENSE).
