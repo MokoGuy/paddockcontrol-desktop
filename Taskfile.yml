@@ -39,6 +39,11 @@ tasks:
         dir: frontend
         cmd: npm run test:e2e:ui
 
+    screenshots:
+        desc: Regenerate README screenshots with synthetic data
+        dir: frontend
+        cmd: npx playwright test screenshots --project chromium
+
     test:e2e:headed:
         desc: Run Playwright e2e tests with visible browser (slow motion)
         dir: frontend

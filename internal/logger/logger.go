@@ -22,44 +22,61 @@ var (
 	logWriter *lumberjack.Logger
 )
 
-// Initialize sets up structured logging based on build mode
+// Initialize sets up structured logging based on build mode.
+// When dataDir is ":memory:" (e.g. during e2e tests), file logging is
+// skipped entirely to avoid creating a literal ":memory:" directory on disk.
 func Initialize(dataDir string, production bool) error {
-	logsDir = filepath.Join(dataDir, "logs")
-
-	// Always create logs directory for export functionality
-	if err := os.MkdirAll(logsDir, 0700); err != nil {
-		return fmt.Errorf("failed to create logs directory: %w", err)
-	}
-
-	// Always set up file logging with rotation
-	logWriter = &lumberjack.Logger{
-		Filename:   filepath.Join(logsDir, "paddockcontrol.log"),
-		MaxSize:    10,   // MB
-		MaxBackups: 5,    // Keep 5 old log files
-		MaxAge:     30,   // Days
-		Compress:   true, // Compress old logs
-	}
+	inMemory := dataDir == ":memory:"
 
 	var handler slog.Handler
 
-	if production {
-		// Production: JSON logs to file only
-		handler = slog.NewJSONHandler(logWriter, &slog.HandlerOptions{
-			Level:     slog.LevelInfo,
-			AddSource: true,
-		})
+	if inMemory {
+		// In-memory mode: stdout only, no file logging
+		if production {
+			handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+				Level:     slog.LevelInfo,
+				AddSource: true,
+			})
+		} else {
+			handler = newColoredHandler(os.Stdout, &slog.HandlerOptions{
+				Level:     slog.LevelDebug,
+				AddSource: true,
+			})
+		}
 	} else {
-		// Development: colored text to stdout + JSON to file (multi-writer)
-		handler = newMultiHandler(
-			newColoredHandler(os.Stdout, &slog.HandlerOptions{
-				Level:     slog.LevelDebug,
+		logsDir = filepath.Join(dataDir, "logs")
+
+		if err := os.MkdirAll(logsDir, 0700); err != nil {
+			return fmt.Errorf("failed to create logs directory: %w", err)
+		}
+
+		logWriter = &lumberjack.Logger{
+			Filename:   filepath.Join(logsDir, "paddockcontrol.log"),
+			MaxSize:    10,   // MB
+			MaxBackups: 5,    // Keep 5 old log files
+			MaxAge:     30,   // Days
+			Compress:   true, // Compress old logs
+		}
+
+		if production {
+			// Production: JSON logs to file only
+			handler = slog.NewJSONHandler(logWriter, &slog.HandlerOptions{
+				Level:     slog.LevelInfo,
 				AddSource: true,
-			}),
-			slog.NewJSONHandler(logWriter, &slog.HandlerOptions{
-				Level:     slog.LevelDebug,
-				AddSource: true,
-			}),
-		)
+			})
+		} else {
+			// Development: colored text to stdout + JSON to file
+			handler = newMultiHandler(
+				newColoredHandler(os.Stdout, &slog.HandlerOptions{
+					Level:     slog.LevelDebug,
+					AddSource: true,
+				}),
+				slog.NewJSONHandler(logWriter, &slog.HandlerOptions{
+					Level:     slog.LevelDebug,
+					AddSource: true,
+				}),
+			)
+		}
 	}
 
 	defaultLogger = slog.New(handler)

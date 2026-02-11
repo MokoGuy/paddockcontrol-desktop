@@ -28,6 +28,7 @@ task dev
 | `cd frontend && npm run typecheck`            | TypeScript type check                                        |
 | `cd internal/db && sqlc generate`             | Regenerate DB types after SQL changes                        |
 | `cd frontend && npx shadcn@latest add [name]` | Add a shadcn/ui component                                    |
+| `task screenshots`                            | Regenerate README screenshots with synthetic data            |
 
 ## Project Structure
 

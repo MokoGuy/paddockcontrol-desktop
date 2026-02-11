@@ -9,6 +9,7 @@ const VITE_PORT = process.env.PLAYWRIGHT_VITE_PORT || "5174";
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: ["**/screenshots.spec.ts"],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
