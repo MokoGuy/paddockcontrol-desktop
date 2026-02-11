@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { getStatusColor } from "@/lib/theme";
 import { CertificateStatus } from "@/types";
@@ -41,9 +42,17 @@ export function StatusBadge({ status, daysUntilExpiration }: StatusBadgeProps) {
     const icon = statusIcons[status as CertificateStatus] || HelpCircleIcon;
 
     return (
-        <Badge className={`${getStatusColor(status)} inline-flex items-center gap-1`}>
-            <HugeiconsIcon icon={icon} className="w-3.5 h-3.5" strokeWidth={2} />
-            {getLabel()}
-        </Badge>
+        <motion.div
+            layout
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        >
+            <Badge className={`${getStatusColor(status)} inline-flex items-center gap-1`}>
+                <HugeiconsIcon icon={icon} className="w-3.5 h-3.5" strokeWidth={2} />
+                {getLabel()}
+            </Badge>
+        </motion.div>
     );
 }

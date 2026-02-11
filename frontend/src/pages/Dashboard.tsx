@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useCertificates } from "@/hooks/useCertificates";
 import { useAppStore } from "@/stores/useAppStore";
+import { useCertificateStore } from "@/stores/useCertificateStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +30,7 @@ import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { RenewalBadge } from "@/components/certificate/RenewalBadge";
 import { formatDate } from "@/lib/theme";
-import { CertificateFilter } from "@/types";
+import { CertificateFilter, CertificateListItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Certificate02Icon,
@@ -39,9 +41,10 @@ import {
 
 export function Dashboard() {
     const navigate = useNavigate();
-    const { certificates, isLoading, error, listCertificates } =
+    const { certificates, isLoading, error, listCertificates, setCertificateReadOnly } =
         useCertificates();
     const { isEncryptionKeyProvided } = useAppStore();
+    const { updateCertificate } = useCertificateStore();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<
@@ -62,6 +65,23 @@ export function Dashboard() {
             navigate(`/certificates/${hostname}`);
         }, 300);
     };
+
+    // Alt + Right Click to toggle read-only state
+    const handleContextMenu = useCallback(async (e: React.MouseEvent, cert: CertificateListItem) => {
+        if (!e.altKey) return;
+        e.preventDefault();
+
+        const newReadOnly = !cert.read_only;
+        updateCertificate(cert.hostname, { ...cert, read_only: newReadOnly });
+
+        try {
+            await setCertificateReadOnly(cert.hostname, newReadOnly);
+            toast.success(newReadOnly ? "Certificate locked" : "Certificate unlocked");
+        } catch {
+            updateCertificate(cert.hostname, { ...cert, read_only: !newReadOnly });
+            toast.error("Failed to update read-only state");
+        }
+    }, [setCertificateReadOnly, updateCertificate]);
 
     const loadCertificates = async () => {
         const filter: CertificateFilter = {
@@ -367,6 +387,7 @@ export function Dashboard() {
                                     <Card
                                         className="shadow-sm border-border hover:shadow-lg hover:border-border/80 transition-all cursor-pointer group"
                                         onClick={() => handleCardClick(cert.hostname)}
+                                        onContextMenu={(e) => handleContextMenu(e, cert)}
                                     >
                                         <CardContent>
                                             <div className="flex items-start justify-between">
@@ -380,14 +401,21 @@ export function Dashboard() {
                                                         <h3 className="text-lg font-semibold text-foreground">
                                                             {cert.hostname}
                                                         </h3>
-                                                        <StatusBadge
-                                                            status={cert.status}
-                                                            daysUntilExpiration={
-                                                                cert.days_until_expiration
-                                                            }
-                                                        />
-                                                        {cert.has_pending_csr && cert.status !== "pending" && <RenewalBadge />}
-                                                        {cert.read_only && <ReadOnlyBadge />}
+                                                        <AnimatePresence mode="sync">
+                                                            <StatusBadge
+                                                                key={`status-${cert.status}`}
+                                                                status={cert.status}
+                                                                daysUntilExpiration={
+                                                                    cert.days_until_expiration
+                                                                }
+                                                            />
+                                                            {cert.has_pending_csr && cert.status !== "pending" && (
+                                                                <RenewalBadge key="renewal-badge" />
+                                                            )}
+                                                            {cert.read_only && (
+                                                                <ReadOnlyBadge key="read-only-badge" />
+                                                            )}
+                                                        </AnimatePresence>
                                                     </div>
 
                                                     {cert.sans && cert.sans.length > 0 && (

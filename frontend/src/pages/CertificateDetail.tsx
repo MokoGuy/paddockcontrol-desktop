@@ -166,34 +166,16 @@ export function CertificateDetail() {
             </div>
             <div className="-mt-4 mb-6">
                 <div className="flex items-center gap-2">
-                    <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                        <StatusBadge
-                            status={certificate.status}
-                            daysUntilExpiration={certificate.days_until_expiration}
-                        />
-                    </motion.div>
+                    <StatusBadge
+                        status={certificate.status}
+                        daysUntilExpiration={certificate.days_until_expiration}
+                    />
                     <AnimatePresence mode="popLayout">
                         {certificate.pending_csr && certificate.status !== "pending" && (
-                            <motion.div
-                                key="renewal-badge"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            >
-                                <RenewalBadge />
-                            </motion.div>
+                            <RenewalBadge key="renewal-badge" />
                         )}
                         {certificate.read_only && (
-                            <motion.div
-                                key="read-only-badge"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            >
-                                <ReadOnlyBadge />
-                            </motion.div>
+                            <ReadOnlyBadge key="read-only-badge" />
                         )}
                     </AnimatePresence>
                 </div>
