@@ -50,6 +50,8 @@ import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { RenewalBadge } from "@/components/certificate/RenewalBadge";
 import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
 import { formatDateTime, pendingCardStyles } from "@/lib/theme";
+import { tabTransition } from "@/lib/animations";
+import { ReadOnlyFade } from "@/components/shared/ReadOnlyFade";
 
 export function CertificateDetail() {
     const { hostname } = useParams<{ hostname: string }>();
@@ -244,10 +246,7 @@ export function CertificateDetail() {
                             />
                             Export
                         </Button>
-                        <motion.div
-                            animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                            transition={{ duration: 0.2 }}
-                        >
+                        <ReadOnlyFade readOnly={certificate.read_only}>
                             <AdminGatedButton
                                 variant="outline"
                                 size="sm"
@@ -270,11 +269,8 @@ export function CertificateDetail() {
                                 />
                                 {certificate.pending_csr ? "Regenerate" : "Renew"}
                             </AdminGatedButton>
-                        </motion.div>
-                        <motion.div
-                            animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                            transition={{ duration: 0.2 }}
-                        >
+                        </ReadOnlyFade>
+                        <ReadOnlyFade readOnly={certificate.read_only}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <span className="inline-flex">
@@ -298,7 +294,7 @@ export function CertificateDetail() {
                                     <TooltipContent>Certificate is read-only</TooltipContent>
                                 )}
                             </Tooltip>
-                        </motion.div>
+                        </ReadOnlyFade>
                     </div>
                 </div>
 
@@ -308,10 +304,7 @@ export function CertificateDetail() {
                     <TabsContent value="certificate" forceMount asChild>
                         <motion.div
                             key="certificate"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            {...tabTransition}
                         >
                         <CertificateDescriptionEditor
                             note={certificate.note || ""}
@@ -364,10 +357,7 @@ export function CertificateDetail() {
                     <TabsContent value="pending" forceMount asChild>
                         <motion.div
                             key="pending"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            {...tabTransition}
                         >
                         <CertificateDescriptionEditor
                             note={certificate.pending_note || ""}
@@ -421,10 +411,7 @@ export function CertificateDetail() {
                     <TabsContent value="activity" forceMount asChild>
                         <motion.div
                             key="activity"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            {...tabTransition}
                         >
                             <CertificateHistoryCard
                                 history={history}

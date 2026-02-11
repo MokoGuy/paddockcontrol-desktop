@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
+import { stepAnimations } from "@/lib/animations";
 import { useSetup } from "@/hooks/useSetup";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
@@ -324,10 +325,7 @@ export function RestoreBackup() {
               {step === "file" && (
                 <motion.div
                   key="file"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
+                  {...stepAnimations}
                   className="space-y-6"
                 >
                   <div className="space-y-2">
@@ -367,10 +365,7 @@ export function RestoreBackup() {
                 (hasEmbeddedKey ? (
                   <motion.div
                     key="key-embedded"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
+                    {...stepAnimations}
                     className="space-y-6"
                   >
                     <div className="space-y-2">
@@ -438,10 +433,7 @@ export function RestoreBackup() {
                 ) : (
                   <motion.form
                     key="key-manual"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
+                    {...stepAnimations}
                     onSubmit={handleSubmit(handleKeySubmit)}
                     className="space-y-6"
                   >
@@ -502,10 +494,7 @@ export function RestoreBackup() {
               {step === "confirm" && backupData && (
                 <motion.div
                   key="confirm"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
+                  {...stepAnimations}
                   className="space-y-4"
                 >
                   <ReviewSection title="Backup Info">

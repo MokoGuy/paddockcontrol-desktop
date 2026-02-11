@@ -29,13 +29,7 @@ import { ReviewStep } from "@/components/setup/steps/ReviewStep";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AlertCircleIcon } from "@hugeicons/core-free-icons";
-
-const stepAnimations = {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 },
-    transition: { duration: 0.2 },
-};
+import { stepAnimations } from "@/lib/animations";
 
 function getNextStep(current: WizardStep): WizardStep {
     const currentIndex = getStepIndex(current);

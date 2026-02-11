@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "motion/react";
+import { ReadOnlyFade } from "@/components/shared/ReadOnlyFade";
 import {
     Card,
     CardContent,
@@ -81,10 +81,7 @@ export function PendingCSRSection({
                                 />
                             </CollapsibleTrigger>
                             <div className="flex gap-2 ml-4 shrink-0">
-                                <motion.div
-                                    animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                                    transition={{ duration: 0.2 }}
-                                >
+                                <ReadOnlyFade readOnly={certificate.read_only}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex">
@@ -105,11 +102,8 @@ export function PendingCSRSection({
                                             {certificate.read_only ? "Certificate is read-only" : "Upload a signed certificate for this CSR"}
                                         </TooltipContent>
                                     </Tooltip>
-                                </motion.div>
-                                <motion.div
-                                    animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                                    transition={{ duration: 0.2 }}
-                                >
+                                </ReadOnlyFade>
+                                <ReadOnlyFade readOnly={certificate.read_only}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <span className="inline-flex">
@@ -133,7 +127,7 @@ export function PendingCSRSection({
                                             {certificate.read_only ? "Certificate is read-only" : "Cancel the pending renewal and delete the CSR"}
                                         </TooltipContent>
                                     </Tooltip>
-                                </motion.div>
+                                </ReadOnlyFade>
                             </div>
                         </div>
                     </CardHeader>
