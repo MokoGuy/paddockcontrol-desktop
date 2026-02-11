@@ -236,7 +236,7 @@ export function AppHeader({
                         <motion.img
                             src={logo}
                             alt="PaddockControl"
-                            className={`w-8 h-8 ${isDarkMode ? "invert" : ""}`}
+                            className={`w-8 h-8 transition-[filter] duration-300 ease-in-out ${isDarkMode ? "invert" : ""}`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.4, delay: 0.1 }}

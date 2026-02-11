@@ -70,7 +70,7 @@ export function SetupChoice() {
                     <motion.img
                         src={logo}
                         alt="PaddockControl"
-                        className={`w-16 h-16 mx-auto ${isDarkMode ? "invert" : ""}`}
+                        className={`w-16 h-16 mx-auto transition-[filter] duration-300 ease-in-out ${isDarkMode ? "invert" : ""}`}
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         transition={{
