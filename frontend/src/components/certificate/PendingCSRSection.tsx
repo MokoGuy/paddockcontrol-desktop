@@ -141,7 +141,6 @@ export function PendingCSRSection({
                         <CardContent>
                             <CodeBlock
                                 content={certificate.pending_csr}
-                                downloadFilename={`${certificate.hostname}.csr`}
                             />
                         </CardContent>
                     </CollapsibleContent>

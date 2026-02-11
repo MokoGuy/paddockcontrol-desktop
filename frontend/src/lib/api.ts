@@ -108,6 +108,16 @@ export const api = {
     saveChainToFile: (hostname: string) => App.SaveChainToFile(hostname),
     savePrivateKeyToFile: (hostname: string) =>
         App.SavePrivateKeyToFile(hostname),
+    exportCertificateZip: (
+        hostname: string,
+        options: {
+            certificate: boolean;
+            chain: boolean;
+            private_key: boolean;
+            csr: boolean;
+            pending_key: boolean;
+        },
+    ) => App.ExportCertificateZip(hostname, options),
 
     // Backup export (JSON)
     exportBackup: () => App.ExportBackup(false),

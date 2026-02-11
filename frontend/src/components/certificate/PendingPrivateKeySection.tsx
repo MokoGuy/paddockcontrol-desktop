@@ -27,7 +27,6 @@ interface PendingPrivateKeySectionProps {
     pendingPrivateKeyPEM: string | null;
     pendingPrivateKeyLoading: boolean;
     pendingPrivateKeyError: string | null;
-    downloadFilename?: string;
 }
 
 export function PendingPrivateKeySection({
@@ -36,7 +35,6 @@ export function PendingPrivateKeySection({
     pendingPrivateKeyPEM,
     pendingPrivateKeyLoading,
     pendingPrivateKeyError,
-    downloadFilename,
 }: PendingPrivateKeySectionProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -84,7 +82,6 @@ export function PendingPrivateKeySection({
                         ) : pendingPrivateKeyPEM ? (
                             <CodeBlock
                                 content={pendingPrivateKeyPEM}
-                                downloadFilename={downloadFilename}
                             />
                         ) : (
                             <p className={`text-sm ${pendingCardStyles.text}`}>

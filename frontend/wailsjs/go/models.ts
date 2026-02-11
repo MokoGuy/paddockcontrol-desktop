@@ -396,6 +396,26 @@ export namespace models {
 	    }
 	}
 	
+	export class ExportOptions {
+	    certificate: boolean;
+	    chain: boolean;
+	    private_key: boolean;
+	    csr: boolean;
+	    pending_key: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.certificate = source["certificate"];
+	        this.chain = source["chain"];
+	        this.private_key = source["private_key"];
+	        this.csr = source["csr"];
+	        this.pending_key = source["pending_key"];
+	    }
+	}
 	export class HistoryEntry {
 	    id: number;
 	    hostname: string;

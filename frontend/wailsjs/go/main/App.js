@@ -46,6 +46,10 @@ export function ExportBackup(arg1) {
   return window['go']['main']['App']['ExportBackup'](arg1);
 }
 
+export function ExportCertificateZip(arg1, arg2) {
+  return window['go']['main']['App']['ExportCertificateZip'](arg1, arg2);
+}
+
 export function ExportLogs() {
   return window['go']['main']['App']['ExportLogs']();
 }

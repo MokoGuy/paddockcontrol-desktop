@@ -25,6 +25,8 @@ export function DownloadAndApplyUpdate():Promise<void>;
 
 export function ExportBackup(arg1:boolean):Promise<void>;
 
+export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
+
 export function ExportLogs():Promise<void>;
 
 export function GenerateCSR(arg1:models.CSRRequest):Promise<models.CSRResponse>;

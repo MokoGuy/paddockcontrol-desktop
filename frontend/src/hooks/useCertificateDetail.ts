@@ -16,7 +16,6 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         getCertificate,
         deleteCertificate,
         uploadCertificate,
-        downloadPrivateKey,
         setCertificateReadOnly,
         isLoading: certLoading,
         error: certError,
@@ -54,6 +53,9 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
     const [pendingPrivateKeyPEM, setPendingPrivateKeyPEM] = useState<string | null>(null);
     const [pendingPrivateKeyLoading, setPendingPrivateKeyLoading] = useState(false);
     const [pendingPrivateKeyError, setPendingPrivateKeyError] = useState<string | null>(null);
+
+    // Export dialog state
+    const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
     // Encryption key dialog state
     const [showKeyDialog, setShowKeyDialog] = useState(false);
@@ -286,15 +288,6 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [hostname, uploadCertPEM, uploadCertificate, loadCertificate]);
 
-    const handleDownloadChain = useCallback(async () => {
-        if (!hostname) return;
-        try {
-            await api.saveChainToFile(hostname);
-        } catch (err) {
-            console.error("Download chain failed:", err);
-        }
-    }, [hostname]);
-
     const handleToggleReadOnly = useCallback(async (checked: boolean) => {
         if (!hostname || !certificate) return;
         setIsTogglingReadOnly(true);
@@ -312,12 +305,6 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
             setIsTogglingReadOnly(false);
         }
     }, [hostname, certificate, setCertificateReadOnly]);
-
-    const handleDownloadPrivateKey = useCallback(() => {
-        if (certificate) {
-            downloadPrivateKey(certificate.hostname);
-        }
-    }, [certificate, downloadPrivateKey]);
 
     const handleSaveCurrentNote = useCallback(
         async (note: string) => {
@@ -405,6 +392,8 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         setUploadStep,
         uploadPreview,
         isPreviewing,
+        exportDialogOpen,
+        setExportDialogOpen,
         showKeyDialog,
         setShowKeyDialog,
 
@@ -419,9 +408,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         handleCancelRenewal,
         handlePreviewUpload,
         handleUploadCertificate,
-        handleDownloadChain,
         handleToggleReadOnly,
-        handleDownloadPrivateKey,
         handleSaveCurrentNote,
         handleSavePendingNote,
         closeUploadDialog,

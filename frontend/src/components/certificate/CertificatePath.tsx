@@ -21,7 +21,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
     Link04Icon,
     Alert02Icon,
-    Download04Icon,
     Copy01Icon,
     Tick02Icon,
     ArrowDown01Icon,
@@ -32,8 +31,6 @@ interface CertificatePathProps {
     chain: ChainCertificateInfo[];
     isLoading: boolean;
     error: string | null;
-    onDownloadChain?: () => void;
-    hostname?: string;
 }
 
 // Color and label mappings for certificate types
@@ -57,37 +54,18 @@ const typeConfig = {
 
 interface ChainCertificateCardProps {
     cert: ChainCertificateInfo;
-    hostname?: string;
     onCopy: (text: string) => Promise<boolean>;
     isCopied: (text: string) => boolean;
 }
 
 function ChainCertificateCard({
     cert,
-    hostname,
     onCopy,
     isCopied,
 }: ChainCertificateCardProps) {
     const config =
         typeConfig[cert.cert_type as keyof typeof typeConfig] ||
         typeConfig.leaf;
-
-    const getFilename = () => {
-        const base = hostname || "certificate";
-        if (cert.cert_type === "intermediate" && cert.depth > 1) {
-            return `${base}-intermediate-${cert.depth}.crt`;
-        }
-        return `${base}-${cert.cert_type}.crt`;
-    };
-
-    const handleDownload = () => {
-        if (!cert.pem) return;
-        const link = document.createElement("a");
-        link.href =
-            "data:text/plain;charset=utf-8," + encodeURIComponent(cert.pem);
-        link.download = getFilename();
-        link.click();
-    };
 
     const handleCopy = () => {
         if (cert.pem) {
@@ -103,19 +81,6 @@ function ChainCertificateCard({
                 <Badge className={config.badge}>{config.label}</Badge>
                 {cert.pem && cert.cert_type !== "leaf" && (
                     <div className="flex items-center gap-1 mr-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={handleDownload}
-                            title="Download"
-                        >
-                            <HugeiconsIcon
-                                icon={Download04Icon}
-                                className="w-4 h-4"
-                                strokeWidth={2}
-                            />
-                        </Button>
                         <Button
                             variant="ghost"
                             size="icon"
@@ -194,8 +159,6 @@ export function CertificatePath({
     chain,
     isLoading,
     error,
-    onDownloadChain,
-    hostname,
 }: CertificatePathProps) {
     const { copy, isCopied } = useCopyToClipboard();
     const [isOpen, setIsOpen] = useState(false);
@@ -285,21 +248,6 @@ export function CertificatePath({
                                 strokeWidth={2}
                             />
                         </CollapsibleTrigger>
-                        {onDownloadChain && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={onDownloadChain}
-                                className="ml-4 shrink-0"
-                            >
-                                <HugeiconsIcon
-                                    icon={Download04Icon}
-                                    className="w-4 h-4 mr-1"
-                                    strokeWidth={2}
-                                />
-                                Download Chain
-                            </Button>
-                        )}
                     </div>
                 </CardHeader>
                 <CollapsibleContent>
@@ -309,7 +257,6 @@ export function CertificatePath({
                                 <ChainCertificateCard
                                     key={`${cert.serial_number}-${index}`}
                                     cert={cert}
-                                    hostname={hostname}
                                     onCopy={copy}
                                     isCopied={isCopied}
                                 />

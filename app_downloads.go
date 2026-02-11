@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"paddockcontrol-desktop/internal/logger"
+	"paddockcontrol-desktop/internal/models"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -286,6 +288,169 @@ func (a *App) GetPendingPrivateKeyPEM(hostname string) (string, error) {
 	}
 
 	return privateKeyPEM, nil
+}
+
+// ============================================================================
+// Certificate ZIP Export
+// ============================================================================
+
+// ExportCertificateZip creates a ZIP archive containing selected certificate files
+// and prompts the user to save it
+func (a *App) ExportCertificateZip(hostname string, options models.ExportOptions) error {
+	// Require encryption key only when private keys are requested
+	if options.PrivateKey || options.PendingKey {
+		if err := a.requireSetupComplete(); err != nil {
+			return err
+		}
+	} else {
+		if err := a.requireSetupOnly(); err != nil {
+			return err
+		}
+	}
+
+	log := logger.WithComponent("app")
+	log.Info("exporting certificate ZIP", slog.String("hostname", hostname))
+
+	a.mu.RLock()
+	certificateService := a.certificateService
+	var encryptionKey []byte
+	if options.PrivateKey || options.PendingKey {
+		encryptionKey = make([]byte, len(a.encryptionKey))
+		copy(encryptionKey, a.encryptionKey)
+	}
+	a.mu.RUnlock()
+
+	if certificateService == nil {
+		return fmt.Errorf("certificate service not initialized")
+	}
+
+	// Collect files to include in ZIP
+	type zipEntry struct {
+		name    string
+		content string
+		mode    os.FileMode
+	}
+	var entries []zipEntry
+
+	if options.Certificate {
+		cert, err := certificateService.GetCertificateForDownload(a.ctx, hostname)
+		if err != nil {
+			log.Error("get certificate failed", slog.String("hostname", hostname), logger.Err(err))
+			return fmt.Errorf("failed to get certificate: %w", err)
+		}
+		entries = append(entries, zipEntry{hostname + ".crt", cert, 0644})
+	}
+
+	if options.Chain {
+		chainPEM, err := certificateService.GetChainPEMForDownload(a.ctx, hostname)
+		if err != nil {
+			log.Error("get chain failed", slog.String("hostname", hostname), logger.Err(err))
+			return fmt.Errorf("failed to get certificate chain: %w", err)
+		}
+		entries = append(entries, zipEntry{hostname + "-chain.crt", chainPEM, 0644})
+	}
+
+	if options.PrivateKey {
+		key, err := certificateService.GetPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
+		if err != nil {
+			log.Error("get private key failed", slog.String("hostname", hostname), logger.Err(err))
+			return fmt.Errorf("failed to get private key: %w", err)
+		}
+		entries = append(entries, zipEntry{hostname + ".key", key, 0600})
+	}
+
+	if options.CSR {
+		csr, err := certificateService.GetCSRForDownload(a.ctx, hostname)
+		if err != nil {
+			log.Error("get CSR failed", slog.String("hostname", hostname), logger.Err(err))
+			return fmt.Errorf("failed to get CSR: %w", err)
+		}
+		entries = append(entries, zipEntry{hostname + ".csr", csr, 0644})
+	}
+
+	if options.PendingKey {
+		key, err := certificateService.GetPendingPrivateKeyForDownload(a.ctx, hostname, encryptionKey)
+		if err != nil {
+			log.Error("get pending private key failed", slog.String("hostname", hostname), logger.Err(err))
+			return fmt.Errorf("failed to get pending private key: %w", err)
+		}
+		entries = append(entries, zipEntry{hostname + ".pending.key", key, 0600})
+	}
+
+	if len(entries) == 0 {
+		return fmt.Errorf("no items selected for export")
+	}
+
+	// Create temp ZIP file
+	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf(
+		"%s-export-%s.zip",
+		hostname,
+		time.Now().Format("20060102-150405"),
+	))
+
+	zipFile, err := os.Create(tempFile)
+	if err != nil {
+		log.Error("failed to create temp file", logger.Err(err))
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+
+	zipWriter := zip.NewWriter(zipFile)
+	for _, entry := range entries {
+		header := &zip.FileHeader{
+			Name:   entry.name,
+			Method: zip.Deflate,
+		}
+		header.SetMode(entry.mode)
+		w, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			zipWriter.Close()
+			zipFile.Close()
+			os.Remove(tempFile)
+			return fmt.Errorf("failed to create ZIP entry %s: %w", entry.name, err)
+		}
+		if _, err := w.Write([]byte(entry.content)); err != nil {
+			zipWriter.Close()
+			zipFile.Close()
+			os.Remove(tempFile)
+			return fmt.Errorf("failed to write ZIP entry %s: %w", entry.name, err)
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		zipFile.Close()
+		os.Remove(tempFile)
+		return fmt.Errorf("failed to finalize ZIP: %w", err)
+	}
+	zipFile.Close()
+	defer os.Remove(tempFile)
+
+	// Show save dialog
+	path, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
+		DefaultFilename: hostname + ".zip",
+		Title:           "Export Certificate Files",
+		Filters: []wailsruntime.FileFilter{
+			{DisplayName: "ZIP Archives (*.zip)", Pattern: "*.zip"},
+		},
+	})
+
+	if err != nil {
+		log.Error("file dialog error", logger.Err(err))
+		return fmt.Errorf("file dialog error: %w", err)
+	}
+
+	if path == "" {
+		log.Info("user cancelled export dialog")
+		return nil
+	}
+
+	// Copy temp file to selected location
+	if err := copyFile(tempFile, path); err != nil {
+		log.Error("failed to save export", slog.String("path", path), logger.Err(err))
+		return fmt.Errorf("failed to save export: %w", err)
+	}
+
+	log.Info("certificate export saved", slog.String("path", path), slog.Int("files", len(entries)))
+	return nil
 }
 
 // ============================================================================

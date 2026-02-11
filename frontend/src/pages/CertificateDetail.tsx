@@ -28,6 +28,7 @@ import { PrivateKeySection } from "@/components/certificate/PrivateKeySection";
 import { PendingPrivateKeySection } from "@/components/certificate/PendingPrivateKeySection";
 import { CertificateDescriptionEditor } from "@/components/certificate/CertificateDescriptionEditor";
 import { CertificateHistoryCard } from "@/components/certificate/CertificateHistoryCard";
+import { ExportDialog } from "@/components/certificate/ExportDialog";
 import { useCertificateDetail } from "@/hooks/useCertificateDetail";
 import {
     Tooltip,
@@ -43,6 +44,7 @@ import {
     CheckmarkCircle02Icon,
     Cancel01Icon,
     Link04Icon,
+    Download04Icon,
 } from "@hugeicons/core-free-icons";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { RenewalBadge } from "@/components/certificate/RenewalBadge";
@@ -86,6 +88,8 @@ export function CertificateDetail() {
         setUploadStep,
         uploadPreview,
         isPreviewing,
+        exportDialogOpen,
+        setExportDialogOpen,
         showKeyDialog,
         setShowKeyDialog,
         isTogglingReadOnly,
@@ -93,9 +97,7 @@ export function CertificateDetail() {
         handleCancelRenewal,
         handlePreviewUpload,
         handleUploadCertificate,
-        handleDownloadChain,
         handleToggleReadOnly,
-        handleDownloadPrivateKey,
         handleSaveCurrentNote,
         handleSavePendingNote,
         closeUploadDialog,
@@ -204,6 +206,18 @@ export function CertificateDetail() {
                             Read-only
                         </Label>
                     </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExportDialogOpen(true)}
+                    >
+                        <HugeiconsIcon
+                            icon={Download04Icon}
+                            className="w-4 h-4 mr-1"
+                            strokeWidth={2}
+                        />
+                        Export
+                    </Button>
                     <motion.div
                         animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
                         transition={{ duration: 0.2 }}
@@ -331,12 +345,9 @@ export function CertificateDetail() {
                             chain={chain}
                             isLoading={chainLoading}
                             error={chainError}
-                            onDownloadChain={handleDownloadChain}
-                            hostname={certificate.hostname}
                         />
 
                         <CertificatePEMSection
-                            hostname={certificate.hostname}
                             certificatePEM={certificate.certificate_pem}
                         />
 
@@ -361,7 +372,6 @@ export function CertificateDetail() {
                             privateKeyPEM={privateKeyPEM}
                             privateKeyLoading={privateKeyLoading}
                             privateKeyError={privateKeyError}
-                            onDownload={handleDownloadPrivateKey}
                         />
                         </motion.div>
                     </TabsContent>
@@ -419,7 +429,6 @@ export function CertificateDetail() {
                             pendingPrivateKeyPEM={pendingPrivateKeyPEM}
                             pendingPrivateKeyLoading={pendingPrivateKeyLoading}
                             pendingPrivateKeyError={pendingPrivateKeyError}
-                            downloadFilename={`${certificate.hostname}.pending.key`}
                         />
                         </motion.div>
                     </TabsContent>
@@ -602,6 +611,14 @@ export function CertificateDetail() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Export Dialog */}
+            <ExportDialog
+                open={exportDialogOpen}
+                onOpenChange={setExportDialogOpen}
+                certificate={certificate}
+                isEncryptionKeyProvided={isEncryptionKeyProvided}
+            />
 
             {/* Encryption Key Dialog */}
             <EncryptionKeyDialog

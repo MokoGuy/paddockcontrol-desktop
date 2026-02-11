@@ -20,12 +20,10 @@ import {
 } from "@hugeicons/core-free-icons";
 
 interface CertificatePEMSectionProps {
-    hostname: string;
     certificatePEM: string;
 }
 
 export function CertificatePEMSection({
-    hostname,
     certificatePEM,
 }: CertificatePEMSectionProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -57,7 +55,6 @@ export function CertificatePEMSection({
                     <CardContent>
                         <CodeBlock
                             content={certificatePEM}
-                            downloadFilename={`${hostname}.crt`}
                         />
                     </CardContent>
                 </CollapsibleContent>

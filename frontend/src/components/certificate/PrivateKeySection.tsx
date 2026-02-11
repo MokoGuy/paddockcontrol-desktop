@@ -25,7 +25,6 @@ interface PrivateKeySectionProps {
     privateKeyPEM: string | null;
     privateKeyLoading: boolean;
     privateKeyError: string | null;
-    onDownload: () => void;
 }
 
 export function PrivateKeySection({
@@ -33,7 +32,6 @@ export function PrivateKeySection({
     privateKeyPEM,
     privateKeyLoading,
     privateKeyError,
-    onDownload,
 }: PrivateKeySectionProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -75,7 +73,6 @@ export function PrivateKeySection({
                         ) : privateKeyPEM ? (
                             <CodeBlock
                                 content={privateKeyPEM}
-                                onDownload={onDownload}
                             />
                         ) : (
                             <p className="text-sm text-muted-foreground">
