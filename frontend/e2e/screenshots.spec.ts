@@ -4,8 +4,8 @@
  * Seeds the app with synthetic certificate data and captures
  * screenshots of key pages in both light and dark themes.
  *
- * The View Transitions API is disabled so theme toggles are instant,
- * while motion entrance animations are left intact and given time to complete.
+ * All motion animations are disabled via MotionGlobalConfig.skipAnimations
+ * and the View Transitions API is nullified, so every frame is deterministic.
  *
  * Run: task screenshots
  */
@@ -28,12 +28,14 @@ let tmpDir: string;
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * Disable the View Transitions API so theme toggles apply instantly
- * instead of playing a 700ms clip-path animation.
- * Must be called after each navigation (page.goto / page.reload).
+ * Register an init script that runs before every page load to:
+ * 1. Set __SKIP_ANIMATIONS flag (read by main.tsx → MotionGlobalConfig.skipAnimations)
+ * 2. Nullify the View Transitions API (used by the theme toggler)
  */
-async function disableViewTransitions(page: import("@playwright/test").Page) {
-    await page.evaluate(() => {
+async function disableAllAnimations(page: import("@playwright/test").Page) {
+    await page.addInitScript(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).__SKIP_ANIMATIONS = true;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (document as any).startViewTransition = undefined;
     });
@@ -47,8 +49,8 @@ async function toggleTheme(page: import("@playwright/test").Page) {
     await page.evaluate(() => {
         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     });
-    // Wait for React state + DOM repaint (no View Transition animation)
-    await page.waitForTimeout(300);
+    // Wait for React state + DOM repaint
+    await page.waitForTimeout(200);
 }
 
 async function screenshot(page: import("@playwright/test").Page, name: string) {
@@ -93,18 +95,15 @@ test.describe("Screenshots", () => {
         // Fixed viewport matching the previous manual screenshots
         await page.setViewportSize({ width: 1280, height: 800 });
 
+        // Disable all motion animations and View Transitions before any navigation
+        await disableAllAnimations(page);
+
         // ── Welcome page screenshots ────────────────────────────────
         await test.step("Welcome screenshots", async () => {
             await resetDatabase(page);
-            // View Transitions are already skipped on the welcome page
-            // (it has .stars-bg-container), but disable for safety
-            await disableViewTransitions(page);
 
-            // Wait for the entrance animations to fully complete:
-            // "Welcome to" types out (~1.3s), fades, logo + "PaddockControl"
-            // types (~1.7s), cards slide in (~2.2s + 0.4s duration)
+            // With animations skipped, elements are at their final state immediately
             await page.getByText("New Setup").waitFor({ state: "visible", timeout: 15000 });
-            await page.waitForTimeout(3000);
 
             await screenshot(page, "welcome-light");
 
@@ -118,7 +117,6 @@ test.describe("Screenshots", () => {
         // ── Seed synthetic data ─────────────────────────────────────
         await test.step("Seed synthetic data", async () => {
             await completeSetupWizard(page);
-            await disableViewTransitions(page);
 
             // Generate 3 CSRs via Wails bindings (2048-bit for speed)
             const csrDefaults = {
@@ -163,14 +161,11 @@ test.describe("Screenshots", () => {
         await test.step("Dashboard screenshots", async () => {
             await page.goto("/");
             await waitForWails(page);
-            await disableViewTransitions(page);
 
             // Wait for all 3 certificate cards to render
             await page.getByRole("heading", { name: "webapp.test.local" }).waitFor({ state: "visible" });
             await page.getByRole("heading", { name: "api.test.local" }).waitFor({ state: "visible" });
             await page.getByRole("heading", { name: "mail.test.local" }).waitFor({ state: "visible" });
-            // Let motion card entrance animations settle
-            await page.waitForTimeout(500);
 
             await screenshot(page, "dashboard-light");
 
@@ -186,12 +181,9 @@ test.describe("Screenshots", () => {
             // Navigate to webapp.test.local detail
             await page.getByRole("heading", { name: "webapp.test.local" }).click();
             await page.waitForURL(/webapp/);
-            await disableViewTransitions(page);
 
-            // Wait for certificate details to load
-            await page.getByText("webapp.test.local").first().waitFor({ state: "visible" });
-            // Let motion entrance animations settle
-            await page.waitForTimeout(500);
+            // Wait for certificate data to load from backend
+            await page.getByText("Current certificate status").waitFor({ state: "visible" });
 
             await screenshot(page, "certificate-detail-light");
 
