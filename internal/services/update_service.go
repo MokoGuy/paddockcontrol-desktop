@@ -73,6 +73,27 @@ func (s *UpdateService) initUpdater() (*selfupdate.Updater, error) {
 // If force is false, a cached result is returned when the last check was within cacheTTL.
 func (s *UpdateService) CheckForUpdate(ctx context.Context, force bool) (*models.UpdateInfo, error) {
 	if s.currentVersion == "dev" {
+		if force {
+			// Return mock data so the UI can be previewed during development
+			return &models.UpdateInfo{
+				CurrentVersion:  "dev",
+				LatestVersion:   "99.0.0",
+				UpdateAvailable: true,
+				ReleaseURL:      "https://github.com/" + githubOwner + "/" + githubRepo + "/releases/tag/v99.0.0",
+				ReleaseNotes: "> **This is mock data for development preview only.**\n\n" +
+					"## What's Changed\n\n" +
+					"### New Features\n" +
+					"- **Markdown release notes** — Release notes are now rendered as formatted markdown\n" +
+					"- Added certificate chain validation improvements\n\n" +
+					"### Bug Fixes\n" +
+					"- Fixed nil pointer dereference in backup service\n" +
+					"- Resolved UI flickering on certificate detail page\n\n" +
+					"### Contributors\n" +
+					"* @MokoGuy\n\n" +
+					"**Full Changelog**: https://github.com/" + githubOwner + "/" + githubRepo + "/compare/v1.0.0...v99.0.0",
+				AssetSize: 48_000_000,
+			}, nil
+		}
 		return &models.UpdateInfo{
 			CurrentVersion:  s.currentVersion,
 			LatestVersion:   s.currentVersion,

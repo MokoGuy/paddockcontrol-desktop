@@ -89,6 +89,10 @@ Go structs in `internal/models/` are the source of truth. Wails generates TypeSc
 
 When modifying Go models, run `wails dev` or `wails build` to regenerate TypeScript bindings.
 
+## UI Conventions
+
+- **Squared design**: Do not use rounded corners (`rounded-*` classes) on UI elements. Keep edges square.
+
 ## Key Patterns
 
 ### Encryption Key Handling

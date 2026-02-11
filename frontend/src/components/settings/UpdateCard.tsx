@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import {
     Card,
     CardContent,
@@ -197,13 +198,13 @@ export function UpdateCard() {
                             </div>
 
                             {updateInfo!.release_notes && (
-                                <div className="rounded-md border border-border bg-muted/50 p-3">
+                                <div className="border border-border bg-muted/50 p-3">
                                     <p className="text-xs font-medium text-muted-foreground uppercase mb-1">
                                         Release Notes
                                     </p>
-                                    <p className="text-sm text-foreground whitespace-pre-wrap line-clamp-6">
-                                        {updateInfo!.release_notes}
-                                    </p>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none text-foreground prose-headings:text-foreground prose-a:text-primary">
+                                        <ReactMarkdown>{updateInfo!.release_notes}</ReactMarkdown>
+                                    </div>
                                 </div>
                             )}
 
@@ -211,6 +212,7 @@ export function UpdateCard() {
                                 <Button
                                     size="sm"
                                     onClick={handleDownloadAndApply}
+                                    disabled={updateInfo!.current_version === "dev"}
                                 >
                                     Download & Install
                                 </Button>
