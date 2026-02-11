@@ -141,6 +141,13 @@ func (s *BackupService) ExportBackup(ctx context.Context, includeKeys bool) (*mo
 // If backup has encrypted keys, encryptionKey must be correct to decrypt them
 func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupData, encryptionKey []byte) (*models.ImportResult, error) {
 	ctx, log := logger.WithOperation(ctx, "backup_import")
+
+	// Validate backup format before accessing fields
+	if err := s.validateBackup(backup); err != nil {
+		log.Error("backup validation failed", logger.Err(err))
+		return nil, fmt.Errorf("backup validation failed: %w", err)
+	}
+
 	log.Info("starting backup import",
 		slog.String("version", backup.Version),
 		slog.Int("certificates", len(backup.Certificates)),
@@ -153,11 +160,6 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 		Conflicts: []string{},
 	}
 
-	// Validate backup format
-	if err := s.validateBackup(backup); err != nil {
-		log.Error("backup validation failed", logger.Err(err))
-		return nil, fmt.Errorf("backup validation failed: %w", err)
-	}
 	log.Debug("backup format validated")
 
 	// Pre-flight validation: check for conflicts and decrypt ability
@@ -204,7 +206,12 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 			PendingCsrPem:              sql.NullString{String: cert.PendingCSR, Valid: cert.PendingCSR != ""},
 			PendingEncryptedPrivateKey: cert.PendingEncryptedKey,
 			CertificatePem:             sql.NullString{String: cert.CertificatePEM, Valid: cert.CertificatePEM != ""},
-			ExpiresAt:                  sql.NullInt64{Int64: *cert.ExpiresAt, Valid: cert.ExpiresAt != nil},
+			ExpiresAt: func() sql.NullInt64 {
+				if cert.ExpiresAt != nil {
+					return sql.NullInt64{Int64: *cert.ExpiresAt, Valid: true}
+				}
+				return sql.NullInt64{}
+			}(),
 			Note:                       sql.NullString{String: cert.Note, Valid: cert.Note != ""},
 			PendingNote:                sql.NullString{String: cert.PendingNote, Valid: cert.PendingNote != ""},
 			ReadOnly: func() int64 {

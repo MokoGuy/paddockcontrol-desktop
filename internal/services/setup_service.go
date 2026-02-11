@@ -88,15 +88,16 @@ func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupReq
 // If backup lacks encrypted keys, skips key validation
 func (s *SetupService) SetupFromBackup(ctx context.Context, backup *models.BackupData, encryptionKey []byte) error {
 	ctx, log := logger.WithOperation(ctx, "setup_restore")
-	log.Info("starting setup from backup",
-		slog.String("backup_version", backup.Version),
-		slog.Int("certificates", len(backup.Certificates)),
-	)
 
 	if backup == nil {
 		log.Error("backup data is nil")
 		return fmt.Errorf("backup data is nil")
 	}
+
+	log.Info("starting setup from backup",
+		slog.String("backup_version", backup.Version),
+		slog.Int("certificates", len(backup.Certificates)),
+	)
 
 	// Check if backup contains encrypted keys
 	hasEncryptedKeys := s.backupHasEncryptedKeys(backup)
