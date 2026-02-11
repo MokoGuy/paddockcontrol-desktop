@@ -1,0 +1,124 @@
+import { test, expect } from "@playwright/test";
+import {
+    setupFromScratch,
+    setupWithFullMode,
+    provideEncryptionKey,
+    generateCertificate,
+} from "./helpers";
+
+test.describe("Tooltip behaviors", () => {
+    test.describe("Dashboard - Limited Mode", () => {
+        test.beforeEach(async ({ page }) => {
+            await setupFromScratch(page);
+            // Stay in limited mode (no encryption key provided in this session)
+            // Navigate to dashboard to ensure we're there
+            await page.goto("/");
+            await expect(page.getByText("Manage your SSL/TLS certificates")).toBeVisible();
+        });
+
+        test("shows tooltip on Generate CSR button when disabled", async ({ page }) => {
+            // In limited mode, Generate CSR should be disabled
+            const generateBtn = page.getByRole("button", { name: "Generate CSR" }).first();
+            await expect(generateBtn).toBeDisabled();
+
+            // Hover on the span wrapper (disabled buttons don't receive pointer events)
+            await generateBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Encryption key required");
+        });
+
+        test("shows tooltip on Import Certificate button when disabled", async ({ page }) => {
+            const importBtn = page.getByRole("button", { name: "Import Certificate" });
+            await expect(importBtn).toBeDisabled();
+
+            await importBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Encryption key required");
+        });
+
+        test("no tooltip shown when encryption key is provided", async ({ page }) => {
+            await provideEncryptionKey(page);
+
+            const generateBtn = page.getByRole("button", { name: "Generate CSR" }).first();
+            await expect(generateBtn).toBeEnabled();
+
+            await generateBtn.hover();
+            // Tooltip should not be visible when button is enabled
+            await expect(page.getByRole("tooltip")).not.toBeVisible();
+        });
+    });
+
+    test.describe("CertificateDetail - Limited Mode", () => {
+        let fullHostname: string;
+
+        test.beforeEach(async ({ page }) => {
+            // Setup with full mode to create certificate
+            await setupWithFullMode(page);
+            fullHostname = await generateCertificate(page, "tooltip-test");
+
+            // Clear encryption key to return to limited mode
+            await page.evaluate(() => (window as any).go.main.App.ClearEncryptionKey());
+
+            // Navigate to certificate detail in limited mode
+            await page.goto(`/#/certificates/${fullHostname}`);
+            await page.getByRole("heading", { name: /tooltip-test/ }).waitFor({ state: "visible" });
+        });
+
+        test("shows tooltip on Regenerate button in limited mode", async ({ page }) => {
+            const renewBtn = page.getByRole("button", { name: /Regenerate/ });
+            await expect(renewBtn).toBeDisabled();
+
+            await renewBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Encryption key required");
+        });
+
+        test("shows tooltip on Upload Signed Certificate button in limited mode", async ({
+            page,
+        }) => {
+            const uploadBtn = page.getByRole("button", { name: "Upload Signed Certificate" });
+            await expect(uploadBtn).toBeDisabled();
+
+            await uploadBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Encryption key required");
+        });
+    });
+
+    test.describe("CertificateDetail - Read-only Mode", () => {
+        let fullHostname: string;
+
+        test.beforeEach(async ({ page }) => {
+            // Setup with full mode and create certificate
+            await setupWithFullMode(page);
+            fullHostname = await generateCertificate(page, "tooltip-test");
+
+            // Navigate to certificate detail
+            await page.goto(`/#/certificates/${fullHostname}`);
+            await page.getByRole("heading", { name: /tooltip-test/ }).waitFor({ state: "visible" });
+
+            // Enable read-only mode
+            await page.getByRole("switch", { name: "Read-only" }).click();
+        });
+
+        test("shows tooltip on Delete button when read-only", async ({ page }) => {
+            const deleteBtn = page.getByRole("button", { name: "Delete" });
+            await expect(deleteBtn).toBeDisabled();
+
+            await deleteBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Certificate is read-only");
+        });
+
+        test("shows tooltip on Regenerate button when read-only", async ({ page }) => {
+            const renewBtn = page.getByRole("button", { name: /Regenerate/ });
+            await expect(renewBtn).toBeDisabled();
+
+            await renewBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Certificate is read-only");
+        });
+
+        test("shows tooltip on Upload Signed Certificate when read-only", async ({ page }) => {
+            const uploadBtn = page.getByRole("button", { name: "Upload Signed Certificate" });
+            await expect(uploadBtn).toBeDisabled();
+
+            await uploadBtn.locator("..").hover();
+            await expect(page.getByRole("tooltip")).toHaveText("Certificate is read-only");
+        });
+    });
+});

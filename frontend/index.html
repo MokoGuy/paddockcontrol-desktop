@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="/src/assets/images/logo-universal.ico"
+        />
+        <title>paddockcontrol</title>
+        <script>
+            // Initialize theme before React renders to prevent flash
+            // Uses 'theme' key to match next-themes default
+            (function () {
+                try {
+                    const stored = localStorage.getItem("theme");
+                    const theme =
+                        stored && ["light", "dark", "system"].includes(stored)
+                            ? stored
+                            : "system";
+                    const isDark =
+                        theme === "dark" ||
+                        (theme === "system" &&
+                            window.matchMedia("(prefers-color-scheme: dark)")
+                                .matches);
+
+                    if (isDark) {
+                        document.documentElement.classList.add("dark");
+                    }
+                } catch (e) {
+                    // Fallback to system preference
+                    if (
+                        window.matchMedia("(prefers-color-scheme: dark)")
+                            .matches
+                    ) {
+                        document.documentElement.classList.add("dark");
+                    }
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script src="./src/main.tsx" type="module"></script>
+    </body>
+</html>

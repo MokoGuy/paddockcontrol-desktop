@@ -1,0 +1,36 @@
+build/bin
+node_modules
+frontend/dist
+
+# TypeScript build artifacts
+*.tsbuildinfo
+frontend/*.tsbuildinfo
+
+# Vite generated files
+frontend/vite.config.d.ts
+frontend/*.config.d.ts
+
+# Wails generated files
+frontend/package.json.md5
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+tracked_tasks/
+.playwright-mcp/
+
+# Ignore auto-generated folder context files
+**/CLAUDE.md
+
+# But keep the root CLAUDE.md if you want
+!/CLAUDE.md
+frontend/playwright-report/
+frontend/test-results/

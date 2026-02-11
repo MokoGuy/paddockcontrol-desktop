@@ -1,0 +1,70 @@
+import { UseFormGetValues } from "react-hook-form";
+import { Badge } from "@/components/ui/badge";
+import { type SetupRequestInput } from "@/lib/validation";
+import { type WizardStep } from "../SetupWizardSteps";
+import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
+
+interface ReviewStepProps {
+  getValues: UseFormGetValues<SetupRequestInput>;
+  onEditStep: (step: WizardStep) => void;
+}
+
+export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
+  const values = getValues();
+
+  return (
+    <div className="space-y-4">
+        <ReviewSection
+          title="Owner Email"
+          onEdit={() => onEditStep("email")}
+        >
+          <ReviewField label="Email" value={values.owner_email} />
+        </ReviewSection>
+
+        <ReviewSection
+          title="CA Configuration"
+          onEdit={() => onEditStep("ca-config")}
+        >
+          <ReviewField label="CA Name" value={values.ca_name} />
+          <ReviewField label="Hostname Suffix" value={values.hostname_suffix} />
+        </ReviewSection>
+
+        <ReviewSection
+          title="Organization"
+          onEdit={() => onEditStep("organization")}
+        >
+          <ReviewField label="Organization" value={values.default_organization} />
+          <ReviewField label="Organizational Unit" value={values.default_organizational_unit} />
+          <ReviewField label="City" value={values.default_city} />
+          <ReviewField label="State" value={values.default_state} />
+          <ReviewField label="Country" value={values.default_country} />
+        </ReviewSection>
+
+        <ReviewSection
+          title="Certificate Defaults"
+          onEdit={() => onEditStep("cert-defaults")}
+        >
+          <ReviewField
+            label="Validity Period"
+            value={values.validity_period_days ? `${values.validity_period_days} days` : undefined}
+          />
+          <ReviewField
+            label="Key Size"
+            value={values.default_key_size ? `${values.default_key_size} bits` : undefined}
+          />
+        </ReviewSection>
+
+        <ReviewSection
+          title="Security"
+          onEdit={() => onEditStep("encryption-key")}
+        >
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Encryption Key</span>
+            <Badge variant={values.encryption_key ? "default" : "destructive"}>
+              {values.encryption_key ? "Set" : "Not Set"}
+            </Badge>
+          </div>
+        </ReviewSection>
+    </div>
+  );
+}

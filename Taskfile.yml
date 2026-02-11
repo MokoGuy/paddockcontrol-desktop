@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+tasks:
+    dev:
+        desc: Start the development server (using WebKit2 for Ubuntu 24)
+        cmd: wails dev -tags webkit2_41
+
+    build:
+        desc: Build production Wails app for Windows with version injection
+        cmds:
+            - |
+                wails build -platform windows -ldflags "\
+                  -X main.Version={{.VERSION}} \
+                  -X main.BuildTime={{.BUILDTIME}} \
+                  -X main.GitCommit={{.GITCOMMIT}}" \
+                  -tags production
+        vars:
+            VERSION:
+                sh: git describe --tags --always --dirty 2>/dev/null || echo "0.1.0-dev"
+            BUILDTIME:
+                sh: date -u '+%Y-%m-%d_%H:%M:%S'
+            GITCOMMIT:
+                sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+
+    clean:
+        desc: Clean local data (database and logs) - Linux only
+        cmds:
+            - |
+                if [ -d "$HOME/.local/share/paddockcontrol" ]; then rm -rf "$HOME/.local/share/paddockcontrol" && echo "Cleaned: $HOME/.local/share/paddockcontrol"; else echo "No data found to clean"; fi
+
+    test:e2e:
+        desc: Run Playwright e2e tests (headless)
+        dir: frontend
+        cmd: npm run test:e2e
+
+    test:e2e:ui:
+        desc: Run Playwright e2e tests with interactive UI
+        dir: frontend
+        cmd: npm run test:e2e:ui
+
+    test:e2e:headed:
+        desc: Run Playwright e2e tests with visible browser (slow motion)
+        dir: frontend
+        cmd: SLOW=1 npx playwright test --headed
