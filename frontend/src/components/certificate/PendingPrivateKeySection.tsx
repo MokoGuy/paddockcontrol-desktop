@@ -19,6 +19,7 @@ import {
     ArrowDown01Icon,
     ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
+import { pendingCardStyles } from "@/lib/theme";
 
 interface PendingPrivateKeySectionProps {
     hasPendingCSR: boolean;
@@ -39,38 +40,42 @@ export function PendingPrivateKeySection({
 }: PendingPrivateKeySectionProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    if (!hasPendingCSR || !isEncryptionKeyProvided) {
+    if (!hasPendingCSR) {
         return null;
     }
 
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <Card className="mb-6 shadow-sm border-info/30 bg-info/10">
+            <Card className={`mb-6 shadow-sm ${pendingCardStyles.card}`}>
                 <CardHeader>
-                    <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <CollapsibleTrigger className="flex items-center gap-2 w-full cursor-pointer hover:opacity-80 transition-opacity">
                         <HugeiconsIcon
                             icon={Key01Icon}
-                            className="w-5 h-5 text-info dark:text-chart-2"
+                            className={`w-5 h-5 ${pendingCardStyles.icon}`}
                             strokeWidth={2}
                         />
-                        <div className="text-left">
-                            <CardTitle className="text-info dark:text-chart-2">
+                        <div className="text-left flex-1">
+                            <CardTitle className={pendingCardStyles.title}>
                                 Pending Private Key (PEM)
                             </CardTitle>
-                            <CardDescription className="text-info/80 dark:text-chart-2/80">
+                            <CardDescription className={pendingCardStyles.description}>
                                 RSA private key associated with the pending CSR
                             </CardDescription>
                         </div>
                         <HugeiconsIcon
                             icon={isOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                            className="w-4 h-4 ml-1 text-info/60 dark:text-chart-2/60"
+                            className={`w-4 h-4 ${pendingCardStyles.iconMuted} shrink-0`}
                             strokeWidth={2}
                         />
                     </CollapsibleTrigger>
                 </CardHeader>
                 <CollapsibleContent>
                     <CardContent>
-                        {pendingPrivateKeyLoading ? (
+                        {!isEncryptionKeyProvided ? (
+                            <p className="text-sm text-warning">
+                                Private key content can only be retrieved when the encryption key is provided.
+                            </p>
+                        ) : pendingPrivateKeyLoading ? (
                             <LoadingSpinner text="Decrypting pending private key..." />
                         ) : pendingPrivateKeyError ? (
                             <p className="text-sm text-destructive">
@@ -82,7 +87,7 @@ export function PendingPrivateKeySection({
                                 downloadFilename={downloadFilename}
                             />
                         ) : (
-                            <p className="text-sm text-info/80 dark:text-chart-2/80">
+                            <p className={`text-sm ${pendingCardStyles.text}`}>
                                 No pending private key available
                             </p>
                         )}

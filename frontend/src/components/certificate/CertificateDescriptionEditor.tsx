@@ -6,12 +6,9 @@ import { Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 interface CertificateDescriptionEditorProps {
-    hostname: string;
     note: string;
-    pendingNote?: string;
-    hasPendingCSR: boolean;
-    onSave: (note: string, isPending: boolean) => Promise<void>;
-    isSaving: boolean;
+    placeholder?: string;
+    onSave: (note: string) => Promise<void>;
     disabled?: boolean;
 }
 
@@ -192,44 +189,18 @@ function InlineEditField({
 
 export function CertificateDescriptionEditor({
     note,
-    pendingNote,
-    hasPendingCSR,
+    placeholder = "Click to add description...",
     onSave,
     disabled = false,
 }: CertificateDescriptionEditorProps) {
-    const handleSaveNote = useCallback(
-        async (value: string) => {
-            await onSave(value, false);
-        },
-        [onSave]
-    );
-
-    const handleSavePendingNote = useCallback(
-        async (value: string) => {
-            await onSave(value, true);
-        },
-        [onSave]
-    );
-
     return (
-        <div className="mb-6 space-y-4">
+        <div className="mb-6">
             <InlineEditField
                 value={note}
-                placeholder="Click to add description..."
-                onSave={handleSaveNote}
+                placeholder={placeholder}
+                onSave={onSave}
                 disabled={disabled}
             />
-
-            {hasPendingCSR && (
-                <InlineEditField
-                    value={pendingNote || ""}
-                    placeholder="Click to add pending CSR note..."
-                    label="Pending CSR Note"
-                    onSave={handleSavePendingNote}
-                    disabled={disabled}
-                    className="pt-3 border-t border-amber-500/20"
-                />
-            )}
         </div>
     );
 }

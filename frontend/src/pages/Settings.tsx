@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useNavigate } from "react-router-dom";
 import { useSetup } from "@/hooks/useSetup";
 import { useBackup } from "@/hooks/useBackup";
@@ -29,6 +34,8 @@ import {
     Tick02Icon,
     FolderLinksIcon,
     AlertCircleIcon,
+    ArrowDown01Icon,
+    ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { formatDateTime, formatFileSize } from "@/lib/theme";
@@ -71,6 +78,7 @@ export function Settings() {
     const [resetConfirming, setResetConfirming] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
     const [changeKeyOpen, setChangeKeyOpen] = useState(false);
+    const [configOpen, setConfigOpen] = useState(false);
     const { copy, isCopied } = useCopyToClipboard();
     const [buildInfo, setBuildInfo] = useState<Record<string, string> | null>(
         null,
@@ -238,50 +246,62 @@ export function Settings() {
 
             {/* Configuration */}
             {config && (
-                <Card className="mb-6 shadow-sm border-border">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>CA Configuration</CardTitle>
-                                <CardDescription>
-                                    Your certificate authority settings
-                                </CardDescription>
+                <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
+                    <Card className="mb-6 shadow-sm border-border">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1">
+                                    <div className="text-left flex-1">
+                                        <CardTitle>CA Configuration</CardTitle>
+                                        <CardDescription>
+                                            Your certificate authority settings
+                                        </CardDescription>
+                                    </div>
+                                    <HugeiconsIcon
+                                        icon={configOpen ? ArrowUp01Icon : ArrowDown01Icon}
+                                        className="w-4 h-4 text-muted-foreground shrink-0"
+                                        strokeWidth={2}
+                                    />
+                                </CollapsibleTrigger>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsEditMode(true)}
+                                    size="sm"
+                                    className="ml-4 shrink-0"
+                                >
+                                    Edit Settings
+                                </Button>
                             </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsEditMode(true)}
-                                size="sm"
-                            >
-                                Edit Settings
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <ReviewSection title="CA Configuration">
-                            <ReviewField label="CA Name" value={config.ca_name} />
-                            <ReviewField label="Owner Email" value={config.owner_email} />
-                            <ReviewField label="Hostname Suffix" value={config.hostname_suffix} />
-                        </ReviewSection>
+                        </CardHeader>
+                        <CollapsibleContent>
+                            <CardContent className="space-y-4">
+                                <ReviewSection title="CA Configuration">
+                                    <ReviewField label="CA Name" value={config.ca_name} />
+                                    <ReviewField label="Owner Email" value={config.owner_email} />
+                                    <ReviewField label="Hostname Suffix" value={config.hostname_suffix} />
+                                </ReviewSection>
 
-                        <ReviewSection title="Certificate Defaults">
-                            <ReviewField label="Validity Period" value={`${config.validity_period_days} days`} />
-                            <ReviewField label="Key Size" value={`${config.default_key_size} bits`} />
-                        </ReviewSection>
+                                <ReviewSection title="Certificate Defaults">
+                                    <ReviewField label="Validity Period" value={`${config.validity_period_days} days`} />
+                                    <ReviewField label="Key Size" value={`${config.default_key_size} bits`} />
+                                </ReviewSection>
 
-                        <ReviewSection title="Organization">
-                            <ReviewField label="Organization" value={config.default_organization} />
-                            <ReviewField label="Organizational Unit" value={config.default_organizational_unit} />
-                            <ReviewField label="City" value={config.default_city} />
-                            <ReviewField label="State" value={config.default_state} />
-                            <ReviewField label="Country" value={config.default_country} />
-                        </ReviewSection>
+                                <ReviewSection title="Organization">
+                                    <ReviewField label="Organization" value={config.default_organization} />
+                                    <ReviewField label="Organizational Unit" value={config.default_organizational_unit} />
+                                    <ReviewField label="City" value={config.default_city} />
+                                    <ReviewField label="State" value={config.default_state} />
+                                    <ReviewField label="Country" value={config.default_country} />
+                                </ReviewSection>
 
-                        <ReviewSection title="Configuration History">
-                            <ReviewField label="Created" value={formatDateTime(config.created_at)} />
-                            <ReviewField label="Last Modified" value={formatDateTime(config.last_modified)} />
-                        </ReviewSection>
-                    </CardContent>
-                </Card>
+                                <ReviewSection title="Configuration History">
+                                    <ReviewField label="Created" value={formatDateTime(config.created_at)} />
+                                    <ReviewField label="Last Modified" value={formatDateTime(config.last_modified)} />
+                                </ReviewSection>
+                            </CardContent>
+                        </CollapsibleContent>
+                    </Card>
+                </Collapsible>
             )}
 
             {/* Edit Configuration Modal */}

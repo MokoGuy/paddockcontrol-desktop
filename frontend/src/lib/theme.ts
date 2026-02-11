@@ -71,6 +71,20 @@ export function getCssColorAsRgb(cssVar: string): string {
 }
 
 /**
+ * Shared style constants for pending/info-themed cards
+ */
+export const pendingCardStyles = {
+  card: "border-info/30 bg-info/10",
+  title: "text-info dark:text-chart-2",
+  description: "text-info/80 dark:text-chart-2/80",
+  icon: "text-info dark:text-chart-2",
+  iconMuted: "text-info/60 dark:text-chart-2/60",
+  text: "text-info/80 dark:text-chart-2/80",
+  connectorText: "text-info/70 dark:text-chart-2/70",
+  connectorLine: "bg-info/20 dark:bg-chart-2/20",
+} as const;
+
+/**
  * Get status color for certificate status
  */
 export function getStatusColor(status: string): string {

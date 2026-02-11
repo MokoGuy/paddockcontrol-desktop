@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     Card,
     CardContent,
@@ -5,6 +6,11 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -18,6 +24,8 @@ import {
     Download04Icon,
     Copy01Icon,
     Tick02Icon,
+    ArrowDown01Icon,
+    ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 
 interface CertificatePathProps {
@@ -190,6 +198,7 @@ export function CertificatePath({
     hostname,
 }: CertificatePathProps) {
     const { copy, isCopied } = useCopyToClipboard();
+    const [isOpen, setIsOpen] = useState(false);
 
     // Don't render if loading
     if (isLoading) {
@@ -254,51 +263,61 @@ export function CertificatePath({
     }
 
     return (
-        <Card className="mb-6 shadow-sm border-border">
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <Card className="mb-6 shadow-sm border-border">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1">
                             <HugeiconsIcon
                                 icon={Link04Icon}
                                 className="w-5 h-5"
                                 strokeWidth={2}
                             />
-                            <CardTitle>Certificate Path</CardTitle>
-                        </div>
-                        <CardDescription>
-                            Certificate chain from leaf to root CA
-                        </CardDescription>
-                    </div>
-                    {onDownloadChain && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onDownloadChain}
-                        >
+                            <div className="text-left flex-1">
+                                <CardTitle>Certificate Path</CardTitle>
+                                <CardDescription>
+                                    Certificate chain from leaf to root CA
+                                </CardDescription>
+                            </div>
                             <HugeiconsIcon
-                                icon={Download04Icon}
-                                className="w-4 h-4 mr-1"
+                                icon={isOpen ? ArrowUp01Icon : ArrowDown01Icon}
+                                className="w-4 h-4 text-muted-foreground shrink-0"
                                 strokeWidth={2}
                             />
-                            Download Chain
-                        </Button>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-3">
-                    {chain.map((cert, index) => (
-                        <ChainCertificateCard
-                            key={`${cert.serial_number}-${index}`}
-                            cert={cert}
-                            hostname={hostname}
-                            onCopy={copy}
-                            isCopied={isCopied}
-                        />
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+                        </CollapsibleTrigger>
+                        {onDownloadChain && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onDownloadChain}
+                                className="ml-4 shrink-0"
+                            >
+                                <HugeiconsIcon
+                                    icon={Download04Icon}
+                                    className="w-4 h-4 mr-1"
+                                    strokeWidth={2}
+                                />
+                                Download Chain
+                            </Button>
+                        )}
+                    </div>
+                </CardHeader>
+                <CollapsibleContent>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {chain.map((cert, index) => (
+                                <ChainCertificateCard
+                                    key={`${cert.serial_number}-${index}`}
+                                    cert={cert}
+                                    hostname={hostname}
+                                    onCopy={copy}
+                                    isCopied={isCopied}
+                                />
+                            ))}
+                        </div>
+                    </CardContent>
+                </CollapsibleContent>
+            </Card>
+        </Collapsible>
     );
 }

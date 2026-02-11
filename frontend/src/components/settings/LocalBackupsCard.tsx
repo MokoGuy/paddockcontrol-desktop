@@ -147,7 +147,7 @@ export function LocalBackupsCard({
                             {localBackups.map((backup) => (
                                 <div
                                     key={backup.filename}
-                                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                                    className="flex items-center justify-between rounded-none border border-border px-3 py-2"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <Badge

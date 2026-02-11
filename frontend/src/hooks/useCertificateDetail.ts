@@ -319,23 +319,30 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [certificate, downloadPrivateKey]);
 
-    const handleSaveNote = useCallback(
-        async (note: string, isPending: boolean) => {
+    const handleSaveCurrentNote = useCallback(
+        async (note: string) => {
             if (!hostname) return;
             setIsSavingNote(true);
             try {
-                if (isPending) {
-                    await api.updatePendingNote(hostname, note);
-                } else {
-                    await api.updateCertificateNote(hostname, note);
-                }
-                // Optimistically update local state
+                await api.updateCertificateNote(hostname, note);
                 if (certificate) {
-                    setCertificate({
-                        ...certificate,
-                        note: isPending ? certificate.note : note,
-                        pending_note: isPending ? note : certificate.pending_note,
-                    });
+                    setCertificate({ ...certificate, note });
+                }
+            } finally {
+                setIsSavingNote(false);
+            }
+        },
+        [hostname, certificate]
+    );
+
+    const handleSavePendingNote = useCallback(
+        async (note: string) => {
+            if (!hostname) return;
+            setIsSavingNote(true);
+            try {
+                await api.updatePendingNote(hostname, note);
+                if (certificate) {
+                    setCertificate({ ...certificate, pending_note: note });
                 }
             } finally {
                 setIsSavingNote(false);
@@ -415,7 +422,8 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
-        handleSaveNote,
+        handleSaveCurrentNote,
+        handleSavePendingNote,
         closeUploadDialog,
         navigate,
     };

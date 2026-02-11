@@ -1,5 +1,6 @@
+import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
     Dialog,
     DialogContent,
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AnimatedSwitch } from "@/components/ui/animated-switch";
 import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -42,7 +44,10 @@ import {
     Cancel01Icon,
     Link04Icon,
 } from "@hugeicons/core-free-icons";
-import { formatDateTime } from "@/lib/theme";
+import { StatusBadge } from "@/components/certificate/StatusBadge";
+import { RenewalBadge } from "@/components/certificate/RenewalBadge";
+import { ReadOnlyBadge } from "@/components/certificate/ReadOnlyBadge";
+import { formatDateTime, pendingCardStyles } from "@/lib/theme";
 
 export function CertificateDetail() {
     const { hostname } = useParams<{ hostname: string }>();
@@ -84,7 +89,6 @@ export function CertificateDetail() {
         showKeyDialog,
         setShowKeyDialog,
         isTogglingReadOnly,
-        isSavingNote,
         handleDelete,
         handleCancelRenewal,
         handlePreviewUpload,
@@ -92,10 +96,26 @@ export function CertificateDetail() {
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
-        handleSaveNote,
+        handleSaveCurrentNote,
+        handleSavePendingNote,
         closeUploadDialog,
         navigate,
     } = useCertificateDetail({ hostname });
+
+    // Tab state - user selection with automatic fallback when tab becomes invalid
+    const [selectedTab, setSelectedTab] = useState<string | null>(null);
+
+    const activeTab = useMemo(() => {
+        if (!certificate) return "activity";
+        // If user has selected a tab and it's still valid, use it
+        if (selectedTab === "certificate" && certificate.certificate_pem) return "certificate";
+        if (selectedTab === "pending" && certificate.pending_csr) return "pending";
+        if (selectedTab === "activity") return "activity";
+        // Default: prefer certificate tab, then pending, then activity
+        if (certificate.certificate_pem) return "certificate";
+        if (certificate.pending_csr) return "pending";
+        return "activity";
+    }, [certificate, selectedTab]);
 
     if (isLoading) {
         return (
@@ -135,9 +155,38 @@ export function CertificateDetail() {
                     <h1 className="text-3xl font-bold text-foreground">
                         {certificate.hostname}
                     </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Certificate details and operations
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                            <StatusBadge
+                                status={certificate.status}
+                                daysUntilExpiration={certificate.days_until_expiration}
+                            />
+                        </motion.div>
+                        <AnimatePresence mode="popLayout">
+                            {certificate.pending_csr && certificate.status !== "pending" && (
+                                <motion.div
+                                    key="renewal-badge"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                >
+                                    <RenewalBadge />
+                                </motion.div>
+                            )}
+                            {certificate.read_only && (
+                                <motion.div
+                                    key="read-only-badge"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                >
+                                    <ReadOnlyBadge />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
                 <div className="flex gap-2">
                     <div className="flex items-center gap-2 mr-4 pr-4 border-r border-border">
@@ -245,108 +294,157 @@ export function CertificateDetail() {
                 />
             )}
 
-            {/* Description Editor */}
-            <CertificateDescriptionEditor
-                hostname={certificate.hostname}
-                note={certificate.note || ""}
-                pendingNote={certificate.pending_note}
-                hasPendingCSR={!!certificate.pending_csr}
-                onSave={handleSaveNote}
-                isSaving={isSavingNote}
-                disabled={certificate.read_only}
-            />
+            {/* Tabbed Content */}
+            <Tabs value={activeTab} onValueChange={setSelectedTab}>
+                <TabsList variant="line" className="mb-6">
+                    {certificate.certificate_pem && (
+                        <TabsTrigger value="certificate">Certificate</TabsTrigger>
+                    )}
+                    {certificate.pending_csr && (
+                        <TabsTrigger value="pending">Pending</TabsTrigger>
+                    )}
+                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                </TabsList>
 
-            {/* Status and Basic Info */}
-            <CertificateStatusSection certificate={certificate} />
+                <AnimatePresence mode="wait">
+                {/* Certificate Tab */}
+                {certificate.certificate_pem && activeTab === "certificate" && (
+                    <TabsContent value="certificate" forceMount asChild>
+                        <motion.div
+                            key="certificate"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                        >
+                        <CertificateDescriptionEditor
+                            note={certificate.note || ""}
+                            onSave={handleSaveCurrentNote}
+                            disabled={certificate.read_only}
+                        />
 
-            {/* Subject Information */}
-            <CertificateSubjectInfo certificate={certificate} />
+                        <CertificateStatusSection certificate={certificate} />
 
-            {/* Pending CSR */}
-            <PendingCSRSection
-                certificate={certificate}
-                onUploadClick={() => setUploadDialogOpen(true)}
-                onCancelRenewal={handleCancelRenewal}
-                cancelRenewalConfirming={cancelRenewalConfirming}
-                setCancelRenewalConfirming={setCancelRenewalConfirming}
-                isLoading={certLoading}
-            />
+                        <CertificateSubjectInfo certificate={certificate} />
 
-            {/* Chain connector: Pending CSR ↔ Pending Private Key */}
-            {certificate.pending_csr && isEncryptionKeyProvided && pendingPrivateKeyPEM && (
-                <div className="flex items-center justify-center gap-2 -mt-4 mb-2 text-xs text-info/70 dark:text-chart-2/70">
-                    <div className="h-px flex-1 bg-info/20 dark:bg-chart-2/20" />
-                    <HugeiconsIcon
-                        icon={Link04Icon}
-                        className="size-3.5 shrink-0"
-                        strokeWidth={2}
-                    />
-                    <span className="shrink-0">Cryptographically paired</span>
-                    <div className="h-px flex-1 bg-info/20 dark:bg-chart-2/20" />
-                </div>
-            )}
+                        <CertificatePath
+                            chain={chain}
+                            isLoading={chainLoading}
+                            error={chainError}
+                            onDownloadChain={handleDownloadChain}
+                            hostname={certificate.hostname}
+                        />
 
-            {/* Pending Private Key */}
-            <PendingPrivateKeySection
-                hasPendingCSR={!!certificate.pending_csr}
-                isEncryptionKeyProvided={isEncryptionKeyProvided}
-                pendingPrivateKeyPEM={pendingPrivateKeyPEM}
-                pendingPrivateKeyLoading={pendingPrivateKeyLoading}
-                pendingPrivateKeyError={pendingPrivateKeyError}
-                downloadFilename={`${certificate.hostname}.pending.key`}
-            />
+                        <CertificatePEMSection
+                            hostname={certificate.hostname}
+                            certificatePEM={certificate.certificate_pem}
+                        />
 
-            {/* Certificate Path - only for active certificates */}
-            {certificate.certificate_pem && (
-                <CertificatePath
-                    chain={chain}
-                    isLoading={chainLoading}
-                    error={chainError}
-                    onDownloadChain={handleDownloadChain}
-                    hostname={certificate.hostname}
-                />
-            )}
+                        {/* Chain connector: Certificate PEM ↔ Active Private Key */}
+                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isEncryptionKeyProvided && privateKeyPEM ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                            <div className="h-px flex-1 bg-border" />
+                            <HugeiconsIcon
+                                icon={Link04Icon}
+                                className="size-3.5 shrink-0"
+                                strokeWidth={2}
+                            />
+                            <span className="shrink-0">
+                                {isEncryptionKeyProvided && privateKeyPEM
+                                    ? "Cryptographically paired"
+                                    : "Certificate & key present but not verified"}
+                            </span>
+                            <div className="h-px flex-1 bg-border" />
+                        </div>
 
-            {/* Certificate Content */}
-            {certificate.certificate_pem && (
-                <CertificatePEMSection
-                    hostname={certificate.hostname}
-                    certificatePEM={certificate.certificate_pem}
-                />
-            )}
+                        <PrivateKeySection
+                            isEncryptionKeyProvided={isEncryptionKeyProvided}
+                            privateKeyPEM={privateKeyPEM}
+                            privateKeyLoading={privateKeyLoading}
+                            privateKeyError={privateKeyError}
+                            onDownload={handleDownloadPrivateKey}
+                        />
+                        </motion.div>
+                    </TabsContent>
+                )}
 
-            {/* Chain connector: Certificate PEM ↔ Active Private Key */}
-            {certificate.certificate_pem && isEncryptionKeyProvided && privateKeyPEM && (
-                <div className="flex items-center justify-center gap-2 -mt-4 mb-2 text-xs text-muted-foreground">
-                    <div className="h-px flex-1 bg-border" />
-                    <HugeiconsIcon
-                        icon={Link04Icon}
-                        className="size-3.5 shrink-0"
-                        strokeWidth={2}
-                    />
-                    <span className="shrink-0">Cryptographically paired</span>
-                    <div className="h-px flex-1 bg-border" />
-                </div>
-            )}
+                {/* Pending Tab */}
+                {certificate.pending_csr && activeTab === "pending" && (
+                    <TabsContent value="pending" forceMount asChild>
+                        <motion.div
+                            key="pending"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                        >
+                        <CertificateDescriptionEditor
+                            note={certificate.pending_note || ""}
+                            placeholder="Click to add pending CSR note..."
+                            onSave={handleSavePendingNote}
+                            disabled={certificate.read_only}
+                        />
 
-            {/* Active Private Key (PEM) - only for active certificates */}
-            {certificate.certificate_pem && (
-                <PrivateKeySection
-                    isEncryptionKeyProvided={isEncryptionKeyProvided}
-                    privateKeyPEM={privateKeyPEM}
-                    privateKeyLoading={privateKeyLoading}
-                    privateKeyError={privateKeyError}
-                    onUnlockClick={() => setShowKeyDialog(true)}
-                    onDownload={handleDownloadPrivateKey}
-                />
-            )}
+                        <CertificateStatusSection certificate={certificate} variant="pending" />
 
-            {/* Activity History */}
-            <CertificateHistoryCard
-                history={history}
-                isLoading={historyLoading}
-                error={historyError}
-            />
+                        <CertificateSubjectInfo certificate={certificate} variant="pending" />
+
+                        <PendingCSRSection
+                            certificate={certificate}
+                            onUploadClick={() => setUploadDialogOpen(true)}
+                            onCancelRenewal={handleCancelRenewal}
+                            cancelRenewalConfirming={cancelRenewalConfirming}
+                            setCancelRenewalConfirming={setCancelRenewalConfirming}
+                            isLoading={certLoading}
+                        />
+
+                        {/* Chain connector: Pending CSR ↔ Pending Private Key */}
+                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorText : "text-muted-foreground/60"}`}>
+                            <div className={`h-px flex-1 ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
+                            <HugeiconsIcon
+                                icon={Link04Icon}
+                                className="size-3.5 shrink-0"
+                                strokeWidth={2}
+                            />
+                            <span className="shrink-0">
+                                {isEncryptionKeyProvided && pendingPrivateKeyPEM
+                                    ? "Cryptographically paired"
+                                    : "Certificate & key present but not verified"}
+                            </span>
+                            <div className={`h-px flex-1 ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
+                        </div>
+
+                        <PendingPrivateKeySection
+                            hasPendingCSR={!!certificate.pending_csr}
+                            isEncryptionKeyProvided={isEncryptionKeyProvided}
+                            pendingPrivateKeyPEM={pendingPrivateKeyPEM}
+                            pendingPrivateKeyLoading={pendingPrivateKeyLoading}
+                            pendingPrivateKeyError={pendingPrivateKeyError}
+                            downloadFilename={`${certificate.hostname}.pending.key`}
+                        />
+                        </motion.div>
+                    </TabsContent>
+                )}
+
+                {/* Activity Tab */}
+                {activeTab === "activity" && (
+                    <TabsContent value="activity" forceMount asChild>
+                        <motion.div
+                            key="activity"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                        >
+                            <CertificateHistoryCard
+                                history={history}
+                                isLoading={historyLoading}
+                                error={historyError}
+                            />
+                        </motion.div>
+                    </TabsContent>
+                )}
+                </AnimatePresence>
+            </Tabs>
 
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog
