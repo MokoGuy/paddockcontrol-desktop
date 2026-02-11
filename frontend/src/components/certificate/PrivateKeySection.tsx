@@ -17,7 +17,6 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-    Download04Icon,
     Key01Icon,
     ArrowDown01Icon,
     ArrowUp01Icon,
@@ -29,7 +28,7 @@ interface PrivateKeySectionProps {
     privateKeyLoading: boolean;
     privateKeyError: string | null;
     onUnlockClick: () => void;
-    onDownloadClick: () => void;
+    onDownload: () => void;
 }
 
 export function PrivateKeySection({
@@ -38,7 +37,7 @@ export function PrivateKeySection({
     privateKeyLoading,
     privateKeyError,
     onUnlockClick,
-    onDownloadClick,
+    onDownload,
 }: PrivateKeySectionProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -75,40 +74,24 @@ export function PrivateKeySection({
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <Card className="mb-6 shadow-sm border-border">
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                            <HugeiconsIcon
-                                icon={Key01Icon}
-                                className="w-5 h-5"
-                                strokeWidth={2}
-                            />
-                            <div className="text-left">
-                                <CardTitle>Private Key (PEM)</CardTitle>
-                                <CardDescription>
-                                    RSA private key in PEM format
-                                </CardDescription>
-                            </div>
-                            <HugeiconsIcon
-                                icon={isOpen ? ArrowUp01Icon : ArrowDown01Icon}
-                                className="w-4 h-4 ml-1 text-muted-foreground"
-                                strokeWidth={2}
-                            />
-                        </CollapsibleTrigger>
-                        {privateKeyPEM && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={onDownloadClick}
-                            >
-                                <HugeiconsIcon
-                                    icon={Download04Icon}
-                                    className="w-4 h-4 mr-1"
-                                    strokeWidth={2}
-                                />
-                                Download
-                            </Button>
-                        )}
-                    </div>
+                    <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                        <HugeiconsIcon
+                            icon={Key01Icon}
+                            className="w-5 h-5"
+                            strokeWidth={2}
+                        />
+                        <div className="text-left">
+                            <CardTitle>Private Key (PEM)</CardTitle>
+                            <CardDescription>
+                                RSA private key in PEM format
+                            </CardDescription>
+                        </div>
+                        <HugeiconsIcon
+                            icon={isOpen ? ArrowUp01Icon : ArrowDown01Icon}
+                            className="w-4 h-4 ml-1 text-muted-foreground"
+                            strokeWidth={2}
+                        />
+                    </CollapsibleTrigger>
                 </CardHeader>
                 <CollapsibleContent>
                     <CardContent>
@@ -119,7 +102,10 @@ export function PrivateKeySection({
                                 {privateKeyError}
                             </p>
                         ) : privateKeyPEM ? (
-                            <CodeBlock content={privateKeyPEM} />
+                            <CodeBlock
+                                content={privateKeyPEM}
+                                onDownload={onDownload}
+                            />
                         ) : (
                             <p className="text-sm text-muted-foreground">
                                 No private key available

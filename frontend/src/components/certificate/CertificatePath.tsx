@@ -99,6 +99,19 @@ function ChainCertificateCard({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
+                            onClick={handleDownload}
+                            title="Download"
+                        >
+                            <HugeiconsIcon
+                                icon={Download04Icon}
+                                className="w-4 h-4"
+                                strokeWidth={2}
+                            />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
                             onClick={handleCopy}
                             title="Copy PEM"
                         >
@@ -107,19 +120,6 @@ function ChainCertificateCard({
                                     isCopied(cert.pem) ? Tick02Icon : Copy01Icon
                                 }
                                 className={`w-4 h-4 ${isCopied(cert.pem) ? "text-success" : ""}`}
-                                strokeWidth={2}
-                            />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={handleDownload}
-                            title="Download"
-                        >
-                            <HugeiconsIcon
-                                icon={Download04Icon}
-                                className="w-4 h-4"
                                 strokeWidth={2}
                             />
                         </Button>

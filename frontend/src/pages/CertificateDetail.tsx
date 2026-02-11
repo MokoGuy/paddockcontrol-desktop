@@ -92,7 +92,6 @@ export function CertificateDetail() {
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
-        handleDownloadPendingPrivateKey,
         handleSaveNote,
         closeUploadDialog,
         navigate,
@@ -294,7 +293,7 @@ export function CertificateDetail() {
                 pendingPrivateKeyPEM={pendingPrivateKeyPEM}
                 pendingPrivateKeyLoading={pendingPrivateKeyLoading}
                 pendingPrivateKeyError={pendingPrivateKeyError}
-                onDownloadClick={handleDownloadPendingPrivateKey}
+                downloadFilename={`${certificate.hostname}.pending.key`}
             />
 
             {/* Certificate Path - only for active certificates */}
@@ -338,7 +337,7 @@ export function CertificateDetail() {
                     privateKeyLoading={privateKeyLoading}
                     privateKeyError={privateKeyError}
                     onUnlockClick={() => setShowKeyDialog(true)}
-                    onDownloadClick={handleDownloadPrivateKey}
+                    onDownload={handleDownloadPrivateKey}
                 />
             )}
 

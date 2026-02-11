@@ -319,16 +319,6 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         }
     }, [certificate, downloadPrivateKey]);
 
-    const handleDownloadPendingPrivateKey = useCallback(() => {
-        if (!pendingPrivateKeyPEM || !certificate) return;
-        const link = document.createElement("a");
-        link.href =
-            "data:text/plain;charset=utf-8," +
-            encodeURIComponent(pendingPrivateKeyPEM);
-        link.download = `${certificate.hostname}.pending.key`;
-        link.click();
-    }, [pendingPrivateKeyPEM, certificate]);
-
     const handleSaveNote = useCallback(
         async (note: string, isPending: boolean) => {
             if (!hostname) return;
@@ -425,7 +415,6 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         handleDownloadChain,
         handleToggleReadOnly,
         handleDownloadPrivateKey,
-        handleDownloadPendingPrivateKey,
         handleSaveNote,
         closeUploadDialog,
         navigate,
