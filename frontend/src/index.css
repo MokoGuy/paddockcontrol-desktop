@@ -51,6 +51,8 @@
     --admin-foreground: oklch(0.971 0.013 17.38);
     --action: oklch(0.546 0.214 255.115);
     --action-foreground: oklch(0.97 0.014 254.604);
+    --renewal: oklch(0.585 0.22 300);
+    --renewal-foreground: oklch(0.97 0.014 300);
 
     /* Muted variants for badges/pills */
     --success-muted: oklch(0.912 0.044 155.995);
@@ -104,6 +106,8 @@
     --admin-foreground: oklch(0.971 0.013 17.38);
     --action: oklch(0.623 0.214 255.115);
     --action-foreground: oklch(0.97 0.014 254.604);
+    --renewal: oklch(0.65 0.2 300);
+    --renewal-foreground: oklch(0.97 0.014 300);
 
     /* Muted variants for badges/pills - dark mode */
     --success-muted: oklch(0.266 0.065 152.934);
@@ -168,6 +172,8 @@
     --color-admin-foreground: var(--admin-foreground);
     --color-admin-muted: var(--admin-muted);
     --color-action: var(--action);
+    --color-renewal: var(--renewal);
+    --color-renewal-foreground: var(--renewal-foreground);
     --color-action-foreground: var(--action-foreground);
     --color-action-muted: var(--action-muted);
 }
