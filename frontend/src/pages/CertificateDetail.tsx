@@ -10,9 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AnimatedSwitch } from "@/components/ui/animated-switch";
 import { FileDropTextarea } from "@/components/shared/FileDropTextarea";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -45,6 +43,8 @@ import {
     Cancel01Icon,
     Link04Icon,
     Download04Icon,
+    SquareLock02Icon,
+    SquareUnlock02Icon,
 } from "@hugeicons/core-free-icons";
 import { StatusBadge } from "@/components/certificate/StatusBadge";
 import { RenewalBadge } from "@/components/certificate/RenewalBadge";
@@ -152,134 +152,50 @@ export function CertificateDetail() {
     return (
         <>
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">
-                        {certificate.hostname}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-2">
-                        <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
-                            <StatusBadge
-                                status={certificate.status}
-                                daysUntilExpiration={certificate.days_until_expiration}
-                            />
-                        </motion.div>
-                        <AnimatePresence mode="popLayout">
-                            {certificate.pending_csr && certificate.status !== "pending" && (
-                                <motion.div
-                                    key="renewal-badge"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                >
-                                    <RenewalBadge />
-                                </motion.div>
-                            )}
-                            {certificate.read_only && (
-                                <motion.div
-                                    key="read-only-badge"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                >
-                                    <ReadOnlyBadge />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <div className="flex items-center gap-2 mr-4 pr-4 border-r border-border">
-                        <AnimatedSwitch
-                            id="read-only-switch"
-                            size="sm"
-                            checked={certificate.read_only}
-                            onCheckedChange={handleToggleReadOnly}
-                            disabled={isTogglingReadOnly}
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold text-foreground">
+                    {certificate.hostname}
+                </h1>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/")}
+                >
+                    ← Back
+                </Button>
+            </div>
+            <div className="-mt-4 mb-6">
+                <div className="flex items-center gap-2">
+                    <motion.div layout transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
+                        <StatusBadge
+                            status={certificate.status}
+                            daysUntilExpiration={certificate.days_until_expiration}
                         />
-                        <Label
-                            htmlFor="read-only-switch"
-                            className="text-sm text-muted-foreground cursor-pointer"
-                        >
-                            Read-only
-                        </Label>
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setExportDialogOpen(true)}
-                    >
-                        <HugeiconsIcon
-                            icon={Download04Icon}
-                            className="w-4 h-4 mr-1"
-                            strokeWidth={2}
-                        />
-                        Export
-                    </Button>
-                    <motion.div
-                        animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <AdminGatedButton
-                            variant="outline"
-                            size="sm"
-                            requireAdminMode={false}
-                            requireEncryptionKey
-                            disabled={certificate.read_only}
-                            disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
-                            onClick={() =>
-                                navigate("/certificates/generate", {
-                                    state: certificate.pending_csr
-                                        ? { regenerate: certificate.hostname }
-                                        : { renewal: certificate.hostname },
-                                })
-                            }
-                        >
-                            <HugeiconsIcon
-                                icon={RefreshIcon}
-                                className="w-4 h-4 mr-1"
-                                strokeWidth={2}
-                            />
-                            {certificate.pending_csr ? "Regenerate" : "Renew"}
-                        </AdminGatedButton>
                     </motion.div>
-                    <motion.div
-                        animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span className="inline-flex">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
-                                        onClick={() => setDeleteConfirming(true)}
-                                        disabled={certLoading || backupLoading || certificate.read_only}
-                                    >
-                                        <HugeiconsIcon
-                                            icon={Delete02Icon}
-                                            className="w-4 h-4 mr-1"
-                                            strokeWidth={2}
-                                        />
-                                        Delete
-                                    </Button>
-                                </span>
-                            </TooltipTrigger>
-                            {certificate.read_only && (
-                                <TooltipContent>Certificate is read-only</TooltipContent>
-                            )}
-                        </Tooltip>
-                    </motion.div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate("/")}
-                    >
-                        ← Back
-                    </Button>
+                    <AnimatePresence mode="popLayout">
+                        {certificate.pending_csr && certificate.status !== "pending" && (
+                            <motion.div
+                                key="renewal-badge"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            >
+                                <RenewalBadge />
+                            </motion.div>
+                        )}
+                        {certificate.read_only && (
+                            <motion.div
+                                key="read-only-badge"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            >
+                                <ReadOnlyBadge />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 
@@ -310,15 +226,99 @@ export function CertificateDetail() {
 
             {/* Tabbed Content */}
             <Tabs value={activeTab} onValueChange={setSelectedTab}>
-                <TabsList variant="line" className="mb-6">
-                    {certificate.certificate_pem && (
-                        <TabsTrigger value="certificate">Certificate</TabsTrigger>
-                    )}
-                    {certificate.pending_csr && (
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                    )}
-                    <TabsTrigger value="activity">Activity</TabsTrigger>
-                </TabsList>
+                <div className="flex items-center justify-between mb-6">
+                    <TabsList variant="line">
+                        {certificate.certificate_pem && (
+                            <TabsTrigger value="certificate">Certificate</TabsTrigger>
+                        )}
+                        {certificate.pending_csr && (
+                            <TabsTrigger value="pending">Pending</TabsTrigger>
+                        )}
+                        <TabsTrigger value="activity">Activity</TabsTrigger>
+                    </TabsList>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleReadOnly(!certificate.read_only)}
+                            disabled={isTogglingReadOnly}
+                        >
+                            <HugeiconsIcon
+                                icon={certificate.read_only ? SquareUnlock02Icon : SquareLock02Icon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            {certificate.read_only ? "Unlock" : "Lock"}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExportDialogOpen(true)}
+                        >
+                            <HugeiconsIcon
+                                icon={Download04Icon}
+                                className="w-4 h-4 mr-1"
+                                strokeWidth={2}
+                            />
+                            Export
+                        </Button>
+                        <motion.div
+                            animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <AdminGatedButton
+                                variant="outline"
+                                size="sm"
+                                requireAdminMode={false}
+                                requireEncryptionKey
+                                disabled={certificate.read_only}
+                                disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
+                                onClick={() =>
+                                    navigate("/certificates/generate", {
+                                        state: certificate.pending_csr
+                                            ? { regenerate: certificate.hostname }
+                                            : { renewal: certificate.hostname },
+                                    })
+                                }
+                            >
+                                <HugeiconsIcon
+                                    icon={RefreshIcon}
+                                    className="w-4 h-4 mr-1"
+                                    strokeWidth={2}
+                                />
+                                {certificate.pending_csr ? "Regenerate" : "Renew"}
+                            </AdminGatedButton>
+                        </motion.div>
+                        <motion.div
+                            animate={{ opacity: certificate.read_only ? 0.5 : 1 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="inline-flex">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:text-destructive/50"
+                                            onClick={() => setDeleteConfirming(true)}
+                                            disabled={certLoading || backupLoading || certificate.read_only}
+                                        >
+                                            <HugeiconsIcon
+                                                icon={Delete02Icon}
+                                                className="w-4 h-4 mr-1"
+                                                strokeWidth={2}
+                                            />
+                                            Delete
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                {certificate.read_only && (
+                                    <TooltipContent>Certificate is read-only</TooltipContent>
+                                )}
+                            </Tooltip>
+                        </motion.div>
+                    </div>
+                </div>
 
                 <AnimatePresence mode="wait">
                 {/* Certificate Tab */}
