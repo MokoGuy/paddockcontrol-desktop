@@ -129,7 +129,7 @@ export function FileDropZone({
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
-            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            className={`relative border-2 border-dashed p-8 text-center transition-colors ${
                 disabled
                     ? "cursor-not-allowed opacity-50"
                     : "cursor-pointer"

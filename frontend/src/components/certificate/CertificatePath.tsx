@@ -75,7 +75,7 @@ function ChainCertificateCard({
 
     return (
         <div
-            className={`border-l-4 ${config.border} pl-4 py-3 bg-muted rounded-r-md`}
+            className={`border-l-4 ${config.border} pl-4 py-3 bg-muted`}
         >
             <div className="flex items-center justify-between mb-3">
                 <Badge className={config.badge}>{config.label}</Badge>

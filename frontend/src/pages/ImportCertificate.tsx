@@ -79,7 +79,7 @@ export function ImportCertificate() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <pre className="bg-muted text-foreground p-4 rounded-lg text-xs overflow-auto max-h-48 border border-border scrollbar-float">
+                        <pre className="bg-muted text-foreground p-4 text-xs overflow-auto max-h-48 border border-border scrollbar-float">
                             {certificatePem.substring(0, 500)}...
                         </pre>
                     </CardContent>
@@ -93,7 +93,7 @@ export function ImportCertificate() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <pre className="bg-muted text-foreground p-4 rounded-lg text-xs overflow-auto max-h-48 border border-border scrollbar-float">
+                        <pre className="bg-muted text-foreground p-4 text-xs overflow-auto max-h-48 border border-border scrollbar-float">
                             {privateKeyPem.substring(0, 200)}...
                         </pre>
                     </CardContent>

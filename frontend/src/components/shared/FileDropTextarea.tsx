@@ -94,7 +94,7 @@ export function FileDropTextarea({
             onDragOver={handleDragOver}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
-            className={`relative rounded-md transition-all ${
+            className={`relative transition-all ${
                 isDragging ? "ring-2 ring-primary ring-offset-2" : ""
             }`}
         >
@@ -107,7 +107,7 @@ export function FileDropTextarea({
                 rows={rows}
             />
             {isDragging && (
-                <div className="absolute inset-0 bg-primary/10 rounded-md flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 bg-primary/10 flex items-center justify-center pointer-events-none">
                     <span className="text-primary font-medium">
                         {dropLabel}
                     </span>

@@ -576,7 +576,7 @@ export function RestoreBackup() {
                         </TableBody>
                       </Table>
                     ) : (
-                      <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-border rounded-lg">
+                      <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-border">
                         No certificates in backup
                       </div>
                     )}

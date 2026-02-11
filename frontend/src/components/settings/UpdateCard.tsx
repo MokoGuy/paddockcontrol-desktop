@@ -160,7 +160,7 @@ export function UpdateCard() {
 
                 {/* Update Complete */}
                 {updateState === "complete" && (
-                    <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
+                    <div className="flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
                         <HugeiconsIcon
                             icon={Tick02Icon}
                             className="size-4 shrink-0"

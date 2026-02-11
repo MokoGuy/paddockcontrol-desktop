@@ -365,18 +365,18 @@ export function AppHeader({
                             ease: [0.34, 1.56, 0.64, 1],
                         }}
                     >
-                        <span className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 rounded border border-admin/30 flex items-center gap-1 relative shadow-sm">
+                        <span className="text-xs font-semibold text-admin bg-admin-muted pl-2 pr-1 py-0.5 border border-admin/30 flex items-center gap-1 relative shadow-sm">
                             {/* Pulse and glow effect on enable */}
                             {showPulse && (
                                 <>
                                     <motion.span
-                                        className="absolute inset-0 rounded border-2 border-admin"
+                                        className="absolute inset-0 border-2 border-admin"
                                         initial={{ opacity: 0.8, scale: 1 }}
                                         animate={{ opacity: 0, scale: 2 }}
                                         transition={{ duration: 0.3 }}
                                     />
                                     <motion.span
-                                        className="absolute inset-0 rounded bg-admin"
+                                        className="absolute inset-0 bg-admin"
                                         initial={{ opacity: 0.4, scale: 1 }}
                                         animate={{ opacity: 0, scale: 2.5 }}
                                         transition={{ duration: 1.2 }}
@@ -387,7 +387,7 @@ export function AppHeader({
                             admin mode
                             <button
                                 onClick={() => setIsAdminModeEnabled(false)}
-                                className="hover:bg-admin/20 rounded p-0.5 transition-colors"
+                                className="hover:bg-admin/20 p-0.5 transition-colors"
                                 title="Disable admin mode"
                             >
                                 <HugeiconsIcon

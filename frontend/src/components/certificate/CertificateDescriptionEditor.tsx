@@ -164,7 +164,7 @@ function InlineEditField({
             <p
                 onClick={handleClick}
                 className={cn(
-                    "text-sm whitespace-pre-wrap py-1 px-2 -mx-2 rounded transition-colors",
+                    "text-sm whitespace-pre-wrap py-1 px-2 -mx-2 transition-colors",
                     value
                         ? "text-muted-foreground"
                         : "text-muted-foreground/50 italic",
