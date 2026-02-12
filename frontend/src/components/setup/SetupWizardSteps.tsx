@@ -1,4 +1,4 @@
-export type WizardStep = "email" | "ca-config" | "organization" | "cert-defaults" | "encryption-key" | "review";
+export type WizardStep = "email" | "ca-config" | "organization" | "cert-defaults" | "password" | "review";
 
 interface StepConfig {
   id: WizardStep;
@@ -11,7 +11,7 @@ const STEPS: StepConfig[] = [
   { id: "ca-config", label: "CA Config", number: 2 },
   { id: "organization", label: "Organization", number: 3 },
   { id: "cert-defaults", label: "Defaults", number: 4 },
-  { id: "encryption-key", label: "Security", number: 5 },
+  { id: "password", label: "Security", number: 5 },
   { id: "review", label: "Review", number: 6 },
 ];
 

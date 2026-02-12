@@ -18,7 +18,7 @@ func TestClearPendingCSR_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create an active certificate with a pending renewal CSR
 	_, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -72,7 +72,7 @@ func TestClearPendingCSR_ReadOnly_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "readonly.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -140,7 +140,7 @@ func TestClearPendingCSR_LogsHistoryEvent(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "history.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -192,7 +192,7 @@ func TestListCertificates_HasPendingCSR_True(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "pending.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 

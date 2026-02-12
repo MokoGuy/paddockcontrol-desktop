@@ -76,3 +76,15 @@ CREATE TABLE update_history (
     created_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 CREATE INDEX idx_update_history_created_at ON update_history(created_at);
+
+-- Create security_keys table for multi-method master key wrapping
+CREATE TABLE security_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    method TEXT NOT NULL CHECK(method IN ('password', 'os_native', 'fido2')),
+    label TEXT NOT NULL,
+    wrapped_master_key BLOB NOT NULL,
+    metadata TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_used_at INTEGER
+);
+CREATE INDEX idx_security_keys_method ON security_keys(method);

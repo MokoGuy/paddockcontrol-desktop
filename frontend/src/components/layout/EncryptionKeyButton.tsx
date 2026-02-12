@@ -8,13 +8,13 @@ import { EncryptionKeyDialog } from "@/components/shared/EncryptionKeyDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 export function EncryptionKeyButton() {
-    const { isEncryptionKeyProvided, setIsEncryptionKeyProvided } =
+    const { isUnlocked, setIsUnlocked } =
         useAppStore();
     const [showUnlockDialog, setShowUnlockDialog] = useState(false);
     const [showLockConfirm, setShowLockConfirm] = useState(false);
 
     const handleClick = () => {
-        if (isEncryptionKeyProvided) {
+        if (isUnlocked) {
             setShowLockConfirm(true);
         } else {
             setShowUnlockDialog(true);
@@ -23,7 +23,7 @@ export function EncryptionKeyButton() {
 
     const handleLock = async () => {
         await api.clearEncryptionKey();
-        setIsEncryptionKeyProvided(false);
+        setIsUnlocked(false);
         setShowLockConfirm(false);
     };
 
@@ -34,18 +34,18 @@ export function EncryptionKeyButton() {
                 size="icon"
                 onClick={handleClick}
                 title={
-                    isEncryptionKeyProvided
-                        ? "Lock encryption key"
-                        : "Unlock encryption key"
+                    isUnlocked
+                        ? "Lock"
+                        : "Unlock"
                 }
                 className={`${
-                    isEncryptionKeyProvided
+                    isUnlocked
                         ? "text-success"
                         : "text-warning"
                 } hover:bg-transparent dark:hover:bg-transparent focus-visible:ring-0 focus-visible:border-transparent active:bg-transparent`}
             >
                 <HugeiconsIcon
-                    icon={isEncryptionKeyProvided ? LockKeyIcon : LockIcon}
+                    icon={isUnlocked ? LockKeyIcon : LockIcon}
                     className="w-5 h-5"
                     strokeWidth={2}
                 />
@@ -58,8 +58,8 @@ export function EncryptionKeyButton() {
 
             <ConfirmDialog
                 open={showLockConfirm}
-                title="Lock Encryption Key"
-                description="This will clear the encryption key from memory. You will need to provide it again to access private key operations."
+                title="Lock"
+                description="This will lock the application. You will need to enter your password again to access private key operations."
                 confirmText="Lock"
                 cancelText="Cancel"
                 onConfirm={handleLock}

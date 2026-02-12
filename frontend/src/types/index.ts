@@ -45,6 +45,17 @@ export interface CertificateUploadPreview {
     key_match: boolean;
 }
 
+// Security key types
+export type SecurityKeyMethod = "password" | "os_native" | "fido2";
+
+export interface SecurityKeyInfo {
+    id: number;
+    method: SecurityKeyMethod;
+    label: string;
+    created_at: number;
+    last_used_at?: number;
+}
+
 // Frontend-only types (not in Go backend)
 export interface ImportResult {
     success: number;

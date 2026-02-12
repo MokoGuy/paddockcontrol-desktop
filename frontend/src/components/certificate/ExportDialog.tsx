@@ -20,7 +20,7 @@ interface ExportDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     certificate: Certificate;
-    isEncryptionKeyProvided: boolean;
+    isUnlocked: boolean;
 }
 
 interface ExportItem {
@@ -35,7 +35,7 @@ export function ExportDialog({
     open,
     onOpenChange,
     certificate,
-    isEncryptionKeyProvided,
+    isUnlocked,
 }: ExportDialogProps) {
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState<string | null>(null);
@@ -94,10 +94,10 @@ export function ExportDialog({
     const defaultChecked = useMemo(() => {
         const checked: Record<string, boolean> = {};
         for (const item of items) {
-            checked[item.key] = item.requiresKey ? isEncryptionKeyProvided : true;
+            checked[item.key] = item.requiresKey ? isUnlocked : true;
         }
         return checked;
-    }, [items, isEncryptionKeyProvided]);
+    }, [items, isUnlocked]);
 
     const [checked, setChecked] = useState<Record<string, boolean>>(defaultChecked);
 
@@ -107,14 +107,14 @@ export function ExportDialog({
             if (open) {
                 const initial: Record<string, boolean> = {};
                 for (const item of items) {
-                    initial[item.key] = item.requiresKey ? isEncryptionKeyProvided : true;
+                    initial[item.key] = item.requiresKey ? isUnlocked : true;
                 }
                 setChecked(initial);
                 setExportError(null);
             }
             onOpenChange(open);
         },
-        [onOpenChange, items, isEncryptionKeyProvided],
+        [onOpenChange, items, isUnlocked],
     );
 
     const toggleItem = useCallback((key: string, value: boolean) => {
@@ -185,13 +185,13 @@ export function ExportDialog({
                                     checked={!!checked[item.key]}
                                     disabled={
                                         item.requiresKey &&
-                                        !isEncryptionKeyProvided
+                                        !isUnlocked
                                     }
                                     onCheckedChange={(val) =>
                                         toggleItem(item.key, val)
                                     }
-                                    isEncryptionKeyProvided={
-                                        isEncryptionKeyProvided
+                                    isUnlocked={
+                                        isUnlocked
                                     }
                                 />
                             ))}
@@ -210,13 +210,13 @@ export function ExportDialog({
                                     checked={!!checked[item.key]}
                                     disabled={
                                         item.requiresKey &&
-                                        !isEncryptionKeyProvided
+                                        !isUnlocked
                                     }
                                     onCheckedChange={(val) =>
                                         toggleItem(item.key, val)
                                     }
-                                    isEncryptionKeyProvided={
-                                        isEncryptionKeyProvided
+                                    isUnlocked={
+                                        isUnlocked
                                     }
                                 />
                             ))}
@@ -248,13 +248,13 @@ function ExportCheckboxItem({
     checked,
     disabled,
     onCheckedChange,
-    isEncryptionKeyProvided,
+    isUnlocked,
 }: {
     item: ExportItem;
     checked: boolean;
     disabled: boolean;
     onCheckedChange: (val: boolean) => void;
-    isEncryptionKeyProvided: boolean;
+    isUnlocked: boolean;
 }) {
     return (
         <div className="flex items-center gap-3">
@@ -272,7 +272,7 @@ function ExportCheckboxItem({
                     {item.label}
                 </Label>
                 <p className="text-xs text-muted-foreground truncate">
-                    {item.requiresKey && !isEncryptionKeyProvided
+                    {item.requiresKey && !isUnlocked
                         ? "Encryption key required"
                         : item.filename}
                 </p>

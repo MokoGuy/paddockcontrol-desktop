@@ -12,7 +12,7 @@ import (
 )
 
 func TestValidateKeyMatches_MatchingCSR(t *testing.T) {
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	key, err := GenerateRSAKey(2048)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestValidateKeyMatches_MatchingCSR(t *testing.T) {
 }
 
 func TestValidateKeyMatches_MatchingCert(t *testing.T) {
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	key, err := GenerateRSAKey(2048)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestValidateKeyMatches_MatchingCert(t *testing.T) {
 }
 
 func TestValidateKeyMatches_MismatchingCert(t *testing.T) {
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Key A — the encrypted key
 	keyA, err := GenerateRSAKey(2048)
@@ -148,7 +148,7 @@ func TestValidateKeyMatches_MismatchingCert(t *testing.T) {
 }
 
 func TestValidateKeyMatches_NoKey(t *testing.T) {
-	result := ValidateKeyMatches(nil, nil, nil, "any-key")
+	result := ValidateKeyMatches(nil, nil, nil, []byte("any-key"))
 
 	if result.KeyPresent {
 		t.Error("expected KeyPresent to be false")

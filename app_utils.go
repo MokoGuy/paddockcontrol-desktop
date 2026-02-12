@@ -158,17 +158,17 @@ func (a *App) ResetDatabase() error {
 	}
 
 	// Clear encryption key from memory
-	if a.encryptionKey != nil {
-		for i := range a.encryptionKey {
-			a.encryptionKey[i] = 0
+	if a.masterKey != nil {
+		for i := range a.masterKey {
+			a.masterKey[i] = 0
 		}
-		a.encryptionKey = nil
+		a.masterKey = nil
 	}
 
 	// Reset state to initial values
 	a.isConfigured = false
 	a.waitingForEncryptionKey = true
-	a.encryptionKeyProvided = false
+	a.isUnlocked = false
 
 	// Reinitialize services without encryption key
 	a.initializeServicesWithoutKey()

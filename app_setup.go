@@ -118,8 +118,8 @@ func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key strin
 	// Find first certificate with encrypted key
 	for _, cert := range backup.Certificates {
 		if len(cert.EncryptedKey) > 0 {
-			// Try to decrypt
-			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, key)
+			// DEPRECATED(v2.0.0): Uses legacy SHA-256 format for old backup validation.
+			_, err := crypto.DecryptPrivateKeyLegacy(cert.EncryptedKey, key)
 			if err != nil {
 				log.Error("encryption key validation failed", logger.Err(err))
 				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
@@ -130,7 +130,8 @@ func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key strin
 		}
 
 		if len(cert.PendingEncryptedKey) > 0 {
-			_, err := crypto.DecryptPrivateKey(cert.PendingEncryptedKey, key)
+			// DEPRECATED(v2.0.0): Uses legacy SHA-256 format for old backup validation.
+			_, err := crypto.DecryptPrivateKeyLegacy(cert.PendingEncryptedKey, key)
 			if err != nil {
 				log.Error("encryption key validation failed", logger.Err(err))
 				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
@@ -148,7 +149,7 @@ func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key strin
 
 // RestoreFromBackup imports backup and marks setup complete
 func (a *App) RestoreFromBackup(backup models.BackupData) error {
-	if err := a.requireEncryptionKey(); err != nil {
+	if err := a.requireUnlocked(); err != nil {
 		return err
 	}
 
@@ -162,8 +163,8 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 
 	a.mu.RLock()
 	setupService := a.setupService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if setupService == nil {
@@ -178,7 +179,7 @@ func (a *App) RestoreFromBackup(backup models.BackupData) error {
 	a.mu.Lock()
 	a.isConfigured = true
 	a.waitingForEncryptionKey = false // Key was provided during restore
-	a.encryptionKeyProvided = true
+	a.isUnlocked = true
 	a.mu.Unlock()
 
 	log.Info("restore completed successfully")

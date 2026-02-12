@@ -21,7 +21,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         error: certError,
     } = useCertificates();
     const { isLoading: backupLoading } = useBackup();
-    const { isEncryptionKeyProvided } = useAppStore();
+    const { isUnlocked } = useAppStore();
 
     // Certificate state
     const [certificate, setCertificate] = useState<Certificate | null>(null);
@@ -116,7 +116,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
 
     // Load private key
     const loadPrivateKey = useCallback(async () => {
-        if (!hostname || !isEncryptionKeyProvided) return;
+        if (!hostname || !isUnlocked) return;
 
         setPrivateKeyLoading(true);
         setPrivateKeyError(null);
@@ -134,11 +134,11 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         } finally {
             setPrivateKeyLoading(false);
         }
-    }, [hostname, isEncryptionKeyProvided]);
+    }, [hostname, isUnlocked]);
 
     // Load pending private key
     const loadPendingPrivateKey = useCallback(async () => {
-        if (!hostname || !isEncryptionKeyProvided || !certificate?.pending_csr) return;
+        if (!hostname || !isUnlocked || !certificate?.pending_csr) return;
 
         setPendingPrivateKeyLoading(true);
         setPendingPrivateKeyError(null);
@@ -156,7 +156,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         } finally {
             setPendingPrivateKeyLoading(false);
         }
-    }, [hostname, isEncryptionKeyProvided, certificate?.pending_csr]);
+    }, [hostname, isUnlocked, certificate?.pending_csr]);
 
     // Load certificate history
     const loadHistory = useCallback(async () => {
@@ -192,17 +192,17 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
 
     // Load private key when certificate and encryption key are available
     useEffect(() => {
-        if (certificate && isEncryptionKeyProvided) {
+        if (certificate && isUnlocked) {
             loadPrivateKey();
         }
-    }, [certificate, isEncryptionKeyProvided, loadPrivateKey]);
+    }, [certificate, isUnlocked, loadPrivateKey]);
 
     // Load pending private key when certificate has pending CSR and encryption key is available
     useEffect(() => {
-        if (certificate?.pending_csr && isEncryptionKeyProvided) {
+        if (certificate?.pending_csr && isUnlocked) {
             loadPendingPrivateKey();
         }
-    }, [certificate?.pending_csr, isEncryptionKeyProvided, loadPendingPrivateKey]);
+    }, [certificate?.pending_csr, isUnlocked, loadPendingPrivateKey]);
 
     // Load history when certificate is available
     useEffect(() => {
@@ -354,7 +354,7 @@ export function useCertificateDetail({ hostname }: UseCertificateDetailOptions) 
         certError,
         certLoading,
         backupLoading,
-        isEncryptionKeyProvided,
+        isUnlocked,
 
         // Chain data
         chain,

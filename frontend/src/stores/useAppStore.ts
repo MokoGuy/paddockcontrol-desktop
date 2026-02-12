@@ -11,8 +11,8 @@ interface AppState {
     setIsWaitingForEncryptionKey: (waiting: boolean) => void;
 
     // Track if key was actually provided (not skipped)
-    isEncryptionKeyProvided: boolean;
-    setIsEncryptionKeyProvided: (provided: boolean) => void;
+    isUnlocked: boolean;
+    setIsUnlocked: (provided: boolean) => void;
 
     // Key validation error (for showing which certs failed)
     keyValidationError: KeyValidationError | null;
@@ -31,6 +31,10 @@ interface AppState {
     setError: (error: string | null) => void;
     clearError: () => void;
 
+    // Migration state
+    needsMigration: boolean;
+    setNeedsMigration: (needs: boolean) => void;
+
     // Admin mode (hidden behind Konami code)
     isAdminModeEnabled: boolean;
     setIsAdminModeEnabled: (enabled: boolean) => void;
@@ -41,9 +45,9 @@ export const useAppStore = create<AppState>((set) => ({
     setIsWaitingForEncryptionKey: (waiting) =>
         set({ isWaitingForEncryptionKey: waiting }),
 
-    isEncryptionKeyProvided: false,
-    setIsEncryptionKeyProvided: (provided) =>
-        set({ isEncryptionKeyProvided: provided }),
+    isUnlocked: false,
+    setIsUnlocked: (provided) =>
+        set({ isUnlocked: provided }),
 
     keyValidationError: null,
     setKeyValidationError: (error) => set({ keyValidationError: error }),
@@ -57,6 +61,9 @@ export const useAppStore = create<AppState>((set) => ({
     error: null,
     setError: (error) => set({ error }),
     clearError: () => set({ error: null }),
+
+    needsMigration: false,
+    setNeedsMigration: (needs) => set({ needsMigration: needs }),
 
     isAdminModeEnabled: false,
     setIsAdminModeEnabled: (enabled) => set({ isAdminModeEnabled: enabled }),

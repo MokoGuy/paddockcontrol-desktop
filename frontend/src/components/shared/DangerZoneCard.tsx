@@ -7,7 +7,7 @@ interface DangerZoneCardProps {
     buttonLabel: string;
     onClick: () => void;
     isAdminModeEnabled: boolean;
-    requireEncryptionKey?: boolean;
+    requireUnlocked?: boolean;
     disabled?: boolean;
     disabledReason?: string;
     className?: string;
@@ -19,7 +19,7 @@ export function DangerZoneCard({
     buttonLabel,
     onClick,
     isAdminModeEnabled,
-    requireEncryptionKey,
+    requireUnlocked,
     disabled,
     disabledReason,
     className,
@@ -39,7 +39,7 @@ export function DangerZoneCard({
                     variant="outline"
                     size="sm"
                     className="border-admin/50 text-admin hover:bg-admin/20"
-                    requireEncryptionKey={requireEncryptionKey}
+                    requireUnlocked={requireUnlocked}
                     disabled={disabled}
                     disabledReason={disabledReason}
                     onClick={onClick}
