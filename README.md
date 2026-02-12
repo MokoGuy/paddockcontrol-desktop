@@ -8,7 +8,7 @@ A desktop certificate management app for teams that handle SSL/TLS certificates 
 
 ## About
 
-PaddockControl Desktop simplifies the certificate lifecycle for organizations using internal Certificate Authorities. Generate CSRs, track certificate status, store private keys with AES encryption, and never lose track of expiring certificates again. Built with Go and React, it runs natively on Windows with auto-updates.
+PaddockControl Desktop simplifies the certificate lifecycle for organizations using internal Certificate Authorities. Generate CSRs, track certificate status, securely store private keys with AES-256-GCM encryption, and never lose track of expiring certificates again. Built with Go and React, it runs natively on Windows with auto-updates.
 
 ## Screenshots
 
@@ -35,7 +35,8 @@ PaddockControl Desktop simplifies the certificate lifecycle for organizations us
 - Generate CSRs with RSA 4096-bit keys
 - Track certificate status (pending / active / expiring / expired)
 - Import existing certificates
-- AES-encrypted private key storage
+- AES-256-GCM encrypted private key storage with master key wrapping (Argon2id)
+- OS-native keyring auto-unlock (Linux / Windows)
 - Backup & restore
 - Dark / light theme
 - Auto-updates

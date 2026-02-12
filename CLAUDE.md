@@ -52,7 +52,8 @@ The `App` struct in `app.go` is the bridge between Go and frontend. All its publ
 ### Internal Packages (`/internal/`)
 
 - **config/**: Configuration service and validation
-- **crypto/**: RSA key generation, CSR creation, certificate parsing, AES encryption/decryption for private keys
+- **crypto/**: RSA key generation, CSR creation, certificate parsing, AES-256-GCM encryption with master key wrapping, Argon2id key derivation
+- **keystore/**: OS-native keyring abstraction (Linux via D-Bus, Windows via WinCred)
 - **db/**: SQLite database initialization, migrations, sqlc queries
   - `schema.sql`: Source of truth for database schema
   - `queries/`: SQL queries for sqlc code generation
@@ -95,16 +96,22 @@ When modifying Go models, run `wails dev` or `wails build` to regenerate TypeScr
 
 ## Key Patterns
 
-### Encryption Key Handling
+### Master Key & Unlock Flow
+
+A random 32-byte master key encrypts all certificate private keys (AES-256-GCM). The master key itself is wrapped by one or more unlock methods stored in the `security_keys` table:
+- **Password**: Argon2id derives a wrapping key from the user's password
+- **OS-native keyring**: A random wrapping key stored in the OS keyring (Linux D-Bus / Windows WinCred)
 
 The app has two modes:
-1. **Limited mode**: Read-only operations (list, view, delete certificates) without encryption key
-2. **Full mode**: All operations including CSR generation, key export (requires encryption key)
+1. **Locked mode**: Read-only operations (list, view, delete certificates) without master key in memory
+2. **Unlocked mode**: All operations including CSR generation, key export (master key in memory)
+
+On startup, the app attempts auto-unlock via OS keyring. If unavailable, the user provides their password.
 
 Methods use guards:
-- `requireSetupOnly()`: Setup complete, key not required
-- `requireEncryptionKey()`: Key must be provided
-- `requireSetupComplete()`: Both setup and key required
+- `requireSetupOnly()`: Setup complete, unlock not required
+- `requireUnlocked()`: Master key must be in memory
+- `requireSetupComplete()`: Both setup and unlock required
 
 ### Certificate Status
 
