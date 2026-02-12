@@ -42,6 +42,14 @@ export function DownloadAndApplyUpdate() {
   return window['go']['main']['App']['DownloadAndApplyUpdate']();
 }
 
+export function EnrollOSNative() {
+  return window['go']['main']['App']['EnrollOSNative']();
+}
+
+export function EnrollPasswordMethod(arg1, arg2) {
+  return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
+}
+
 export function ExportBackup(arg1) {
   return window['go']['main']['App']['ExportBackup'](arg1);
 }
@@ -102,20 +110,12 @@ export function GetUpdateHistory(arg1) {
   return window['go']['main']['App']['GetUpdateHistory'](arg1);
 }
 
-export function ImportCertificate(arg1) {
-  return window['go']['main']['App']['ImportCertificate'](arg1);
-}
-
-export function EnrollOSNative() {
-  return window['go']['main']['App']['EnrollOSNative']();
-}
-
-export function EnrollPasswordMethod(arg1, arg2) {
-  return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
-}
-
 export function HasSecurityKeys() {
   return window['go']['main']['App']['HasSecurityKeys']();
+}
+
+export function ImportCertificate(arg1) {
+  return window['go']['main']['App']['ImportCertificate'](arg1);
 }
 
 export function IsOSKeystoreAvailable() {

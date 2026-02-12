@@ -23,6 +23,10 @@ export function DeleteLocalBackup(arg1:string):Promise<void>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
 
+export function EnrollOSNative():Promise<void>;
+
+export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
+
 export function ExportBackup(arg1:boolean):Promise<void>;
 
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
@@ -53,13 +57,9 @@ export function GetSetupDefaults():Promise<models.SetupDefaults>;
 
 export function GetUpdateHistory(arg1:number):Promise<Array<models.UpdateHistoryEntry>>;
 
-export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
-
-export function EnrollOSNative():Promise<void>;
-
-export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
-
 export function HasSecurityKeys():Promise<boolean>;
+
+export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
 export function IsOSKeystoreAvailable():Promise<boolean>;
 
