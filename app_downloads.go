@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -450,76 +449,6 @@ func (a *App) ExportCertificateZip(hostname string, options models.ExportOptions
 	}
 
 	log.Info("certificate export saved", slog.String("path", path), slog.Int("files", len(entries)))
-	return nil
-}
-
-// ============================================================================
-// Backup Export Operations
-// ============================================================================
-
-// ExportBackup prompts user to save backup file
-// Requires encryption key only if includeKeys is true
-func (a *App) ExportBackup(includeKeys bool) error {
-	if err := a.requireSetupOnly(); err != nil {
-		return err
-	}
-
-	// If including keys, require encryption key
-	if includeKeys {
-		if err := a.requireUnlocked(); err != nil {
-			return fmt.Errorf("encryption key required to export backup with private keys")
-		}
-	}
-
-	_, log := logger.WithOperation(a.ctx, "export_backup")
-	log.Info("exporting backup", slog.Bool("include_keys", includeKeys))
-
-	a.mu.RLock()
-	backupService := a.backupService
-	a.mu.RUnlock()
-
-	if backupService == nil {
-		return fmt.Errorf("backup service not initialized")
-	}
-
-	backup, err := backupService.ExportBackup(a.ctx, includeKeys)
-	if err != nil {
-		log.Error("export backup failed", logger.Err(err))
-		return err
-	}
-
-	path, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
-		DefaultFilename: fmt.Sprintf("paddockcontrol-backup-%s.json",
-			time.Now().Format("20060102-150405")),
-		Title: "Export Backup",
-		Filters: []wailsruntime.FileFilter{
-			{DisplayName: "JSON Files (*.json)", Pattern: "*.json"},
-			{DisplayName: "All Files (*.*)", Pattern: "*.*"},
-		},
-	})
-
-	if err != nil {
-		log.Error("file dialog error", logger.Err(err))
-		return fmt.Errorf("file dialog error: %w", err)
-	}
-
-	if path == "" {
-		log.Info("user cancelled backup export")
-		return nil
-	}
-
-	data, err := json.MarshalIndent(backup, "", "  ")
-	if err != nil {
-		log.Error("failed to marshal backup", logger.Err(err))
-		return fmt.Errorf("failed to marshal backup: %w", err)
-	}
-
-	if err := os.WriteFile(path, data, 0600); err != nil {
-		log.Error("failed to write backup file", slog.String("path", path), logger.Err(err))
-		return fmt.Errorf("failed to write file: %w", err)
-	}
-
-	log.Info("backup exported", slog.String("path", path), slog.Int("certificates", len(backup.Certificates)))
 	return nil
 }
 

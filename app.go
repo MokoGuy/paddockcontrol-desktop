@@ -25,7 +25,6 @@ type App struct {
 	// Database and services
 	db                 *db.Database
 	certificateService *services.CertificateService
-	backupService      *services.BackupService
 	autoBackupService  *services.AutoBackupService
 	setupService       *services.SetupService
 	configService      *config.Service
@@ -201,9 +200,8 @@ func (a *App) showFatalError(title, message string) {
 // initializeServicesWithoutKey initializes services for read-only access
 func (a *App) initializeServicesWithoutKey() {
 	a.configService = config.NewService(a.db)
-	a.backupService = services.NewBackupService(a.db)
 	a.certificateService = services.NewCertificateService(a.db, a.configService)
-	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
+	a.setupService = services.NewSetupService(a.db, a.configService)
 	if a.dataDir != ":memory:" {
 		a.autoBackupService = services.NewAutoBackupService(a.db.DB(), a.dataDir)
 	}

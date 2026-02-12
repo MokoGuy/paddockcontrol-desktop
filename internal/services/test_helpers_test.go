@@ -105,7 +105,7 @@ func containsHelper(s, substr string) bool {
 	return false
 }
 
-// setupTestConfig seeds a config row in the database (needed by GenerateCSR, ExportBackup)
+// setupTestConfig seeds a config row in the database (needed by GenerateCSR)
 func setupTestConfig(t *testing.T, database *db.Database) {
 	t.Helper()
 	ctx := context.Background()
@@ -130,19 +130,6 @@ func setupTestConfig(t *testing.T, database *db.Database) {
 	}
 }
 
-// setupBackupService creates a BackupService with an in-memory database
-func setupBackupService(t *testing.T) (*BackupService, *db.Database) {
-	t.Helper()
-	database, err := db.NewDatabase(":memory:")
-	if err != nil {
-		t.Fatalf("failed to create database: %v", err)
-	}
-	t.Cleanup(func() { database.Close() })
-
-	svc := NewBackupService(database)
-	return svc, database
-}
-
 // setupSetupService creates a SetupService with all dependencies
 func setupSetupService(t *testing.T) (*SetupService, *db.Database) {
 	t.Helper()
@@ -153,8 +140,7 @@ func setupSetupService(t *testing.T) (*SetupService, *db.Database) {
 	t.Cleanup(func() { database.Close() })
 
 	configSvc := config.NewService(database)
-	backupSvc := NewBackupService(database)
-	svc := NewSetupService(database, configSvc, backupSvc)
+	svc := NewSetupService(database, configSvc)
 	return svc, database
 }
 
@@ -170,26 +156,6 @@ func makeTestSetupRequest() models.SetupRequest {
 		DefaultState:        "IDF",
 		DefaultCountry:      "FR",
 		DefaultKeySize:      4096,
-	}
-}
-
-// makeTestBackupWithConfig returns a BackupData with config and the given certificates
-func makeTestBackupWithConfig(certs []*models.BackupCertificate) *models.BackupData {
-	return &models.BackupData{
-		Version:    "1.0",
-		ExportedAt: time.Now().Unix(),
-		Config: &models.Config{
-			OwnerEmail:         "admin@example.com",
-			CAName:             "Backup CA",
-			HostnameSuffix:     ".example.com",
-			ValidityPeriodDays: 365,
-			DefaultOrganization: "Backup Org",
-			DefaultCity:         "Paris",
-			DefaultState:        "IDF",
-			DefaultCountry:      "FR",
-			DefaultKeySize:      4096,
-		},
-		Certificates: certs,
 	}
 }
 

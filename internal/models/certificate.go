@@ -97,46 +97,19 @@ type CertificateFilter struct {
 	SortOrder string `json:"sort_order,omitempty"` // asc, desc
 }
 
-// BackupCertificate represents a certificate in a backup file
-type BackupCertificate struct {
-	Hostname            string `json:"hostname"`
-	EncryptedKey        []byte `json:"encrypted_private_key,omitempty"`
-	PendingCSR          string `json:"pending_csr_pem,omitempty"`
-	CertificatePEM      string `json:"certificate_pem,omitempty"`
-	PendingEncryptedKey []byte `json:"pending_encrypted_private_key,omitempty"`
-	CreatedAt           int64  `json:"created_at"`
-	ExpiresAt           *int64 `json:"expires_at,omitempty"`
-	Note                string `json:"note,omitempty"`
-	PendingNote         string `json:"pending_note,omitempty"`
-	ReadOnly            bool   `json:"read_only"`
-}
-
-// BackupData represents the complete backup file structure
-type BackupData struct {
-	Version       string               `json:"version"`
-	ExportedAt    int64                `json:"exported_at"`
-	EncryptionKey string               `json:"encryption_key,omitempty"`
-	Config        *Config              `json:"config,omitempty"`
-	Certificates  []*BackupCertificate `json:"certificates,omitempty"`
-}
-
-// ImportResult represents the result of importing a backup
-type ImportResult struct {
-	Success   int      `json:"success"`
+// CertImportResult represents the result of importing certificates from a backup
+type CertImportResult struct {
+	Imported  int      `json:"imported"`
 	Skipped   int      `json:"skipped"`
-	Failed    int      `json:"failed"`
 	Conflicts []string `json:"conflicts,omitempty"`
 }
 
-// BackupValidationResult represents validation results from a backup file
-type BackupValidationResult struct {
-	Valid            bool   `json:"valid"`
-	Version          string `json:"version"`
-	CertificateCount int    `json:"certificate_count"`
-	HasEncryptedKeys bool   `json:"has_encrypted_keys"`
-	HasEncryptionKey bool   `json:"has_encryption_key"`
-	EncryptionKey    string `json:"encryption_key"`
-	ExportedAt       int64  `json:"exported_at"`
+// BackupPeekInfo represents a summary of a backup file's contents
+type BackupPeekInfo struct {
+	CertificateCount int      `json:"certificate_count"`
+	CAName           string   `json:"ca_name"`
+	HasSecurityKeys  bool     `json:"has_security_keys"`
+	Hostnames        []string `json:"hostnames"`
 }
 
 // LocalBackupInfo represents metadata about a local database backup file
