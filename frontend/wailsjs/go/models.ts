@@ -497,11 +497,11 @@ export namespace models {
 	    label: string;
 	    created_at: number;
 	    last_used_at?: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SecurityKeyInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
