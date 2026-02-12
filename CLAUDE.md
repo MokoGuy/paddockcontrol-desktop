@@ -61,7 +61,7 @@ The `App` struct in `app.go` is the bridge between Go and frontend. All its publ
   - `status.go`: Certificate status computation (pending/active/expiring/expired)
 - **logger/**: Rotating file logger with lumberjack
 - **models/**: Go structs shared between services and exposed to frontend
-- **services/**: Business logic (CertificateService, BackupService, SetupService)
+- **services/**: Business logic (CertificateService, AutoBackupService, SetupService)
 
 ### Frontend (`/frontend/`)
 
@@ -112,6 +112,20 @@ Methods use guards:
 - `requireSetupOnly()`: Setup complete, unlock not required
 - `requireUnlocked()`: Master key must be in memory
 - `requireSetupComplete()`: Both setup and unlock required
+
+### Backup System
+
+Database backups (SQLite file copies via `VACUUM INTO`) are the single backup format. There is no JSON export/import.
+
+- **Auto-backups**: Created automatically before destructive operations (stored in `backups/` subdirectory)
+- **Manual backups**: Created on-demand from Settings
+- **Full restore**: Replaces the entire database with a backup file (locks the app, requires password re-entry)
+- **Certificate import**: Selectively imports certificates from another backup's database, re-encrypting private keys from the backup's master key to the current master key
+
+Key methods in `app_backup_import.go`:
+- `PeekBackupInfo(path)`: Opens backup DB read-only, returns cert count, CA name, hostnames
+- `ImportCertificatesFromBackup(path, password)`: Unwraps backup's master key, re-encrypts certs, inserts non-conflicting hostnames
+- `RestoreFromBackupFile(path)`: Full DB replacement from any `.db` file
 
 ### Certificate Status
 
