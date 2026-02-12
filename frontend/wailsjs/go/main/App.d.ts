@@ -27,8 +27,6 @@ export function EnrollOSNative():Promise<void>;
 
 export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
-export function ExportBackup(arg1:boolean):Promise<void>;
-
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
 
 export function ExportLogs():Promise<void>;
@@ -93,7 +91,7 @@ export function ResetDatabase():Promise<void>;
 
 export function RestartApp():Promise<void>;
 
-export function RestoreFromBackup(arg1:models.BackupData):Promise<void>;
+export function RestoreFromBackupFile(arg1:string):Promise<void>;
 
 export function RestoreLocalBackup(arg1:string):Promise<void>;
 
@@ -121,6 +119,8 @@ export function UpdatePendingNote(arg1:string,arg2:string):Promise<void>;
 
 export function UploadCertificate(arg1:string,arg2:string):Promise<void>;
 
-export function ValidateBackupFile(arg1:string):Promise<models.BackupValidationResult>;
+export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
 
-export function ValidateEncryptionKeyForBackup(arg1:models.BackupData,arg2:string):Promise<void>;
+export function PeekBackupInfo(arg1:string):Promise<models.BackupPeekInfo>;
+
+export function SelectBackupFile():Promise<string>;
