@@ -49,7 +49,7 @@ test.describe("My Feature", () => {
 |--------|-------------|
 | `resetDatabase(page)` | Drops all tables via migrations, recreates empty schema |
 | `completeSetupWizard(page)` | Completes the 6-step setup wizard with test data |
-| `provideEncryptionKey(page)` | Unlocks full mode by providing encryption key |
+| `provideEncryptionKey(page)` | Unlocks the app by providing a password (wraps master key via Argon2id) |
 | `setupFromScratch(page)` | `resetDatabase` + `completeSetupWizard` |
 | `setupWithFullMode(page)` | `setupFromScratch` + `provideEncryptionKey` |
 | `generateCertificate(page, hostname)` | Creates a certificate, returns full hostname |
@@ -63,7 +63,7 @@ test.describe("My Feature", () => {
 3. Calls `ResetDatabase()` which:
    - Runs down migration (drops all tables)
    - Runs up migration (recreates empty tables)
-   - Clears encryption key from memory
+   - Clears master key from memory
    - Resets app state to unconfigured
 
 ### Server Lifecycle
