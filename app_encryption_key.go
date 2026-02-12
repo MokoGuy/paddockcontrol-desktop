@@ -135,9 +135,8 @@ func (a *App) ProvideEncryptionKey(password string) (*models.KeyValidationResult
 
 	// Initialize services
 	a.configService = config.NewService(a.db)
-	a.backupService = services.NewBackupService(a.db)
 	a.certificateService = services.NewCertificateService(a.db, a.configService)
-	a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
+	a.setupService = services.NewSetupService(a.db, a.configService)
 
 	log.Info("all services initialized successfully")
 

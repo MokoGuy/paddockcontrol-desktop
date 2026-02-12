@@ -304,9 +304,8 @@ func (a *App) TryAutoUnlock() (bool, error) {
 		a.needsMigration = false
 
 		a.configService = config.NewService(a.db)
-		a.backupService = services.NewBackupService(a.db)
 		a.certificateService = services.NewCertificateService(a.db, a.configService)
-		a.setupService = services.NewSetupService(a.db, a.configService, a.backupService)
+		a.setupService = services.NewSetupService(a.db, a.configService)
 		a.mu.Unlock()
 
 		log.Info("auto-unlock via OS keyring succeeded")
