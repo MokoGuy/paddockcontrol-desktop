@@ -66,7 +66,6 @@ export function Settings() {
     const {
         isLoading: backupLoading,
         error: backupError,
-        exportBackup,
         getDataDirectory,
         localBackups,
         isLoadingBackups,
@@ -388,8 +387,7 @@ export function Settings() {
                 onCreateManualBackup={createManualBackup}
                 onRestoreBackup={handleRestoreBackup}
                 onDeleteBackup={deleteLocalBackup}
-                onExportBackup={exportBackup}
-                backupLoading={backupLoading}
+                isUnlocked={isUnlocked}
             />
 
             {/* Application Logs */}

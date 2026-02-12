@@ -50,10 +50,6 @@ export function EnrollPasswordMethod(arg1, arg2) {
   return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
-export function ExportBackup(arg1) {
-  return window['go']['main']['App']['ExportBackup'](arg1);
-}
-
 export function ExportCertificateZip(arg1, arg2) {
   return window['go']['main']['App']['ExportCertificateZip'](arg1, arg2);
 }
@@ -182,8 +178,8 @@ export function RestartApp() {
   return window['go']['main']['App']['RestartApp']();
 }
 
-export function RestoreFromBackup(arg1) {
-  return window['go']['main']['App']['RestoreFromBackup'](arg1);
+export function RestoreFromBackupFile(arg1) {
+  return window['go']['main']['App']['RestoreFromBackupFile'](arg1);
 }
 
 export function RestoreLocalBackup(arg1) {
@@ -238,10 +234,14 @@ export function UploadCertificate(arg1, arg2) {
   return window['go']['main']['App']['UploadCertificate'](arg1, arg2);
 }
 
-export function ValidateBackupFile(arg1) {
-  return window['go']['main']['App']['ValidateBackupFile'](arg1);
+export function ImportCertificatesFromBackup(arg1, arg2) {
+  return window['go']['main']['App']['ImportCertificatesFromBackup'](arg1, arg2);
 }
 
-export function ValidateEncryptionKeyForBackup(arg1, arg2) {
-  return window['go']['main']['App']['ValidateEncryptionKeyForBackup'](arg1, arg2);
+export function PeekBackupInfo(arg1) {
+  return window['go']['main']['App']['PeekBackupInfo'](arg1);
+}
+
+export function SelectBackupFile() {
+  return window['go']['main']['App']['SelectBackupFile']();
 }

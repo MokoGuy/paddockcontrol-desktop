@@ -191,8 +191,8 @@ export function SetupChoice() {
                                                 Restore from Backup
                                             </CardTitle>
                                             <CardDescription>
-                                                Restore your certificates from a
-                                                backup file
+                                                Restore from a database backup
+                                                file
                                             </CardDescription>
                                         </div>
                                     </div>

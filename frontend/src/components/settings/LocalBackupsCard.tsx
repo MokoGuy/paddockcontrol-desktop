@@ -12,6 +12,7 @@ import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ImportCertificatesDialog } from "@/components/settings/ImportCertificatesDialog";
 import { formatDateTime, getRelativeTime, formatFileSize } from "@/lib/theme";
 import { LocalBackupInfo } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -29,8 +30,7 @@ interface LocalBackupsCardProps {
     onCreateManualBackup: () => Promise<void>;
     onRestoreBackup: (filename: string) => Promise<void>;
     onDeleteBackup: (filename: string) => Promise<void>;
-    onExportBackup: () => Promise<void>;
-    backupLoading: boolean;
+    isUnlocked: boolean;
 }
 
 export function LocalBackupsCard({
@@ -41,12 +41,11 @@ export function LocalBackupsCard({
     onCreateManualBackup,
     onRestoreBackup,
     onDeleteBackup,
-    onExportBackup,
-    backupLoading,
+    isUnlocked,
 }: LocalBackupsCardProps) {
     const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-    const [exportConfirming, setExportConfirming] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
     const handleCreate = async () => {
@@ -76,14 +75,6 @@ export function LocalBackupsCard({
         }
     };
 
-    const handleExport = async () => {
-        try {
-            await onExportBackup();
-        } finally {
-            setExportConfirming(false);
-        }
-    };
-
     return (
         <>
             <Card className="mt-6 shadow-sm border-border">
@@ -100,12 +91,11 @@ export function LocalBackupsCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setExportConfirming(true)}
-                                disabled={backupLoading}
+                                onClick={() => setImportOpen(true)}
+                                disabled={!isUnlocked}
+                                title={!isUnlocked ? "Unlock the app first to import certificates" : undefined}
                             >
-                                {backupLoading
-                                    ? "Exporting..."
-                                    : "Export JSON"}
+                                Import Certificates
                             </Button>
                             <Button
                                 size="sm"
@@ -256,16 +246,13 @@ export function LocalBackupsCard({
                 onCancel={() => setDeleteTarget(null)}
             />
 
-            {/* Export JSON Confirmation */}
-            <ConfirmDialog
-                open={exportConfirming}
-                title="Export Backup"
-                description="Create a JSON backup of your CA configuration and certificates?"
-                confirmText="Export"
-                cancelText="Cancel"
-                isLoading={backupLoading}
-                onConfirm={handleExport}
-                onCancel={() => setExportConfirming(false)}
+            {/* Import Certificates Dialog */}
+            <ImportCertificatesDialog
+                open={importOpen}
+                onOpenChange={setImportOpen}
+                onComplete={() => {
+                    // Certificates imported — caller can refresh if needed
+                }}
             />
         </>
     );

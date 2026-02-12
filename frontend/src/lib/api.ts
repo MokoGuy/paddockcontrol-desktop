@@ -11,8 +11,8 @@ import {
     CertificateFilter,
     SetupRequest,
     SetupDefaults,
-    BackupData,
-    BackupValidationResult,
+    CertImportResult,
+    BackupPeekInfo,
     KeyValidationResult,
     ChainCertificateInfo,
     HistoryEntry,
@@ -39,7 +39,6 @@ export const api = {
     // Security Key Management
     listSecurityKeys: () => App.ListSecurityKeys() as Promise<SecurityKeyInfo[]>,
     hasSecurityKeys: () => App.HasSecurityKeys() as Promise<boolean>,
-    needsMigration: () => App.NeedsMigration() as Promise<boolean>,
     enrollPasswordMethod: (password: string, label: string) => App.EnrollPasswordMethod(password, label),
     removeSecurityKey: (id: number) => App.RemoveSecurityKey(id),
     isOSKeystoreAvailable: () => App.IsOSKeystoreAvailable() as Promise<boolean>,
@@ -56,31 +55,13 @@ export const api = {
     updateConfig: (req: UpdateConfigRequest) =>
         App.UpdateConfig(req) as Promise<Config>,
 
-    // Backup validation and restore
-    validateBackupFile: (path: string) =>
-        App.ValidateBackupFile(path) as Promise<BackupValidationResult>,
-    validateEncryptionKeyForBackup: (backup: BackupData, key: string) =>
-        App.ValidateEncryptionKeyForBackup(backup, key),
-    restoreFromBackup: (backup: BackupData) => {
-        console.log("📡 [api.restoreFromBackup] Calling Wails backend...");
-        console.log("📦 [api.restoreFromBackup] Backup data:", {
-            version: backup.version,
-            certificateCount: backup.certificates?.length || 0,
-            hasConfig: !!backup.config,
-            hasEncryptionKey: !!backup.encryption_key,
-        });
-        return App.RestoreFromBackup(backup)
-            .then(() => {
-                console.log("✅ [api.restoreFromBackup] Wails call succeeded");
-            })
-            .catch((err) => {
-                console.error(
-                    "❌ [api.restoreFromBackup] Wails call failed:",
-                    err,
-                );
-                throw err;
-            });
-    },
+    // Backup import and restore
+    peekBackupInfo: (path: string) =>
+        App.PeekBackupInfo(path) as Promise<BackupPeekInfo>,
+    importCertificatesFromBackup: (path: string, password: string) =>
+        App.ImportCertificatesFromBackup(path, password) as Promise<CertImportResult>,
+    restoreFromBackupFile: (path: string) => App.RestoreFromBackupFile(path),
+    selectBackupFile: () => App.SelectBackupFile() as Promise<string>,
 
     // Certificate operations
     generateCSR: (req: CSRRequest) =>
@@ -129,9 +110,6 @@ export const api = {
             pending_key: boolean;
         },
     ) => App.ExportCertificateZip(hostname, options),
-
-    // Backup export (JSON)
-    exportBackup: () => App.ExportBackup(false),
 
     // Local backup management
     listLocalBackups: () =>
