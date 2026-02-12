@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.2.0...v1.3.0) (2026-02-12)
+
+
+### Features
+
+* add dashboard read-only toggle and move badge animations into components ([101852f](https://github.com/MokoGuy/paddockcontrol-desktop/commit/101852f1cfd1acff717928a9ef336ef5f34353b5)), closes [#63](https://github.com/MokoGuy/paddockcontrol-desktop/issues/63)
+
+
+### Bug Fixes
+
+* disable Go cache in release build to prevent cache key collision ([c510150](https://github.com/MokoGuy/paddockcontrol-desktop/commit/c5101503834d00d11212386715c1fd43fd836207)), closes [#75](https://github.com/MokoGuy/paddockcontrol-desktop/issues/75)
+
+
+### Code Refactoring
+
+* deduplicate motion animation wrappers ([8ce2216](https://github.com/MokoGuy/paddockcontrol-desktop/commit/8ce22163e514679a7012d29099e3bdf60debc554))
+* disable motion animations in screenshot generation ([c9ac574](https://github.com/MokoGuy/paddockcontrol-desktop/commit/c9ac574fbf85003e7f534db76ea43e32c8b92887))
+
 ## [1.2.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.1.2...v1.2.0) (2026-02-11)
 
 
