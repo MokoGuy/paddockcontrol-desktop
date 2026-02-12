@@ -56,12 +56,12 @@ export function ReviewStep({ getValues, onEditStep }: ReviewStepProps) {
 
         <ReviewSection
           title="Security"
-          onEdit={() => onEditStep("encryption-key")}
+          onEdit={() => onEditStep("password")}
         >
           <div className="flex justify-between gap-4">
-            <span className="text-muted-foreground">Encryption Key</span>
-            <Badge variant={values.encryption_key ? "default" : "destructive"}>
-              {values.encryption_key ? "Set" : "Not Set"}
+            <span className="text-muted-foreground">Password</span>
+            <Badge variant={values.password ? "default" : "destructive"}>
+              {values.password ? "Set" : "Not Set"}
             </Badge>
           </div>
         </ReviewSection>

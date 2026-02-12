@@ -191,8 +191,8 @@ func (a *App) SavePrivateKeyToFile(hostname string) error {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -245,8 +245,8 @@ func (a *App) GetPrivateKeyPEM(hostname string) (string, error) {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -273,8 +273,8 @@ func (a *App) GetPendingPrivateKeyPEM(hostname string) (string, error) {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -315,8 +315,8 @@ func (a *App) ExportCertificateZip(hostname string, options models.ExportOptions
 	certificateService := a.certificateService
 	var encryptionKey []byte
 	if options.PrivateKey || options.PendingKey {
-		encryptionKey = make([]byte, len(a.encryptionKey))
-		copy(encryptionKey, a.encryptionKey)
+		encryptionKey = make([]byte, len(a.masterKey))
+		copy(encryptionKey, a.masterKey)
 	}
 	a.mu.RUnlock()
 
@@ -466,7 +466,7 @@ func (a *App) ExportBackup(includeKeys bool) error {
 
 	// If including keys, require encryption key
 	if includeKeys {
-		if err := a.requireEncryptionKey(); err != nil {
+		if err := a.requireUnlocked(); err != nil {
 			return fmt.Errorf("encryption key required to export backup with private keys")
 		}
 	}

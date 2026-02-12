@@ -240,7 +240,7 @@ func (s *SetupService) validateEncryptionKey(backup *models.BackupData, encrypti
 		// Find first certificate with encrypted key
 		if len(cert.EncryptedKey) > 0 {
 			// Try to decrypt the key
-			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, string(encryptionKey))
+			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, encryptionKey)
 			if err != nil {
 				return fmt.Errorf("encryption key validation failed: unable to decrypt private key. Please verify the encryption key is correct")
 			}

@@ -28,8 +28,8 @@ func (a *App) GenerateCSR(req models.CSRRequest) (*models.CSRResponse, error) {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -61,8 +61,8 @@ func (a *App) UploadCertificate(hostname, certPEM string) error {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -91,8 +91,8 @@ func (a *App) PreviewCertificateUpload(hostname, certPEM string) (*models.Certif
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {
@@ -120,8 +120,8 @@ func (a *App) ImportCertificate(req models.ImportRequest) error {
 
 	a.mu.RLock()
 	certificateService := a.certificateService
-	encryptionKey := make([]byte, len(a.encryptionKey))
-	copy(encryptionKey, a.encryptionKey)
+	encryptionKey := make([]byte, len(a.masterKey))
+	copy(encryptionKey, a.masterKey)
 	a.mu.RUnlock()
 
 	if certificateService == nil {

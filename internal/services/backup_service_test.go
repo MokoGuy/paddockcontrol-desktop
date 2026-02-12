@@ -16,7 +16,7 @@ func TestExportBackup_WithKeys(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -51,7 +51,7 @@ func TestExportBackup_WithoutKeys(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -105,7 +105,7 @@ func TestExportBackup_IncludesPendingCSR(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -238,7 +238,7 @@ func TestImportBackup_WithEncryptedKeys(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -254,7 +254,7 @@ func TestImportBackup_WithEncryptedKeys(t *testing.T) {
 		},
 	}
 
-	result, err := svc.ImportBackup(ctx, backup, []byte(encryptionKey))
+	result, err := svc.ImportBackup(ctx, backup, encryptionKey)
 	if err != nil {
 		t.Fatalf("ImportBackup failed: %v", err)
 	}
@@ -308,8 +308,8 @@ func TestImportBackup_WrongEncryptionKey_ReturnsError(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
-	wrongKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
+	wrongKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -325,7 +325,7 @@ func TestImportBackup_WrongEncryptionKey_ReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := svc.ImportBackup(ctx, backup, []byte(wrongKey))
+	_, err := svc.ImportBackup(ctx, backup, wrongKey)
 	if err == nil {
 		t.Fatal("expected error with wrong encryption key, got nil")
 	}
@@ -435,7 +435,7 @@ func TestImportBackup_RoundTrip(t *testing.T) {
 	svc, database := setupBackupService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -467,7 +467,7 @@ func TestImportBackup_RoundTrip(t *testing.T) {
 		t.Fatalf("failed to delete certificate: %v", err)
 	}
 
-	result, err := svc.ImportBackup(ctx, backup, []byte(encryptionKey))
+	result, err := svc.ImportBackup(ctx, backup, encryptionKey)
 	if err != nil {
 		t.Fatalf("ImportBackup failed: %v", err)
 	}

@@ -491,6 +491,26 @@ export namespace models {
 	    }
 	}
 	
+	export class SecurityKeyInfo {
+	    id: number;
+	    method: string;
+	    label: string;
+	    created_at: number;
+	    last_used_at?: number;
+
+	    static createFrom(source: any = {}) {
+	        return new SecurityKeyInfo(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.method = source["method"];
+	        this.label = source["label"];
+	        this.created_at = source["created_at"];
+	        this.last_used_at = source["last_used_at"];
+	    }
+	}
 	export class SetupDefaults {
 	    validity_period_days: number;
 	    default_key_size: number;

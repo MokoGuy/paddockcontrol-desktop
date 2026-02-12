@@ -55,15 +55,27 @@ export function GetUpdateHistory(arg1:number):Promise<Array<models.UpdateHistory
 
 export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
-export function IsEncryptionKeyProvided():Promise<boolean>;
+export function EnrollOSNative():Promise<void>;
+
+export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
+
+export function HasSecurityKeys():Promise<boolean>;
+
+export function IsOSKeystoreAvailable():Promise<boolean>;
 
 export function IsSetupComplete():Promise<boolean>;
+
+export function IsUnlocked():Promise<boolean>;
 
 export function IsWaitingForEncryptionKey():Promise<boolean>;
 
 export function ListCertificates(arg1:models.CertificateFilter):Promise<Array<models.CertificateListItem>>;
 
 export function ListLocalBackups():Promise<Array<models.LocalBackupInfo>>;
+
+export function ListSecurityKeys():Promise<Array<models.SecurityKeyInfo>>;
+
+export function NeedsMigration():Promise<boolean>;
 
 export function OpenBugReport():Promise<void>;
 
@@ -74,6 +86,8 @@ export function OpenURL(arg1:string):Promise<void>;
 export function PreviewCertificateUpload(arg1:string,arg2:string):Promise<models.CertificateUploadPreview>;
 
 export function ProvideEncryptionKey(arg1:string):Promise<models.KeyValidationResult>;
+
+export function RemoveSecurityKey(arg1:number):Promise<void>;
 
 export function ResetDatabase():Promise<void>;
 
@@ -96,6 +110,8 @@ export function SaveSetup(arg1:models.SetupRequest):Promise<void>;
 export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 
 export function SkipEncryptionKey():Promise<void>;
+
+export function TryAutoUnlock():Promise<boolean>;
 
 export function UpdateCertificateNote(arg1:string,arg2:string):Promise<void>;
 

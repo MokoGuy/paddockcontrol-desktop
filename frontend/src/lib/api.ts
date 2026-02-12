@@ -22,18 +22,29 @@ import {
     LocalBackupInfo,
     UpdateInfo,
     UpdateHistoryEntry,
+    SecurityKeyInfo,
 } from "../types";
 
 // Encryption Key Management
 export const api = {
     // Key management
     isWaitingForEncryptionKey: () => App.IsWaitingForEncryptionKey(),
-    isEncryptionKeyProvided: () => App.IsEncryptionKeyProvided(),
+    isUnlocked: () => App.IsUnlocked(),
     provideEncryptionKey: (key: string) =>
         App.ProvideEncryptionKey(key) as Promise<KeyValidationResult>,
     skipEncryptionKey: () => App.SkipEncryptionKey(),
     clearEncryptionKey: () => App.ClearEncryptionKey(),
     changeEncryptionKey: (newKey: string) => App.ChangeEncryptionKey(newKey),
+
+    // Security Key Management
+    listSecurityKeys: () => App.ListSecurityKeys() as Promise<SecurityKeyInfo[]>,
+    hasSecurityKeys: () => App.HasSecurityKeys() as Promise<boolean>,
+    needsMigration: () => App.NeedsMigration() as Promise<boolean>,
+    enrollPasswordMethod: (password: string, label: string) => App.EnrollPasswordMethod(password, label),
+    removeSecurityKey: (id: number) => App.RemoveSecurityKey(id),
+    isOSKeystoreAvailable: () => App.IsOSKeystoreAvailable() as Promise<boolean>,
+    enrollOSNative: () => App.EnrollOSNative(),
+    tryAutoUnlock: () => App.TryAutoUnlock() as Promise<boolean>,
 
     // Setup
     isSetupComplete: () => App.IsSetupComplete(),

@@ -32,10 +32,11 @@ type App struct {
 	updateService      *services.UpdateService
 
 	// Runtime state
-	encryptionKey           []byte
+	masterKey               []byte // 32-byte random master key (encrypts all cert private keys)
 	waitingForEncryptionKey bool
-	encryptionKeyProvided   bool // true only if key was actually provided (not skipped)
+	isUnlocked              bool // true when master key is in memory (app is unlocked)
 	isConfigured            bool
+	needsMigration          bool // true if legacy SHA-256 encrypted certs exist without security_keys
 	dataDir                 string
 }
 
@@ -92,6 +93,17 @@ func (a *App) startup(ctx context.Context) {
 	}
 	log.Info("configuration status", slog.Bool("configured", a.isConfigured))
 
+	// Detect if migration from legacy SHA-256 format is needed
+	hasSecurityKeys, err := a.db.Queries().HasAnySecurityKeys(ctx)
+	if err != nil {
+		log.Error("failed to check security keys", logger.Err(err))
+	}
+	if a.isConfigured && hasSecurityKeys == 0 {
+		// Configured app with no security_keys — may need migration if encrypted certs exist
+		a.needsMigration = true
+		log.Info("legacy encryption detected - migration will run on first unlock")
+	}
+
 	// Initialize services without encryption key (for setup/restore to work)
 	a.initializeServicesWithoutKey()
 	log.Info("services initialized without encryption key")
@@ -99,8 +111,8 @@ func (a *App) startup(ctx context.Context) {
 	// Auto-skip encryption key at startup (limited mode by default)
 	// Users can provide key anytime via Settings
 	a.waitingForEncryptionKey = false
-	a.encryptionKeyProvided = false
-	log.Info("starting in limited mode - encryption key can be provided via Settings")
+	a.isUnlocked = false
+	log.Info("starting in limited mode - password can be provided via Settings")
 }
 
 // domReady is called when the frontend DOM is ready
@@ -126,13 +138,13 @@ func (a *App) shutdown(ctx context.Context) {
 		}
 	}
 
-	// Clear encryption key from memory
-	if len(a.encryptionKey) > 0 {
-		for i := range a.encryptionKey {
-			a.encryptionKey[i] = 0
+	// Clear master key from memory
+	if len(a.masterKey) > 0 {
+		for i := range a.masterKey {
+			a.masterKey[i] = 0
 		}
-		a.encryptionKey = nil
-		log.Info("encryption key cleared from memory")
+		a.masterKey = nil
+		log.Info("master key cleared from memory")
 	}
 
 	log.Info("application shutdown complete")
@@ -205,17 +217,17 @@ func (a *App) initializeServicesWithoutKey() {
 // Validation Guards
 // ============================================================================
 
-// requireEncryptionKey validates that encryption key is provided
+// requireUnlocked validates that the app is unlocked (master key in memory)
 // Use this for operations that need to encrypt/decrypt private keys
-func (a *App) requireEncryptionKey() error {
+func (a *App) requireUnlocked() error {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	if !a.encryptionKeyProvided {
+	if !a.isUnlocked {
 		return fmt.Errorf("encryption key required for this operation")
 	}
 
-	if len(a.encryptionKey) == 0 {
+	if len(a.masterKey) == 0 {
 		return fmt.Errorf("encryption key is empty")
 	}
 
@@ -247,7 +259,7 @@ func (a *App) requireSetupComplete() error {
 		return err
 	}
 
-	return a.requireEncryptionKey()
+	return a.requireUnlocked()
 }
 
 // ============================================================================

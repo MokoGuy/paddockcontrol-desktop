@@ -9,22 +9,22 @@ import { useAppStore } from "@/stores/useAppStore";
 interface AdminGatedButtonProps
     extends React.ComponentProps<typeof Button> {
     requireAdminMode?: boolean;
-    requireEncryptionKey?: boolean;
+    requireUnlocked?: boolean;
     disabledReason?: string;
 }
 
 export function AdminGatedButton({
     requireAdminMode = true,
-    requireEncryptionKey = false,
+    requireUnlocked = false,
     disabledReason,
     disabled,
     children,
     ...props
 }: AdminGatedButtonProps) {
-    const { isAdminModeEnabled, isEncryptionKeyProvided } = useAppStore();
+    const { isAdminModeEnabled, isUnlocked } = useAppStore();
 
     const isGatedByAdmin = requireAdminMode && !isAdminModeEnabled;
-    const isGatedByKey = requireEncryptionKey && !isEncryptionKeyProvided;
+    const isGatedByKey = requireUnlocked && !isUnlocked;
     const isDisabled = isGatedByAdmin || isGatedByKey || !!disabled;
 
     const tooltipMessage = isGatedByAdmin

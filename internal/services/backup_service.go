@@ -185,7 +185,7 @@ func (s *BackupService) ImportBackup(ctx context.Context, backup *models.BackupD
 		if len(cert.EncryptedKey) > 0 {
 			certLog.Debug("validating encrypted key decryption")
 			// Try to decrypt to validate the key works
-			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, string(encryptionKey))
+			_, err := crypto.DecryptPrivateKey(cert.EncryptedKey, encryptionKey)
 			if err != nil {
 				certLog.Error("failed to decrypt private key, encryption key may be incorrect", logger.Err(err))
 				return nil, fmt.Errorf("failed to decrypt private key for %s: encryption key may be incorrect. Restore aborted", cert.Hostname)

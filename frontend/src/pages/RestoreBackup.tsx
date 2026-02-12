@@ -43,7 +43,7 @@ export function RestoreBackup() {
   const {
     setIsSetupComplete,
     setIsWaitingForEncryptionKey,
-    setIsEncryptionKeyProvided,
+    setIsUnlocked,
   } = useAppStore();
   const { isLoading, error, validateBackupKey, restoreFromBackup } = useSetup();
   const [step, setStep] = useState<"file" | "key" | "confirm">("file");
@@ -149,7 +149,7 @@ export function RestoreBackup() {
       // Provide encryption key to backend before restore
       console.log("🔐 Providing encryption key to backend...");
       await api.provideEncryptionKey(keyToUse);
-      setIsEncryptionKeyProvided(true);
+      setIsUnlocked(true);
       console.log("✅ Encryption key provided to backend");
 
       console.log("📦 Calling restoreFromBackup API...");

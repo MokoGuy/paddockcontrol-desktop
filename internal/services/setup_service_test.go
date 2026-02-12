@@ -218,7 +218,7 @@ func TestSetupFromBackup_Success(t *testing.T) {
 func TestSetupFromBackup_WithEncryptedKeys(t *testing.T) {
 	svc, database := setupSetupService(t)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -230,7 +230,7 @@ func TestSetupFromBackup_WithEncryptedKeys(t *testing.T) {
 		},
 	})
 
-	err := svc.SetupFromBackup(ctx, backup, []byte(encryptionKey))
+	err := svc.SetupFromBackup(ctx, backup, encryptionKey)
 	if err != nil {
 		t.Fatalf("SetupFromBackup failed: %v", err)
 	}
@@ -247,8 +247,8 @@ func TestSetupFromBackup_WithEncryptedKeys(t *testing.T) {
 func TestSetupFromBackup_WrongEncryptionKey_ReturnsError(t *testing.T) {
 	svc, _ := setupSetupService(t)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
-	wrongKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
+	wrongKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
 
@@ -260,7 +260,7 @@ func TestSetupFromBackup_WrongEncryptionKey_ReturnsError(t *testing.T) {
 		},
 	})
 
-	err := svc.SetupFromBackup(ctx, backup, []byte(wrongKey))
+	err := svc.SetupFromBackup(ctx, backup, wrongKey)
 	if err == nil {
 		t.Fatal("expected error with wrong encryption key, got nil")
 	}

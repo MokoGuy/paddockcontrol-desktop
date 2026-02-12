@@ -48,7 +48,7 @@ interface LocationState {
 export function GenerateCSR() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isEncryptionKeyProvided, isAdminModeEnabled } = useAppStore();
+    const { isUnlocked, isAdminModeEnabled } = useAppStore();
 
     // Extract mode from navigation state
     const locationState = location.state as LocationState | null;
@@ -87,7 +87,7 @@ export function GenerateCSR() {
     if (
         !config ||
         certLoading ||
-        !isEncryptionKeyProvided ||
+        !isUnlocked ||
         ((isRenewalMode || isRegenerateMode) && existingCertificate?.read_only)
     ) {
         return (
