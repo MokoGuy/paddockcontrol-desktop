@@ -1,13 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"paddockcontrol-desktop/internal/config"
-	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 )
@@ -58,131 +55,6 @@ func (a *App) SaveSetup(req models.SetupRequest) error {
 	a.mu.Unlock()
 
 	log.Info("setup completed successfully")
-	return nil
-}
-
-// ValidateBackupFile reads and validates backup file structure
-func (a *App) ValidateBackupFile(path string) (*models.BackupValidationResult, error) {
-	log := logger.WithComponent("app")
-	log.Info("validating backup file", slog.String("path", path))
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		log.Error("failed to read backup file", logger.Err(err))
-		return nil, fmt.Errorf("failed to read backup file: %w", err)
-	}
-
-	var backup models.BackupData
-	if err := json.Unmarshal(data, &backup); err != nil {
-		log.Error("failed to parse backup file", logger.Err(err))
-		return nil, fmt.Errorf("invalid backup file format: %w", err)
-	}
-
-	hasEncryptedKeys := false
-	for _, cert := range backup.Certificates {
-		if len(cert.EncryptedKey) > 0 || len(cert.PendingEncryptedKey) > 0 {
-			hasEncryptedKeys = true
-			break
-		}
-	}
-
-	result := &models.BackupValidationResult{
-		Valid:            true,
-		Version:          backup.Version,
-		CertificateCount: len(backup.Certificates),
-		HasEncryptedKeys: hasEncryptedKeys,
-		HasEncryptionKey: backup.EncryptionKey != "",
-		EncryptionKey:    backup.EncryptionKey,
-		ExportedAt:       backup.ExportedAt,
-	}
-
-	log.Info("backup validation complete",
-		slog.Bool("valid", result.Valid),
-		slog.Int("certificate_count", result.CertificateCount),
-		slog.Bool("has_encrypted_keys", result.HasEncryptedKeys),
-		slog.Bool("has_key_in_backup", result.HasEncryptionKey),
-	)
-
-	return result, nil
-}
-
-// ValidateEncryptionKeyForBackup tests if encryption key can decrypt backup keys
-func (a *App) ValidateEncryptionKeyForBackup(backup models.BackupData, key string) error {
-	log := logger.WithComponent("app")
-	log.Info("validating encryption key for backup restore")
-
-	if len(key) < 16 {
-		return fmt.Errorf("encryption key must be at least 16 characters")
-	}
-
-	// Find first certificate with encrypted key
-	for _, cert := range backup.Certificates {
-		if len(cert.EncryptedKey) > 0 {
-			// DEPRECATED(v2.0.0): Uses legacy SHA-256 format for old backup validation.
-			_, err := crypto.DecryptPrivateKeyLegacy(cert.EncryptedKey, key)
-			if err != nil {
-				log.Error("encryption key validation failed", logger.Err(err))
-				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
-			}
-
-			log.Info("encryption key validated successfully")
-			return nil
-		}
-
-		if len(cert.PendingEncryptedKey) > 0 {
-			// DEPRECATED(v2.0.0): Uses legacy SHA-256 format for old backup validation.
-			_, err := crypto.DecryptPrivateKeyLegacy(cert.PendingEncryptedKey, key)
-			if err != nil {
-				log.Error("encryption key validation failed", logger.Err(err))
-				return fmt.Errorf("invalid encryption key: cannot decrypt certificate keys")
-			}
-
-			log.Info("encryption key validated successfully")
-			return nil
-		}
-	}
-
-	// No encrypted keys found - validation passes
-	log.Info("no encrypted keys in backup, validation skipped")
-	return nil
-}
-
-// RestoreFromBackup imports backup and marks setup complete
-func (a *App) RestoreFromBackup(backup models.BackupData) error {
-	if err := a.requireUnlocked(); err != nil {
-		return err
-	}
-
-	_, log := logger.WithOperation(a.ctx, "restore_backup")
-	log.Info("restoring from backup",
-		slog.String("version", backup.Version),
-		slog.Int("certificates", len(backup.Certificates)),
-	)
-
-	a.performAutoBackup("restore_backup")
-
-	a.mu.RLock()
-	setupService := a.setupService
-	encryptionKey := make([]byte, len(a.masterKey))
-	copy(encryptionKey, a.masterKey)
-	a.mu.RUnlock()
-
-	if setupService == nil {
-		return fmt.Errorf("setup service not initialized")
-	}
-
-	if err := setupService.SetupFromBackup(a.ctx, &backup, encryptionKey); err != nil {
-		log.Error("restore from backup failed", logger.Err(err))
-		return err
-	}
-
-	a.mu.Lock()
-	a.isConfigured = true
-	a.waitingForEncryptionKey = false // Key was provided during restore
-	a.isUnlocked = true
-	a.mu.Unlock()
-
-	log.Info("restore completed successfully")
 	return nil
 }
 
