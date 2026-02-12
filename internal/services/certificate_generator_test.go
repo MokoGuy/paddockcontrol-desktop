@@ -19,7 +19,7 @@ func TestGenerateCSR_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -30,7 +30,7 @@ func TestGenerateCSR_Success(t *testing.T) {
 		KeySize:      2048,
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestGenerateCSR_VerifyCSRContent(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:           "server.example.com",
@@ -71,7 +71,7 @@ func TestGenerateCSR_VerifyCSRContent(t *testing.T) {
 		KeySize:            2048,
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestGenerateCSR_WithDNSSANs(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -116,7 +116,7 @@ func TestGenerateCSR_WithDNSSANs(t *testing.T) {
 		},
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestGenerateCSR_WithIPSANs(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -154,7 +154,7 @@ func TestGenerateCSR_WithIPSANs(t *testing.T) {
 		},
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestGenerateCSR_StoresEncryptedKey(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -193,7 +193,7 @@ func TestGenerateCSR_StoresEncryptedKey(t *testing.T) {
 		KeySize:      2048,
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestGenerateCSR_EmptyHostname_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:             "",
@@ -229,7 +229,7 @@ func TestGenerateCSR_EmptyHostname_ReturnsError(t *testing.T) {
 		SkipSuffixValidation: true,
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error for empty hostname, got nil")
 	}
@@ -242,7 +242,7 @@ func TestGenerateCSR_HostnameSuffixValidation_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database) // config has suffix ".example.com"
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.wrongdomain.com",
@@ -253,7 +253,7 @@ func TestGenerateCSR_HostnameSuffixValidation_ReturnsError(t *testing.T) {
 		KeySize:      2048,
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error for wrong hostname suffix, got nil")
 	}
@@ -266,7 +266,7 @@ func TestGenerateCSR_SkipSuffixValidation(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database) // config has suffix ".example.com"
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:             "server.otherdomain.com",
@@ -278,7 +278,7 @@ func TestGenerateCSR_SkipSuffixValidation(t *testing.T) {
 		SkipSuffixValidation: true,
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("expected success with skip suffix, got: %v", err)
 	}
@@ -291,7 +291,7 @@ func TestGenerateCSR_DuplicateHostname_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create an existing certificate
 	err := database.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
@@ -312,7 +312,7 @@ func TestGenerateCSR_DuplicateHostname_ReturnsError(t *testing.T) {
 		IsRenewal:    false,
 	}
 
-	_, err = svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err = svc.GenerateCSR(ctx, req, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error for duplicate hostname, got nil")
 	}
@@ -325,7 +325,7 @@ func TestGenerateCSR_Renewal_UpdatesPendingColumns(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create an existing certificate with an active cert
 	err := database.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
@@ -347,7 +347,7 @@ func TestGenerateCSR_Renewal_UpdatesPendingColumns(t *testing.T) {
 		IsRenewal:    true,
 	}
 
-	resp, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	resp, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR renewal failed: %v", err)
 	}
@@ -375,7 +375,7 @@ func TestGenerateCSR_InvalidIPSAN_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -389,7 +389,7 @@ func TestGenerateCSR_InvalidIPSAN_ReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error for invalid IP SAN, got nil")
 	}
@@ -402,7 +402,7 @@ func TestGenerateCSR_InvalidSANType_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -416,7 +416,7 @@ func TestGenerateCSR_InvalidSANType_ReturnsError(t *testing.T) {
 		},
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error for unknown SAN type, got nil")
 	}
@@ -429,7 +429,7 @@ func TestGenerateCSR_LogsHistoryEvent(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -440,7 +440,7 @@ func TestGenerateCSR_LogsHistoryEvent(t *testing.T) {
 		KeySize:      2048,
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}
@@ -463,7 +463,7 @@ func TestGenerateCSR_Renewal_LogsHistoryEvent(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create existing cert
 	err := database.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
@@ -484,7 +484,7 @@ func TestGenerateCSR_Renewal_LogsHistoryEvent(t *testing.T) {
 		IsRenewal:    true,
 	}
 
-	_, err = svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err = svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR renewal failed: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestGenerateCSR_WithNote(t *testing.T) {
 	svc, database := setupTestService(t)
 	setupTestConfig(t, database)
 	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	req := models.CSRRequest{
 		Hostname:     "server.example.com",
@@ -518,7 +518,7 @@ func TestGenerateCSR_WithNote(t *testing.T) {
 		Note:         "Production web server",
 	}
 
-	_, err := svc.GenerateCSR(ctx, req, []byte(encryptionKey))
+	_, err := svc.GenerateCSR(ctx, req, encryptionKey)
 	if err != nil {
 		t.Fatalf("GenerateCSR failed: %v", err)
 	}

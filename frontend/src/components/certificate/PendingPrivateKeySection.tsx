@@ -23,7 +23,7 @@ import { pendingCardStyles } from "@/lib/theme";
 
 interface PendingPrivateKeySectionProps {
     hasPendingCSR: boolean;
-    isEncryptionKeyProvided: boolean;
+    isUnlocked: boolean;
     pendingPrivateKeyPEM: string | null;
     pendingPrivateKeyLoading: boolean;
     pendingPrivateKeyError: string | null;
@@ -31,7 +31,7 @@ interface PendingPrivateKeySectionProps {
 
 export function PendingPrivateKeySection({
     hasPendingCSR,
-    isEncryptionKeyProvided,
+    isUnlocked,
     pendingPrivateKeyPEM,
     pendingPrivateKeyLoading,
     pendingPrivateKeyError,
@@ -69,7 +69,7 @@ export function PendingPrivateKeySection({
                 </CardHeader>
                 <CollapsibleContent>
                     <CardContent>
-                        {!isEncryptionKeyProvided ? (
+                        {!isUnlocked ? (
                             <p className="text-sm text-warning">
                                 Private key content can only be retrieved when the encryption key is provided.
                             </p>

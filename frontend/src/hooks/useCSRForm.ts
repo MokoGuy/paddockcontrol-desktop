@@ -26,7 +26,7 @@ export function useCSRForm(options: UseCSRFormOptions = {}) {
     const { renewalHostname, regenerateHostname } = options;
     const navigate = useNavigate();
     const { config, setConfig } = useConfigStore();
-    const { isEncryptionKeyProvided } = useAppStore();
+    const { isUnlocked } = useAppStore();
     const { generateCSR, getCertificate, isLoading } = useCertificates();
 
     const [sanInputs, setSanInputs] = useState<SANInputEntry[]>([]);
@@ -163,10 +163,10 @@ export function useCSRForm(options: UseCSRFormOptions = {}) {
 
     // Route protection: redirect if encryption key not provided
     useEffect(() => {
-        if (!isEncryptionKeyProvided) {
+        if (!isUnlocked) {
             navigate("/", { replace: true });
         }
-    }, [isEncryptionKeyProvided, navigate]);
+    }, [isUnlocked, navigate]);
 
     // Route protection: redirect if certificate is read-only
     useEffect(() => {

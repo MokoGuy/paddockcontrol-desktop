@@ -62,7 +62,7 @@ export function CertificateDetail() {
         certError,
         certLoading,
         backupLoading,
-        isEncryptionKeyProvided,
+        isUnlocked,
         chain,
         chainLoading,
         chainError,
@@ -201,7 +201,7 @@ export function CertificateDetail() {
             )}
 
             {/* Limited Mode Notice */}
-            {!isEncryptionKeyProvided && (
+            {!isUnlocked && (
                 <LimitedModeNotice
                     className="mb-6"
                     onProvideKey={() => setShowKeyDialog(true)}
@@ -251,7 +251,7 @@ export function CertificateDetail() {
                                 variant="outline"
                                 size="sm"
                                 requireAdminMode={false}
-                                requireEncryptionKey
+                                requireUnlocked
                                 disabled={certificate.read_only}
                                 disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
                                 onClick={() =>
@@ -327,7 +327,7 @@ export function CertificateDetail() {
                         />
 
                         {/* Chain connector: Certificate PEM ↔ Active Private Key */}
-                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isEncryptionKeyProvided && privateKeyPEM ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isUnlocked && privateKeyPEM ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
                             <div className="h-px flex-1 bg-border" />
                             <HugeiconsIcon
                                 icon={Link04Icon}
@@ -335,7 +335,7 @@ export function CertificateDetail() {
                                 strokeWidth={2}
                             />
                             <span className="shrink-0">
-                                {isEncryptionKeyProvided && privateKeyPEM
+                                {isUnlocked && privateKeyPEM
                                     ? "Cryptographically paired"
                                     : "Certificate & key present but not verified"}
                             </span>
@@ -343,7 +343,7 @@ export function CertificateDetail() {
                         </div>
 
                         <PrivateKeySection
-                            isEncryptionKeyProvided={isEncryptionKeyProvided}
+                            isUnlocked={isUnlocked}
                             privateKeyPEM={privateKeyPEM}
                             privateKeyLoading={privateKeyLoading}
                             privateKeyError={privateKeyError}
@@ -380,24 +380,24 @@ export function CertificateDetail() {
                         />
 
                         {/* Chain connector: Pending CSR ↔ Pending Private Key */}
-                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorText : "text-muted-foreground/60"}`}>
-                            <div className={`h-px flex-1 ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
+                        <div className={`flex items-center justify-center gap-2 -mt-4 mb-2 text-xs ${isUnlocked && pendingPrivateKeyPEM ? pendingCardStyles.connectorText : "text-muted-foreground/60"}`}>
+                            <div className={`h-px flex-1 ${isUnlocked && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
                             <HugeiconsIcon
                                 icon={Link04Icon}
                                 className="size-3.5 shrink-0"
                                 strokeWidth={2}
                             />
                             <span className="shrink-0">
-                                {isEncryptionKeyProvided && pendingPrivateKeyPEM
+                                {isUnlocked && pendingPrivateKeyPEM
                                     ? "Cryptographically paired"
                                     : "Certificate & key present but not verified"}
                             </span>
-                            <div className={`h-px flex-1 ${isEncryptionKeyProvided && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
+                            <div className={`h-px flex-1 ${isUnlocked && pendingPrivateKeyPEM ? pendingCardStyles.connectorLine : "bg-border"}`} />
                         </div>
 
                         <PendingPrivateKeySection
                             hasPendingCSR={!!certificate.pending_csr}
-                            isEncryptionKeyProvided={isEncryptionKeyProvided}
+                            isUnlocked={isUnlocked}
                             pendingPrivateKeyPEM={pendingPrivateKeyPEM}
                             pendingPrivateKeyLoading={pendingPrivateKeyLoading}
                             pendingPrivateKeyError={pendingPrivateKeyError}
@@ -586,7 +586,7 @@ export function CertificateDetail() {
                 open={exportDialogOpen}
                 onOpenChange={setExportDialogOpen}
                 certificate={certificate}
-                isEncryptionKeyProvided={isEncryptionKeyProvided}
+                isUnlocked={isUnlocked}
             />
 
             {/* Encryption Key Dialog */}

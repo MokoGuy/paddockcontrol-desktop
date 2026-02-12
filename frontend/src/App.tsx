@@ -60,7 +60,7 @@ import { Settings } from "@/pages/Settings";
 
 function AppContent() {
     const {
-        setIsEncryptionKeyProvided,
+        setIsUnlocked,
         isSetupComplete,
         setIsSetupComplete,
         isLoading,
@@ -90,10 +90,11 @@ function AppContent() {
                 const setupComplete = await api.isSetupComplete();
                 setIsSetupComplete(setupComplete);
 
-                // Check if encryption key is provided
+                // Try auto-unlock via OS keyring, then check unlock state
                 if (setupComplete) {
-                    const keyProvided = await api.isEncryptionKeyProvided();
-                    setIsEncryptionKeyProvided(keyProvided);
+                    await api.tryAutoUnlock();
+                    const unlocked = await api.isUnlocked();
+                    setIsUnlocked(unlocked);
                 }
             } catch (error) {
                 console.error("Failed to check initial state:", error);
@@ -103,7 +104,7 @@ function AppContent() {
         };
 
         checkInitialState();
-    }, [setIsEncryptionKeyProvided, setIsSetupComplete, setIsLoading]);
+    }, [setIsUnlocked, setIsSetupComplete, setIsLoading]);
 
     // Listen for backup events from the backend
     useEffect(() => {
@@ -260,7 +261,7 @@ function AppContent() {
                     <Route
                         path="/certificates/generate"
                         element={
-                            <ProtectedRoute requireEncryptionKey>
+                            <ProtectedRoute requireUnlocked>
                                 <GenerateCSR />
                             </ProtectedRoute>
                         }
@@ -268,7 +269,7 @@ function AppContent() {
                     <Route
                         path="/certificates/import"
                         element={
-                            <ProtectedRoute requireEncryptionKey>
+                            <ProtectedRoute requireUnlocked>
                                 <ImportCertificate />
                             </ProtectedRoute>
                         }

@@ -80,7 +80,7 @@ type KeyValidationResult struct {
 // csrPEM: optional CSR PEM string (can be nil)
 // certPEM: optional certificate PEM string (can be nil)
 // encryptionKey: the encryption key to decrypt the private key
-func ValidateKeyMatches(encryptedKey []byte, csrPEM *string, certPEM *string, encryptionKey string) KeyValidationResult {
+func ValidateKeyMatches(encryptedKey []byte, csrPEM *string, certPEM *string, encryptionKey []byte) KeyValidationResult {
 	result := KeyValidationResult{
 		KeyPresent: len(encryptedKey) > 0,
 	}

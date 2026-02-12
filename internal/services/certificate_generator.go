@@ -106,7 +106,7 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 
 	// Encrypt private key
 	t = time.Now()
-	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, string(encryptionKey))
+	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, encryptionKey)
 	if err != nil {
 		log.Error("failed to encrypt private key", logger.Err(err))
 		return nil, fmt.Errorf("failed to encrypt private key: %w", err)

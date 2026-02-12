@@ -34,7 +34,7 @@ func setupTestService(t *testing.T) (*CertificateService, *db.Database) {
 }
 
 // generateTestCSRAndKey generates a 2048-bit RSA key, a CSR, and encrypts the key
-func generateTestCSRAndKey(t *testing.T, hostname, encryptionKey string) (csrPEM []byte, encryptedKey []byte, privateKey *rsa.PrivateKey) {
+func generateTestCSRAndKey(t *testing.T, hostname string, encryptionKey []byte) (csrPEM []byte, encryptedKey []byte, privateKey *rsa.PrivateKey) {
 	t.Helper()
 	key, err := crypto.GenerateRSAKey(2048)
 	if err != nil {
@@ -193,5 +193,5 @@ func makeTestBackupWithConfig(certs []*models.BackupCertificate) *models.BackupD
 	}
 }
 
-// Ensure testutil import is used (provides RandomEncryptionKey)
-var _ = testutil.RandomEncryptionKey
+// Ensure testutil import is used
+var _ = testutil.RandomMasterKey

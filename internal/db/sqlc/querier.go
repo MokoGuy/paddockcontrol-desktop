@@ -22,6 +22,10 @@ type Querier interface {
 	ClearPendingCSR(ctx context.Context, hostname string) error
 	// Check if configuration exists
 	ConfigExists(ctx context.Context) (int64, error)
+	// Count all security keys
+	CountAllSecurityKeys(ctx context.Context) (int64, error)
+	// Count security keys of a specific method
+	CountSecurityKeysByMethod(ctx context.Context, method string) (int64, error)
 	// Create a new certificate entry with all fields
 	CreateCertificate(ctx context.Context, arg CreateCertificateParams) error
 	// Create the initial configuration
@@ -32,18 +36,32 @@ type Querier interface {
 	DeleteCertificate(ctx context.Context, hostname string) error
 	// Delete all history entries for a certificate (used when certificate is deleted)
 	DeleteCertificateHistory(ctx context.Context, hostname string) error
+	// Delete a security key by ID
+	DeleteSecurityKey(ctx context.Context, id int64) error
+	// Delete all security keys of a specific method
+	DeleteSecurityKeysByMethod(ctx context.Context, method string) error
 	// Get a certificate by hostname
 	GetCertificateByHostname(ctx context.Context, hostname string) (Certificate, error)
 	// Get history entries for a certificate, ordered by most recent first
 	GetCertificateHistory(ctx context.Context, arg GetCertificateHistoryParams) ([]CertificateHistory, error)
 	// Get the configuration (single row)
 	GetConfig(ctx context.Context) (Config, error)
+	// Get a single security key by ID
+	GetSecurityKeyByID(ctx context.Context, id int64) (SecurityKey, error)
+	// Get security keys filtered by method type
+	GetSecurityKeysByMethod(ctx context.Context, method string) ([]SecurityKey, error)
 	// Get recent update history entries, newest first
 	GetUpdateHistory(ctx context.Context, limit int64) ([]UpdateHistory, error)
+	// Check if any security keys exist
+	HasAnySecurityKeys(ctx context.Context) (int64, error)
+	// Insert a new security key and return the created row
+	InsertSecurityKey(ctx context.Context, arg InsertSecurityKeyParams) (SecurityKey, error)
 	// Check if initial setup is complete
 	IsConfigured(ctx context.Context) (int64, error)
 	// List all certificates ordered by creation date
 	ListAllCertificates(ctx context.Context) ([]Certificate, error)
+	// List all security keys ordered by creation date
+	ListSecurityKeys(ctx context.Context) ([]SecurityKey, error)
 	// Update history queries
 	// Record an update attempt (success or failure)
 	RecordUpdate(ctx context.Context, arg RecordUpdateParams) error
@@ -63,6 +81,8 @@ type Querier interface {
 	UpdatePendingCSR(ctx context.Context, arg UpdatePendingCSRParams) error
 	// Update the pending note field
 	UpdatePendingNote(ctx context.Context, arg UpdatePendingNoteParams) error
+	// Update the last_used_at timestamp for a security key
+	UpdateSecurityKeyLastUsed(ctx context.Context, id int64) error
 }
 
 var _ Querier = (*Queries)(nil)

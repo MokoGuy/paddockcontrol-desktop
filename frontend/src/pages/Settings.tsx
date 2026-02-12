@@ -42,7 +42,7 @@ import { formatDateTime, formatFileSize } from "@/lib/theme";
 import { GetBuildInfo, OpenDataDirectory, ExportLogs, GetLogInfo } from "../../wailsjs/go/main/App";
 import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
-import { ChangeEncryptionKeyDialog } from "@/components/settings/ChangeEncryptionKeyDialog";
+import { ChangePasswordDialog } from "@/components/settings/ChangePasswordDialog";
 import { LocalBackupsCard } from "@/components/settings/LocalBackupsCard";
 import { UpdateCard } from "@/components/settings/UpdateCard";
 import { DangerZoneCard } from "@/components/shared/DangerZoneCard";
@@ -56,7 +56,8 @@ export function Settings() {
         setIsAdminModeEnabled,
         setIsSetupComplete,
         setIsWaitingForEncryptionKey,
-        setIsEncryptionKeyProvided,
+        isUnlocked,
+        setIsUnlocked,
     } = useAppStore();
     const { isLoading: configLoading, error: configError } = useSetup();
     const [isEditMode, setIsEditMode] = useState(false);
@@ -137,9 +138,9 @@ export function Settings() {
     const handleRestoreBackup = async (filename: string) => {
         await restoreLocalBackup(filename);
         // Reset frontend state — the restored DB may have different state
-        setIsEncryptionKeyProvided(false);
+        setIsUnlocked(false);
         toast.info(
-            "Backup restored. You may need to re-provide your encryption key.",
+            "Backup restored. You may need to re-enter your password.",
         );
         // Re-load settings data
         try {
@@ -158,7 +159,7 @@ export function Settings() {
             // Reset frontend state to initial values
             setIsSetupComplete(false);
             setIsWaitingForEncryptionKey(true);
-            setIsEncryptionKeyProvided(false);
+            setIsUnlocked(false);
             setIsAdminModeEnabled(false);
             // Navigate to setup wizard
             navigate("/setup", { replace: true });
@@ -504,16 +505,27 @@ export function Settings() {
             {/* Application Updates */}
             <UpdateCard />
 
-            {/* Change Encryption Key */}
-            <DangerZoneCard
-                className="mt-6"
-                title="Danger Zone - Change Encryption Key"
-                description="Re-encrypt all private keys with a new encryption key."
-                buttonLabel="Change Key"
-                onClick={() => setChangeKeyOpen(true)}
-                isAdminModeEnabled={isAdminModeEnabled}
-                requireEncryptionKey
-            />
+            {/* Change Password */}
+            <Card className="mt-6 shadow-sm border-border">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Security</CardTitle>
+                            <CardDescription>
+                                Change your unlock password
+                            </CardDescription>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setChangeKeyOpen(true)}
+                            disabled={!isUnlocked}
+                        >
+                            Change Password
+                        </Button>
+                    </div>
+                </CardHeader>
+            </Card>
 
             {/* Danger Zone - Reset Database */}
             <DangerZoneCard
@@ -547,8 +559,8 @@ export function Settings() {
                 onCancel={() => setResetConfirming(false)}
             />
 
-            {/* Change Encryption Key Dialog */}
-            <ChangeEncryptionKeyDialog
+            {/* Change Password Dialog */}
+            <ChangePasswordDialog
                 open={changeKeyOpen}
                 onClose={() => setChangeKeyOpen(false)}
             />
