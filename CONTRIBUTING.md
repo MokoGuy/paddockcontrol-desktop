@@ -40,7 +40,8 @@ build_dev.go / build_prod.go  # ProductionMode flag
 
 internal/
 ├── config/              # Configuration service and validation
-├── crypto/              # RSA keygen, CSR creation, cert parsing, AES encrypt/decrypt
+├── crypto/              # RSA keygen, CSR creation, cert parsing, AES-256-GCM encryption, Argon2id KDF
+├── keystore/            # OS-native keyring abstraction (Linux D-Bus, Windows WinCred)
 ├── db/                  # SQLite init, migrations, sqlc queries
 │   ├── schema.sql       # Source of truth for DB schema
 │   ├── queries/         # SQL for sqlc code generation
