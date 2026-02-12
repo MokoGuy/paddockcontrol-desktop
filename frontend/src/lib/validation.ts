@@ -280,11 +280,3 @@ export const certificateFilterSchema = z.object({
 
 export type CertificateFilterInput = z.infer<typeof certificateFilterSchema>;
 
-// Backup encryption key
-export const backupKeySchema = z.object({
-  key: z
-    .string()
-    .min(16, 'Encryption key must be at least 16 characters'),
-});
-
-export type BackupKeyInput = z.infer<typeof backupKeySchema>;

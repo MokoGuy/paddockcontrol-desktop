@@ -31,10 +31,6 @@ interface AppState {
     setError: (error: string | null) => void;
     clearError: () => void;
 
-    // Migration state
-    needsMigration: boolean;
-    setNeedsMigration: (needs: boolean) => void;
-
     // Admin mode (hidden behind Konami code)
     isAdminModeEnabled: boolean;
     setIsAdminModeEnabled: (enabled: boolean) => void;
@@ -61,9 +57,6 @@ export const useAppStore = create<AppState>((set) => ({
     error: null,
     setError: (error) => set({ error }),
     clearError: () => set({ error: null }),
-
-    needsMigration: false,
-    setNeedsMigration: (needs) => set({ needsMigration: needs }),
 
     isAdminModeEnabled: false,
     setIsAdminModeEnabled: (enabled) => set({ isAdminModeEnabled: enabled }),

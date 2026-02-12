@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { LocalBackupInfo } from "@/types";
+import { LocalBackupInfo, BackupPeekInfo, CertImportResult } from "@/types";
 
 interface UseBackupReturn {
     isLoading: boolean;
     error: string | null;
 
-    // Export operations
-    exportBackup: () => Promise<void>;
+    // Import operations
+    importCertificatesFromBackup: (
+        path: string,
+        password: string,
+    ) => Promise<CertImportResult | null>;
+    peekBackupInfo: (path: string) => Promise<BackupPeekInfo | null>;
+    selectBackupFile: () => Promise<string | null>;
     copyToClipboard: (text: string) => Promise<void>;
     getDataDirectory: () => Promise<string | null>;
 
@@ -36,15 +41,42 @@ export function useBackup(): UseBackupReturn {
         console.error("Backup operation error:", err);
     };
 
-    const exportBackup = async () => {
+    const importCertificatesFromBackup = async (
+        path: string,
+        password: string,
+    ): Promise<CertImportResult | null> => {
         setIsLoading(true);
         setError(null);
         try {
-            await api.exportBackup();
+            return await api.importCertificatesFromBackup(path, password);
         } catch (err) {
             handleError(err);
+            return null;
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const peekBackupInfo = async (
+        path: string,
+    ): Promise<BackupPeekInfo | null> => {
+        setError(null);
+        try {
+            return await api.peekBackupInfo(path);
+        } catch (err) {
+            handleError(err);
+            return null;
+        }
+    };
+
+    const selectBackupFile = async (): Promise<string | null> => {
+        setError(null);
+        try {
+            const path = await api.selectBackupFile();
+            return path || null;
+        } catch (err) {
+            handleError(err);
+            return null;
         }
     };
 
@@ -122,7 +154,9 @@ export function useBackup(): UseBackupReturn {
     return {
         isLoading,
         error,
-        exportBackup,
+        importCertificatesFromBackup,
+        peekBackupInfo,
+        selectBackupFile,
         copyToClipboard,
         getDataDirectory,
         localBackups,

@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
-import {
-    SetupDefaults,
-    SetupRequest,
-    BackupData,
-    BackupValidationResult,
-} from "@/types";
+import { SetupDefaults, SetupRequest, BackupPeekInfo } from "@/types";
 import { useAppStore } from "@/stores/useAppStore";
 
 interface UseSetupReturn {
@@ -17,11 +12,9 @@ interface UseSetupReturn {
     loadConfig: () => Promise<void>;
     loadDefaults: () => Promise<void>;
     saveSetup: (req: SetupRequest) => Promise<void>;
-    validateBackupFile: (
-        path: string,
-    ) => Promise<BackupValidationResult | null>;
-    validateBackupKey: (backup: BackupData, key: string) => Promise<void>;
-    restoreFromBackup: (backup: BackupData) => Promise<void>;
+    peekBackupInfo: (path: string) => Promise<BackupPeekInfo | null>;
+    restoreFromBackupFile: (path: string) => Promise<void>;
+    selectBackupFile: () => Promise<string | null>;
 
     // Utilities
     clearError: () => void;
@@ -44,7 +37,6 @@ export function useSetup(): UseSetupReturn {
         setIsLoading(true);
         setError(null);
         try {
-            // Config is loaded from defaults on setup
             const isComplete = await api.isSetupComplete();
             setIsSetupComplete(isComplete);
         } catch (err) {
@@ -83,13 +75,13 @@ export function useSetup(): UseSetupReturn {
         }
     };
 
-    const validateBackupFile = async (
+    const peekBackupInfo = async (
         path: string,
-    ): Promise<BackupValidationResult | null> => {
+    ): Promise<BackupPeekInfo | null> => {
         setIsLoading(true);
         setError(null);
         try {
-            return await api.validateBackupFile(path);
+            return await api.peekBackupInfo(path);
         } catch (err) {
             handleError(err);
             return null;
@@ -98,11 +90,13 @@ export function useSetup(): UseSetupReturn {
         }
     };
 
-    const validateBackupKey = async (backup: BackupData, key: string) => {
+    const restoreFromBackupFile = async (path: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            await api.validateEncryptionKeyForBackup(backup, key);
+            await api.restoreFromBackupFile(path);
+            await loadConfig();
+            setIsSetupComplete(true);
         } catch (err) {
             handleError(err);
         } finally {
@@ -110,34 +104,14 @@ export function useSetup(): UseSetupReturn {
         }
     };
 
-    const restoreFromBackup = async (backup: BackupData) => {
-        setIsLoading(true);
+    const selectBackupFile = async (): Promise<string | null> => {
         setError(null);
         try {
-            console.log("🔄 [useSetup] Starting backup restore...");
-            console.log(
-                "📦 [useSetup] Backup has",
-                backup.certificates?.length || 0,
-                "certificates",
-            );
-
-            console.log("📡 [useSetup] Calling api.restoreFromBackup...");
-            await api.restoreFromBackup(backup);
-            console.log("✅ [useSetup] restoreFromBackup API call completed");
-
-            console.log("🔍 [useSetup] Loading config after restore...");
-            await loadConfig();
-            console.log("✅ [useSetup] Config loaded");
-
-            console.log("✅ [useSetup] Setting setup complete to true");
-            setIsSetupComplete(true);
-
-            console.log("✅ [useSetup] Restore completed successfully");
+            const path = await api.selectBackupFile();
+            return path || null;
         } catch (err) {
-            console.error("❌ [useSetup] Restore failed:", err);
             handleError(err);
-        } finally {
-            setIsLoading(false);
+            return null;
         }
     };
 
@@ -148,9 +122,9 @@ export function useSetup(): UseSetupReturn {
         loadConfig,
         loadDefaults,
         saveSetup,
-        validateBackupFile,
-        validateBackupKey,
-        restoreFromBackup,
+        peekBackupInfo,
+        restoreFromBackupFile,
+        selectBackupFile,
         clearError: () => setError(null),
     };
 }
