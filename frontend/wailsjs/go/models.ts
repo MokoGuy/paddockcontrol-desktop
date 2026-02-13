@@ -30,6 +30,7 @@ export namespace models {
 	    ca_name: string;
 	    has_security_keys: boolean;
 	    hostnames: string[];
+	    schema_version: number;
 
 	    static createFrom(source: any = {}) {
 	        return new BackupPeekInfo(source);
@@ -41,6 +42,7 @@ export namespace models {
 	        this.ca_name = source["ca_name"];
 	        this.has_security_keys = source["has_security_keys"];
 	        this.hostnames = source["hostnames"];
+	        this.schema_version = source["schema_version"];
 	    }
 	}
 	export class CertImportResult {
