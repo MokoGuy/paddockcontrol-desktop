@@ -273,7 +273,7 @@ function ExportCheckboxItem({
                 </Label>
                 <p className="text-xs text-muted-foreground truncate">
                     {item.requiresKey && !isUnlocked
-                        ? "Encryption key required"
+                        ? "Unlock required"
                         : item.filename}
                 </p>
             </div>
