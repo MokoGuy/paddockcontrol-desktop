@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"paddockcontrol-desktop/internal/config"
 	"paddockcontrol-desktop/internal/crypto"
@@ -137,6 +136,10 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 	currentMasterKey := make([]byte, len(a.masterKey))
 	copy(currentMasterKey, a.masterKey)
 	a.mu.RUnlock()
+
+	if len(currentMasterKey) != 32 {
+		return nil, fmt.Errorf("master key is not available")
+	}
 
 	// Read all certificates from backup
 	rows, err := backupDB.Query(`
@@ -378,9 +381,6 @@ func getBackupSchemaVersion(backupDB *sql.DB) (uint, bool) {
 func validateBackupPath(path string) error {
 	if path == "" {
 		return fmt.Errorf("backup path is empty")
-	}
-	if strings.Contains(path, "..") {
-		return fmt.Errorf("invalid backup path")
 	}
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return fmt.Errorf("backup file not found")

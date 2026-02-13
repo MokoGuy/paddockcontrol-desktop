@@ -98,6 +98,10 @@ func (a *App) EnrollPasswordMethod(password, label string) error {
 	database := a.db
 	a.mu.RUnlock()
 
+	if len(masterKey) != 32 {
+		return fmt.Errorf("master key is not available")
+	}
+
 	log := logger.WithComponent("app")
 	log.Info("enrolling new password method", slog.String("label", label))
 
