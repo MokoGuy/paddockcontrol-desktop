@@ -71,7 +71,7 @@ export function PendingPrivateKeySection({
                     <CardContent>
                         {!isUnlocked ? (
                             <p className="text-sm text-warning">
-                                Private key content can only be retrieved when the encryption key is provided.
+                                Private key content can only be retrieved when the app is unlocked.
                             </p>
                         ) : pendingPrivateKeyLoading ? (
                             <LoadingSpinner text="Decrypting pending private key..." />
