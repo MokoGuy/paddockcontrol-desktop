@@ -222,11 +222,11 @@ func (a *App) requireUnlocked() error {
 	defer a.mu.RUnlock()
 
 	if !a.isUnlocked {
-		return fmt.Errorf("encryption key required for this operation")
+		return fmt.Errorf("app must be unlocked for this operation")
 	}
 
 	if len(a.masterKey) == 0 {
-		return fmt.Errorf("encryption key is empty")
+		return fmt.Errorf("master key is not available")
 	}
 
 	return nil
