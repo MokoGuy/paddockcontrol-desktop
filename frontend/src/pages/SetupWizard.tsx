@@ -50,7 +50,7 @@ function getPreviousStep(current: WizardStep): WizardStep {
 export function SetupWizard() {
     const navigate = useNavigate();
     const { defaults, isLoading, error, loadDefaults, saveSetup, clearError } = useSetup();
-    const { setIsEncryptionKeyProvided } = useAppStore();
+    const { setIsUnlocked } = useAppStore();
     const [currentStep, setCurrentStep] = useState<WizardStep>("email");
     const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -82,8 +82,8 @@ export function SetupWizard() {
                 default_organizational_unit: defaults.default_organizational_unit || "",
                 default_city: defaults.default_city,
                 default_state: defaults.default_state,
-                encryption_key: "",
-                encryption_key_confirm: "",
+                password: "",
+                password_confirm: "",
             });
         }
     }, [defaults, reset]);
@@ -164,14 +164,14 @@ export function SetupWizard() {
 
             await saveSetup(setupData);
 
-            // Then, provide the encryption key
-            const keyResult = await api.provideEncryptionKey(data.encryption_key);
+            // Then, provide the password
+            const keyResult = await api.provideEncryptionKey(data.password);
 
             if (keyResult.valid) {
-                setIsEncryptionKeyProvided(true);
+                setIsUnlocked(true);
                 navigate("/", { replace: true });
             } else {
-                setSubmitError("Failed to set encryption key. Please try again.");
+                setSubmitError("Failed to set password. Please try again.");
             }
         } catch (err) {
             console.error("Setup error:", err);
@@ -278,9 +278,9 @@ export function SetupWizard() {
                                 </motion.div>
                             )}
 
-                            {currentStep === "encryption-key" && (
+                            {currentStep === "password" && (
                                 <motion.div
-                                    key="encryption-key"
+                                    key="password"
                                     {...stepAnimations}
                                 >
                                     <EncryptionKeyStep

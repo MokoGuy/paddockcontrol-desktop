@@ -54,7 +54,7 @@ func (s *CertificateService) UploadCertificate(ctx context.Context, hostname, ce
 	log.Info("CSR match validated")
 
 	// Validate certificate matches pending private key
-	decryptedKeyPEM, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, string(encryptionKey))
+	decryptedKeyPEM, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, encryptionKey)
 	if err != nil {
 		return fmt.Errorf("failed to decrypt pending private key: %w", err)
 	}
@@ -130,7 +130,7 @@ func (s *CertificateService) PreviewCertificateUpload(ctx context.Context, hostn
 	// Check key match: cert public key matches pending private key
 	keyMatch := false
 	if len(cert.PendingEncryptedPrivateKey) > 0 {
-		decryptedKeyPEM, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, string(encryptionKey))
+		decryptedKeyPEM, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, encryptionKey)
 		if err == nil {
 			privateKey, err := crypto.ParsePrivateKeyFromPEM(decryptedKeyPEM)
 			if err == nil {
@@ -206,7 +206,7 @@ func (s *CertificateService) ImportCertificate(ctx context.Context, req models.I
 	}
 
 	// Encrypt private key
-	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, string(encryptionKey))
+	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, encryptionKey)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt private key: %w", err)
 	}

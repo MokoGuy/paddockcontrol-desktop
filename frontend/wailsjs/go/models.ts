@@ -25,34 +25,40 @@ export namespace logger {
 
 export namespace models {
 	
-	export class BackupCertificate {
-	    hostname: string;
-	    encrypted_private_key?: number[];
-	    pending_csr_pem?: string;
-	    certificate_pem?: string;
-	    pending_encrypted_private_key?: number[];
-	    created_at: number;
-	    expires_at?: number;
-	    note?: string;
-	    pending_note?: string;
-	    read_only: boolean;
-	
+	export class BackupPeekInfo {
+	    certificate_count: number;
+	    ca_name: string;
+	    has_security_keys: boolean;
+	    hostnames: string[];
+	    schema_version: number;
+
 	    static createFrom(source: any = {}) {
-	        return new BackupCertificate(source);
+	        return new BackupPeekInfo(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.hostname = source["hostname"];
-	        this.encrypted_private_key = source["encrypted_private_key"];
-	        this.pending_csr_pem = source["pending_csr_pem"];
-	        this.certificate_pem = source["certificate_pem"];
-	        this.pending_encrypted_private_key = source["pending_encrypted_private_key"];
-	        this.created_at = source["created_at"];
-	        this.expires_at = source["expires_at"];
-	        this.note = source["note"];
-	        this.pending_note = source["pending_note"];
-	        this.read_only = source["read_only"];
+	        this.certificate_count = source["certificate_count"];
+	        this.ca_name = source["ca_name"];
+	        this.has_security_keys = source["has_security_keys"];
+	        this.hostnames = source["hostnames"];
+	        this.schema_version = source["schema_version"];
+	    }
+	}
+	export class CertImportResult {
+	    imported: number;
+	    skipped: number;
+	    conflicts?: string[];
+
+	    static createFrom(source: any = {}) {
+	        return new CertImportResult(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.imported = source["imported"];
+	        this.skipped = source["skipped"];
+	        this.conflicts = source["conflicts"];
 	    }
 	}
 	export class Config {
@@ -91,68 +97,6 @@ export namespace models {
 	        this.is_configured = source["is_configured"];
 	        this.created_at = source["created_at"];
 	        this.last_modified = source["last_modified"];
-	    }
-	}
-	export class BackupData {
-	    version: string;
-	    exported_at: number;
-	    encryption_key?: string;
-	    config?: Config;
-	    certificates?: BackupCertificate[];
-	
-	    static createFrom(source: any = {}) {
-	        return new BackupData(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.version = source["version"];
-	        this.exported_at = source["exported_at"];
-	        this.encryption_key = source["encryption_key"];
-	        this.config = this.convertValues(source["config"], Config);
-	        this.certificates = this.convertValues(source["certificates"], BackupCertificate);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class BackupValidationResult {
-	    valid: boolean;
-	    version: string;
-	    certificate_count: number;
-	    has_encrypted_keys: boolean;
-	    has_encryption_key: boolean;
-	    encryption_key: string;
-	    exported_at: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new BackupValidationResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.valid = source["valid"];
-	        this.version = source["version"];
-	        this.certificate_count = source["certificate_count"];
-	        this.has_encrypted_keys = source["has_encrypted_keys"];
-	        this.has_encryption_key = source["has_encryption_key"];
-	        this.encryption_key = source["encryption_key"];
-	        this.exported_at = source["exported_at"];
 	    }
 	}
 	export class SANEntry {
@@ -491,6 +435,26 @@ export namespace models {
 	    }
 	}
 	
+	export class SecurityKeyInfo {
+	    id: number;
+	    method: string;
+	    label: string;
+	    created_at: number;
+	    last_used_at?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SecurityKeyInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.method = source["method"];
+	        this.label = source["label"];
+	        this.created_at = source["created_at"];
+	        this.last_used_at = source["last_used_at"];
+	    }
+	}
 	export class SetupDefaults {
 	    validity_period_days: number;
 	    default_key_size: number;

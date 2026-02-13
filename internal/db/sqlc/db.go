@@ -39,6 +39,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.configExistsStmt, err = db.PrepareContext(ctx, configExists); err != nil {
 		return nil, fmt.Errorf("error preparing query ConfigExists: %w", err)
 	}
+	if q.countAllSecurityKeysStmt, err = db.PrepareContext(ctx, countAllSecurityKeys); err != nil {
+		return nil, fmt.Errorf("error preparing query CountAllSecurityKeys: %w", err)
+	}
+	if q.countSecurityKeysByMethodStmt, err = db.PrepareContext(ctx, countSecurityKeysByMethod); err != nil {
+		return nil, fmt.Errorf("error preparing query CountSecurityKeysByMethod: %w", err)
+	}
 	if q.createCertificateStmt, err = db.PrepareContext(ctx, createCertificate); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateCertificate: %w", err)
 	}
@@ -54,6 +60,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteCertificateHistoryStmt, err = db.PrepareContext(ctx, deleteCertificateHistory); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteCertificateHistory: %w", err)
 	}
+	if q.deleteSecurityKeyStmt, err = db.PrepareContext(ctx, deleteSecurityKey); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteSecurityKey: %w", err)
+	}
+	if q.deleteSecurityKeysByMethodStmt, err = db.PrepareContext(ctx, deleteSecurityKeysByMethod); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteSecurityKeysByMethod: %w", err)
+	}
 	if q.getCertificateByHostnameStmt, err = db.PrepareContext(ctx, getCertificateByHostname); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCertificateByHostname: %w", err)
 	}
@@ -63,14 +75,29 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getConfigStmt, err = db.PrepareContext(ctx, getConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetConfig: %w", err)
 	}
+	if q.getSecurityKeyByIDStmt, err = db.PrepareContext(ctx, getSecurityKeyByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSecurityKeyByID: %w", err)
+	}
+	if q.getSecurityKeysByMethodStmt, err = db.PrepareContext(ctx, getSecurityKeysByMethod); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSecurityKeysByMethod: %w", err)
+	}
 	if q.getUpdateHistoryStmt, err = db.PrepareContext(ctx, getUpdateHistory); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUpdateHistory: %w", err)
+	}
+	if q.hasAnySecurityKeysStmt, err = db.PrepareContext(ctx, hasAnySecurityKeys); err != nil {
+		return nil, fmt.Errorf("error preparing query HasAnySecurityKeys: %w", err)
+	}
+	if q.insertSecurityKeyStmt, err = db.PrepareContext(ctx, insertSecurityKey); err != nil {
+		return nil, fmt.Errorf("error preparing query InsertSecurityKey: %w", err)
 	}
 	if q.isConfiguredStmt, err = db.PrepareContext(ctx, isConfigured); err != nil {
 		return nil, fmt.Errorf("error preparing query IsConfigured: %w", err)
 	}
 	if q.listAllCertificatesStmt, err = db.PrepareContext(ctx, listAllCertificates); err != nil {
 		return nil, fmt.Errorf("error preparing query ListAllCertificates: %w", err)
+	}
+	if q.listSecurityKeysStmt, err = db.PrepareContext(ctx, listSecurityKeys); err != nil {
+		return nil, fmt.Errorf("error preparing query ListSecurityKeys: %w", err)
 	}
 	if q.recordUpdateStmt, err = db.PrepareContext(ctx, recordUpdate); err != nil {
 		return nil, fmt.Errorf("error preparing query RecordUpdate: %w", err)
@@ -98,6 +125,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updatePendingNoteStmt, err = db.PrepareContext(ctx, updatePendingNote); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdatePendingNote: %w", err)
+	}
+	if q.updateSecurityKeyLastUsedStmt, err = db.PrepareContext(ctx, updateSecurityKeyLastUsed); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateSecurityKeyLastUsed: %w", err)
 	}
 	return &q, nil
 }
@@ -129,6 +159,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing configExistsStmt: %w", cerr)
 		}
 	}
+	if q.countAllSecurityKeysStmt != nil {
+		if cerr := q.countAllSecurityKeysStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countAllSecurityKeysStmt: %w", cerr)
+		}
+	}
+	if q.countSecurityKeysByMethodStmt != nil {
+		if cerr := q.countSecurityKeysByMethodStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countSecurityKeysByMethodStmt: %w", cerr)
+		}
+	}
 	if q.createCertificateStmt != nil {
 		if cerr := q.createCertificateStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createCertificateStmt: %w", cerr)
@@ -154,6 +194,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteCertificateHistoryStmt: %w", cerr)
 		}
 	}
+	if q.deleteSecurityKeyStmt != nil {
+		if cerr := q.deleteSecurityKeyStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteSecurityKeyStmt: %w", cerr)
+		}
+	}
+	if q.deleteSecurityKeysByMethodStmt != nil {
+		if cerr := q.deleteSecurityKeysByMethodStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteSecurityKeysByMethodStmt: %w", cerr)
+		}
+	}
 	if q.getCertificateByHostnameStmt != nil {
 		if cerr := q.getCertificateByHostnameStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getCertificateByHostnameStmt: %w", cerr)
@@ -169,9 +219,29 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getConfigStmt: %w", cerr)
 		}
 	}
+	if q.getSecurityKeyByIDStmt != nil {
+		if cerr := q.getSecurityKeyByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSecurityKeyByIDStmt: %w", cerr)
+		}
+	}
+	if q.getSecurityKeysByMethodStmt != nil {
+		if cerr := q.getSecurityKeysByMethodStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSecurityKeysByMethodStmt: %w", cerr)
+		}
+	}
 	if q.getUpdateHistoryStmt != nil {
 		if cerr := q.getUpdateHistoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUpdateHistoryStmt: %w", cerr)
+		}
+	}
+	if q.hasAnySecurityKeysStmt != nil {
+		if cerr := q.hasAnySecurityKeysStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing hasAnySecurityKeysStmt: %w", cerr)
+		}
+	}
+	if q.insertSecurityKeyStmt != nil {
+		if cerr := q.insertSecurityKeyStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing insertSecurityKeyStmt: %w", cerr)
 		}
 	}
 	if q.isConfiguredStmt != nil {
@@ -182,6 +252,11 @@ func (q *Queries) Close() error {
 	if q.listAllCertificatesStmt != nil {
 		if cerr := q.listAllCertificatesStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listAllCertificatesStmt: %w", cerr)
+		}
+	}
+	if q.listSecurityKeysStmt != nil {
+		if cerr := q.listSecurityKeysStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listSecurityKeysStmt: %w", cerr)
 		}
 	}
 	if q.recordUpdateStmt != nil {
@@ -229,6 +304,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updatePendingNoteStmt: %w", cerr)
 		}
 	}
+	if q.updateSecurityKeyLastUsedStmt != nil {
+		if cerr := q.updateSecurityKeyLastUsedStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateSecurityKeyLastUsedStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -266,63 +346,83 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                            DBTX
-	tx                            *sql.Tx
-	activateCertificateStmt       *sql.Stmt
-	addHistoryEntryStmt           *sql.Stmt
-	certificateExistsStmt         *sql.Stmt
-	clearPendingCSRStmt           *sql.Stmt
-	configExistsStmt              *sql.Stmt
-	createCertificateStmt         *sql.Stmt
-	createConfigStmt              *sql.Stmt
-	deleteAllCertificatesStmt     *sql.Stmt
-	deleteCertificateStmt         *sql.Stmt
-	deleteCertificateHistoryStmt  *sql.Stmt
-	getCertificateByHostnameStmt  *sql.Stmt
-	getCertificateHistoryStmt     *sql.Stmt
-	getConfigStmt                 *sql.Stmt
-	getUpdateHistoryStmt          *sql.Stmt
-	isConfiguredStmt              *sql.Stmt
-	listAllCertificatesStmt       *sql.Stmt
-	recordUpdateStmt              *sql.Stmt
-	restoreCertificateStmt        *sql.Stmt
-	setConfiguredStmt             *sql.Stmt
-	updateCertificateNoteStmt     *sql.Stmt
-	updateCertificateReadOnlyStmt *sql.Stmt
-	updateConfigStmt              *sql.Stmt
-	updateEncryptedKeysStmt       *sql.Stmt
-	updatePendingCSRStmt          *sql.Stmt
-	updatePendingNoteStmt         *sql.Stmt
+	db                             DBTX
+	tx                             *sql.Tx
+	activateCertificateStmt        *sql.Stmt
+	addHistoryEntryStmt            *sql.Stmt
+	certificateExistsStmt          *sql.Stmt
+	clearPendingCSRStmt            *sql.Stmt
+	configExistsStmt               *sql.Stmt
+	countAllSecurityKeysStmt       *sql.Stmt
+	countSecurityKeysByMethodStmt  *sql.Stmt
+	createCertificateStmt          *sql.Stmt
+	createConfigStmt               *sql.Stmt
+	deleteAllCertificatesStmt      *sql.Stmt
+	deleteCertificateStmt          *sql.Stmt
+	deleteCertificateHistoryStmt   *sql.Stmt
+	deleteSecurityKeyStmt          *sql.Stmt
+	deleteSecurityKeysByMethodStmt *sql.Stmt
+	getCertificateByHostnameStmt   *sql.Stmt
+	getCertificateHistoryStmt      *sql.Stmt
+	getConfigStmt                  *sql.Stmt
+	getSecurityKeyByIDStmt         *sql.Stmt
+	getSecurityKeysByMethodStmt    *sql.Stmt
+	getUpdateHistoryStmt           *sql.Stmt
+	hasAnySecurityKeysStmt         *sql.Stmt
+	insertSecurityKeyStmt          *sql.Stmt
+	isConfiguredStmt               *sql.Stmt
+	listAllCertificatesStmt        *sql.Stmt
+	listSecurityKeysStmt           *sql.Stmt
+	recordUpdateStmt               *sql.Stmt
+	restoreCertificateStmt         *sql.Stmt
+	setConfiguredStmt              *sql.Stmt
+	updateCertificateNoteStmt      *sql.Stmt
+	updateCertificateReadOnlyStmt  *sql.Stmt
+	updateConfigStmt               *sql.Stmt
+	updateEncryptedKeysStmt        *sql.Stmt
+	updatePendingCSRStmt           *sql.Stmt
+	updatePendingNoteStmt          *sql.Stmt
+	updateSecurityKeyLastUsedStmt  *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                            tx,
-		tx:                            tx,
-		activateCertificateStmt:       q.activateCertificateStmt,
-		addHistoryEntryStmt:           q.addHistoryEntryStmt,
-		certificateExistsStmt:         q.certificateExistsStmt,
-		clearPendingCSRStmt:           q.clearPendingCSRStmt,
-		configExistsStmt:              q.configExistsStmt,
-		createCertificateStmt:         q.createCertificateStmt,
-		createConfigStmt:              q.createConfigStmt,
-		deleteAllCertificatesStmt:     q.deleteAllCertificatesStmt,
-		deleteCertificateStmt:         q.deleteCertificateStmt,
-		deleteCertificateHistoryStmt:  q.deleteCertificateHistoryStmt,
-		getCertificateByHostnameStmt:  q.getCertificateByHostnameStmt,
-		getCertificateHistoryStmt:     q.getCertificateHistoryStmt,
-		getConfigStmt:                 q.getConfigStmt,
-		getUpdateHistoryStmt:          q.getUpdateHistoryStmt,
-		isConfiguredStmt:              q.isConfiguredStmt,
-		listAllCertificatesStmt:       q.listAllCertificatesStmt,
-		recordUpdateStmt:              q.recordUpdateStmt,
-		restoreCertificateStmt:        q.restoreCertificateStmt,
-		setConfiguredStmt:             q.setConfiguredStmt,
-		updateCertificateNoteStmt:     q.updateCertificateNoteStmt,
-		updateCertificateReadOnlyStmt: q.updateCertificateReadOnlyStmt,
-		updateConfigStmt:              q.updateConfigStmt,
-		updateEncryptedKeysStmt:       q.updateEncryptedKeysStmt,
-		updatePendingCSRStmt:          q.updatePendingCSRStmt,
-		updatePendingNoteStmt:         q.updatePendingNoteStmt,
+		db:                             tx,
+		tx:                             tx,
+		activateCertificateStmt:        q.activateCertificateStmt,
+		addHistoryEntryStmt:            q.addHistoryEntryStmt,
+		certificateExistsStmt:          q.certificateExistsStmt,
+		clearPendingCSRStmt:            q.clearPendingCSRStmt,
+		configExistsStmt:               q.configExistsStmt,
+		countAllSecurityKeysStmt:       q.countAllSecurityKeysStmt,
+		countSecurityKeysByMethodStmt:  q.countSecurityKeysByMethodStmt,
+		createCertificateStmt:          q.createCertificateStmt,
+		createConfigStmt:               q.createConfigStmt,
+		deleteAllCertificatesStmt:      q.deleteAllCertificatesStmt,
+		deleteCertificateStmt:          q.deleteCertificateStmt,
+		deleteCertificateHistoryStmt:   q.deleteCertificateHistoryStmt,
+		deleteSecurityKeyStmt:          q.deleteSecurityKeyStmt,
+		deleteSecurityKeysByMethodStmt: q.deleteSecurityKeysByMethodStmt,
+		getCertificateByHostnameStmt:   q.getCertificateByHostnameStmt,
+		getCertificateHistoryStmt:      q.getCertificateHistoryStmt,
+		getConfigStmt:                  q.getConfigStmt,
+		getSecurityKeyByIDStmt:         q.getSecurityKeyByIDStmt,
+		getSecurityKeysByMethodStmt:    q.getSecurityKeysByMethodStmt,
+		getUpdateHistoryStmt:           q.getUpdateHistoryStmt,
+		hasAnySecurityKeysStmt:         q.hasAnySecurityKeysStmt,
+		insertSecurityKeyStmt:          q.insertSecurityKeyStmt,
+		isConfiguredStmt:               q.isConfiguredStmt,
+		listAllCertificatesStmt:        q.listAllCertificatesStmt,
+		listSecurityKeysStmt:           q.listSecurityKeysStmt,
+		recordUpdateStmt:               q.recordUpdateStmt,
+		restoreCertificateStmt:         q.restoreCertificateStmt,
+		setConfiguredStmt:              q.setConfiguredStmt,
+		updateCertificateNoteStmt:      q.updateCertificateNoteStmt,
+		updateCertificateReadOnlyStmt:  q.updateCertificateReadOnlyStmt,
+		updateConfigStmt:               q.updateConfigStmt,
+		updateEncryptedKeysStmt:        q.updateEncryptedKeysStmt,
+		updatePendingCSRStmt:           q.updatePendingCSRStmt,
+		updatePendingNoteStmt:          q.updatePendingNoteStmt,
+		updateSecurityKeyLastUsedStmt:  q.updateSecurityKeyLastUsedStmt,
 	}
 }

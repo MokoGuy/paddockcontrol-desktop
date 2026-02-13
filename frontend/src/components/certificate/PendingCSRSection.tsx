@@ -89,7 +89,7 @@ export function PendingCSRSection({
                                                     variant="default"
                                                     size="sm"
                                                     requireAdminMode={false}
-                                                    requireEncryptionKey
+                                                    requireUnlocked
                                                     disabled={certificate.read_only}
                                                     disabledReason={certificate.read_only ? "Certificate is read-only" : undefined}
                                                     onClick={onUploadClick}

@@ -14,7 +14,7 @@ func TestUploadCertificate_NewCSR_PreservesPrivateKey(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Generate CSR and key
 	csrPEM, encryptedKey, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -37,7 +37,7 @@ func TestUploadCertificate_NewCSR_PreservesPrivateKey(t *testing.T) {
 	}
 
 	// Upload the signed certificate
-	err = svc.UploadCertificate(ctx, hostname, certPEM, []byte(encryptionKey))
+	err = svc.UploadCertificate(ctx, hostname, certPEM, encryptionKey)
 	if err != nil {
 		t.Fatalf("UploadCertificate failed: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestUploadCertificate_Renewal_PreservesPrivateKey(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create an existing active certificate (simulating pre-renewal state)
 	originalKey, _ := crypto.GenerateRSAKey(2048)
@@ -115,7 +115,7 @@ func TestUploadCertificate_Renewal_PreservesPrivateKey(t *testing.T) {
 	}
 
 	// Upload the signed certificate
-	err = svc.UploadCertificate(ctx, hostname, certPEM, []byte(encryptionKey))
+	err = svc.UploadCertificate(ctx, hostname, certPEM, encryptionKey)
 	if err != nil {
 		t.Fatalf("UploadCertificate failed: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestUploadCertificate_MissingPendingKey_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Generate CSR and key but only store CSR (simulating the bug scenario)
 	csrPEM, _, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -178,7 +178,7 @@ func TestUploadCertificate_MissingPendingKey_ReturnsError(t *testing.T) {
 	}
 
 	// Upload should fail with defensive error
-	err = svc.UploadCertificate(ctx, hostname, certPEM, []byte(encryptionKey))
+	err = svc.UploadCertificate(ctx, hostname, certPEM, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error when pending private key is missing, got nil")
 	}
@@ -209,7 +209,7 @@ func TestUploadCertificate_NoCSR_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Create certificate with no pending CSR
 	err := database.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
@@ -220,7 +220,7 @@ func TestUploadCertificate_NoCSR_ReturnsError(t *testing.T) {
 		t.Fatalf("failed to create certificate: %v", err)
 	}
 
-	err = svc.UploadCertificate(ctx, hostname, "-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----", []byte(encryptionKey))
+	err = svc.UploadCertificate(ctx, hostname, "-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----", encryptionKey)
 	if err == nil {
 		t.Fatal("expected error when no pending CSR exists, got nil")
 	}
@@ -235,7 +235,7 @@ func TestUploadCertificate_KeyMismatch_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Generate CSR and key for the pending state
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -273,7 +273,7 @@ func TestUploadCertificate_KeyMismatch_ReturnsError(t *testing.T) {
 	}
 
 	// Upload should fail because certificate doesn't match CSR
-	err = svc.UploadCertificate(ctx, hostname, certPEM, []byte(encryptionKey))
+	err = svc.UploadCertificate(ctx, hostname, certPEM, encryptionKey)
 	if err == nil {
 		t.Fatal("expected error when certificate key doesn't match, got nil")
 	}
@@ -288,7 +288,7 @@ func TestPreviewCertificateUpload(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Generate CSR and key
 	csrPEM, encryptedKey, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -311,7 +311,7 @@ func TestPreviewCertificateUpload(t *testing.T) {
 	}
 
 	// Preview
-	preview, err := svc.PreviewCertificateUpload(ctx, hostname, certPEM, []byte(encryptionKey))
+	preview, err := svc.PreviewCertificateUpload(ctx, hostname, certPEM, encryptionKey)
 	if err != nil {
 		t.Fatalf("PreviewCertificateUpload failed: %v", err)
 	}
@@ -337,7 +337,7 @@ func TestPreviewCertificateUpload_KeyMismatch(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	// Generate CSR and key for pending state
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
@@ -374,7 +374,7 @@ func TestPreviewCertificateUpload_KeyMismatch(t *testing.T) {
 	}
 
 	// Preview should succeed but show mismatches
-	preview, err := svc.PreviewCertificateUpload(ctx, hostname, certPEM, []byte(encryptionKey))
+	preview, err := svc.PreviewCertificateUpload(ctx, hostname, certPEM, encryptionKey)
 	if err != nil {
 		t.Fatalf("PreviewCertificateUpload failed: %v", err)
 	}

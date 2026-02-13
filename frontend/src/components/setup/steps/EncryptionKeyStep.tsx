@@ -18,23 +18,23 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
   const [showKey, setShowKey] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const encryptionKey = watch("encryption_key");
-  const confirmKey = watch("encryption_key_confirm");
+  const password = watch("password");
+  const confirmPassword = watch("password_confirm");
 
-  const keysMatch = encryptionKey && confirmKey && encryptionKey === confirmKey;
+  const passwordsMatch = password && confirmPassword && password === confirmPassword;
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="encryption_key">Encryption Key *</Label>
+        <Label htmlFor="password">Password *</Label>
         <div className="relative">
           <Input
-            id="encryption_key"
+            id="password"
             type={showKey ? "text" : "password"}
-            placeholder="Enter a secure encryption key"
+            placeholder="Enter a secure password"
             disabled={isSubmitting}
             className="pr-10"
-            {...register("encryption_key")}
+            {...register("password")}
           />
           <Button
             type="button"
@@ -50,9 +50,9 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
             />
           </Button>
         </div>
-        {errors.encryption_key && (
+        {errors.password && (
           <p className="text-sm text-destructive">
-            {errors.encryption_key.message}
+            {errors.password.message}
           </p>
         )}
         <p className="text-xs text-muted-foreground">
@@ -61,15 +61,15 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="encryption_key_confirm">Confirm Encryption Key *</Label>
+        <Label htmlFor="password_confirm">Confirm Password *</Label>
         <div className="relative">
           <Input
-            id="encryption_key_confirm"
+            id="password_confirm"
             type={showConfirm ? "text" : "password"}
-            placeholder="Confirm your encryption key"
+            placeholder="Confirm your password"
             disabled={isSubmitting}
             className="pr-10"
-            {...register("encryption_key_confirm")}
+            {...register("password_confirm")}
           />
           <Button
             type="button"
@@ -85,19 +85,19 @@ export function EncryptionKeyStep({ register, errors, watch, isSubmitting }: Enc
             />
           </Button>
         </div>
-        {errors.encryption_key_confirm && (
+        {errors.password_confirm && (
           <p className="text-sm text-destructive">
-            {errors.encryption_key_confirm.message}
+            {errors.password_confirm.message}
           </p>
         )}
-        {encryptionKey && confirmKey && !keysMatch && (
+        {password && confirmPassword && !passwordsMatch && (
           <p className="text-sm text-destructive">
-            Keys do not match
+            Passwords do not match
           </p>
         )}
-        {keysMatch && (
+        {passwordsMatch && (
           <p className="text-sm text-green-600">
-            Keys match
+            Passwords match
           </p>
         )}
       </div>

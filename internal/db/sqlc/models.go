@@ -47,6 +47,16 @@ type Config struct {
 	LastModified              int64          `json:"last_modified"`
 }
 
+type SecurityKey struct {
+	ID               int64          `json:"id"`
+	Method           string         `json:"method"`
+	Label            string         `json:"label"`
+	WrappedMasterKey []byte         `json:"wrapped_master_key"`
+	Metadata         sql.NullString `json:"metadata"`
+	CreatedAt        int64          `json:"created_at"`
+	LastUsedAt       sql.NullInt64  `json:"last_used_at"`
+}
+
 type UpdateHistory struct {
 	ID           int64          `json:"id"`
 	FromVersion  string         `json:"from_version"`

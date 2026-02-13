@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import {
-    changeEncryptionKeySchema,
-    type ChangeEncryptionKeyInput,
+    changePasswordSchema,
+    type ChangePasswordInput,
 } from "@/lib/validation";
 import {
     Dialog,
@@ -20,17 +20,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusAlert } from "@/components/shared/StatusAlert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AlertCircleIcon, Alert02Icon } from "@hugeicons/core-free-icons";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 
-interface ChangeEncryptionKeyDialogProps {
+interface ChangePasswordDialogProps {
     open: boolean;
     onClose: () => void;
 }
 
-export function ChangeEncryptionKeyDialog({
+export function ChangePasswordDialog({
     open,
     onClose,
-}: ChangeEncryptionKeyDialogProps) {
+}: ChangePasswordDialogProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPasswords, setShowPasswords] = useState(false);
@@ -40,23 +40,23 @@ export function ChangeEncryptionKeyDialog({
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<ChangeEncryptionKeyInput>({
-        resolver: zodResolver(changeEncryptionKeySchema),
+    } = useForm<ChangePasswordInput>({
+        resolver: zodResolver(changePasswordSchema),
     });
 
-    const onSubmit = async (data: ChangeEncryptionKeyInput) => {
+    const onSubmit = async (data: ChangePasswordInput) => {
         setIsLoading(true);
         setError(null);
         try {
             await api.changeEncryptionKey(data.new_key);
-            toast.success("Encryption key changed successfully");
+            toast.success("Password changed successfully");
             reset();
             onClose();
         } catch (err) {
             const message =
                 err instanceof Error
                     ? err.message
-                    : "Failed to change encryption key";
+                    : "Failed to change password";
             setError(message);
             toast.error(message);
         } finally {
@@ -74,27 +74,11 @@ export function ChangeEncryptionKeyDialog({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Change Encryption Key</DialogTitle>
+                    <DialogTitle>Change Password</DialogTitle>
                     <DialogDescription>
-                        All certificate private keys will be re-encrypted with
-                        the new key
+                        Change your unlock password. Your private keys are not affected.
                     </DialogDescription>
                 </DialogHeader>
-
-                {/* Warning */}
-                <StatusAlert
-                    variant="warning"
-                    icon={
-                        <HugeiconsIcon
-                            icon={Alert02Icon}
-                            className="size-4"
-                            strokeWidth={2}
-                        />
-                    }
-                >
-                    Make sure to securely store your new encryption key. If you
-                    lose it, you will not be able to access your private keys.
-                </StatusAlert>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {error && (
@@ -113,12 +97,12 @@ export function ChangeEncryptionKeyDialog({
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="new_key">New Encryption Key</Label>
+                        <Label htmlFor="new_key">New Password</Label>
                         <div className="relative">
                             <Input
                                 id="new_key"
                                 type={showPasswords ? "text" : "password"}
-                                placeholder="Enter new encryption key (min 16 chars)"
+                                placeholder="Enter new password (min 16 chars)"
                                 disabled={isLoading}
                                 {...register("new_key")}
                                 className="pr-16"
@@ -140,12 +124,12 @@ export function ChangeEncryptionKeyDialog({
 
                     <div className="space-y-2">
                         <Label htmlFor="new_key_confirm">
-                            Confirm New Encryption Key
+                            Confirm New Password
                         </Label>
                         <Input
                             id="new_key_confirm"
                             type={showPasswords ? "text" : "password"}
-                            placeholder="Confirm new encryption key"
+                            placeholder="Confirm new password"
                             disabled={isLoading}
                             {...register("new_key_confirm")}
                         />
@@ -168,9 +152,8 @@ export function ChangeEncryptionKeyDialog({
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            variant="destructive"
                         >
-                            {isLoading ? "Re-encrypting..." : "Change Key"}
+                            {isLoading ? "Changing..." : "Change Password"}
                         </Button>
                     </DialogFooter>
                 </form>

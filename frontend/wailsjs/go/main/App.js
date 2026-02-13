@@ -42,8 +42,12 @@ export function DownloadAndApplyUpdate() {
   return window['go']['main']['App']['DownloadAndApplyUpdate']();
 }
 
-export function ExportBackup(arg1) {
-  return window['go']['main']['App']['ExportBackup'](arg1);
+export function EnrollOSNative() {
+  return window['go']['main']['App']['EnrollOSNative']();
+}
+
+export function EnrollPasswordMethod(arg1, arg2) {
+  return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
 export function ExportCertificateZip(arg1, arg2) {
@@ -102,16 +106,24 @@ export function GetUpdateHistory(arg1) {
   return window['go']['main']['App']['GetUpdateHistory'](arg1);
 }
 
+export function HasSecurityKeys() {
+  return window['go']['main']['App']['HasSecurityKeys']();
+}
+
 export function ImportCertificate(arg1) {
   return window['go']['main']['App']['ImportCertificate'](arg1);
 }
 
-export function IsEncryptionKeyProvided() {
-  return window['go']['main']['App']['IsEncryptionKeyProvided']();
+export function IsOSKeystoreAvailable() {
+  return window['go']['main']['App']['IsOSKeystoreAvailable']();
 }
 
 export function IsSetupComplete() {
   return window['go']['main']['App']['IsSetupComplete']();
+}
+
+export function IsUnlocked() {
+  return window['go']['main']['App']['IsUnlocked']();
 }
 
 export function IsWaitingForEncryptionKey() {
@@ -124,6 +136,14 @@ export function ListCertificates(arg1) {
 
 export function ListLocalBackups() {
   return window['go']['main']['App']['ListLocalBackups']();
+}
+
+export function ListSecurityKeys() {
+  return window['go']['main']['App']['ListSecurityKeys']();
+}
+
+export function NeedsMigration() {
+  return window['go']['main']['App']['NeedsMigration']();
 }
 
 export function OpenBugReport() {
@@ -146,6 +166,10 @@ export function ProvideEncryptionKey(arg1) {
   return window['go']['main']['App']['ProvideEncryptionKey'](arg1);
 }
 
+export function RemoveSecurityKey(arg1) {
+  return window['go']['main']['App']['RemoveSecurityKey'](arg1);
+}
+
 export function ResetDatabase() {
   return window['go']['main']['App']['ResetDatabase']();
 }
@@ -154,8 +178,8 @@ export function RestartApp() {
   return window['go']['main']['App']['RestartApp']();
 }
 
-export function RestoreFromBackup(arg1) {
-  return window['go']['main']['App']['RestoreFromBackup'](arg1);
+export function RestoreFromBackupFile(arg1) {
+  return window['go']['main']['App']['RestoreFromBackupFile'](arg1);
 }
 
 export function RestoreLocalBackup(arg1) {
@@ -190,6 +214,10 @@ export function SkipEncryptionKey() {
   return window['go']['main']['App']['SkipEncryptionKey']();
 }
 
+export function TryAutoUnlock() {
+  return window['go']['main']['App']['TryAutoUnlock']();
+}
+
 export function UpdateCertificateNote(arg1, arg2) {
   return window['go']['main']['App']['UpdateCertificateNote'](arg1, arg2);
 }
@@ -206,10 +234,14 @@ export function UploadCertificate(arg1, arg2) {
   return window['go']['main']['App']['UploadCertificate'](arg1, arg2);
 }
 
-export function ValidateBackupFile(arg1) {
-  return window['go']['main']['App']['ValidateBackupFile'](arg1);
+export function ImportCertificatesFromBackup(arg1, arg2) {
+  return window['go']['main']['App']['ImportCertificatesFromBackup'](arg1, arg2);
 }
 
-export function ValidateEncryptionKeyForBackup(arg1, arg2) {
-  return window['go']['main']['App']['ValidateEncryptionKeyForBackup'](arg1, arg2);
+export function PeekBackupInfo(arg1) {
+  return window['go']['main']['App']['PeekBackupInfo'](arg1);
+}
+
+export function SelectBackupFile() {
+  return window['go']['main']['App']['SelectBackupFile']();
 }

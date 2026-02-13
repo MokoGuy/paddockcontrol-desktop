@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/api";
 import {
-    encryptionKeySchema,
-    type EncryptionKeyInput,
+    passwordSchema,
+    type PasswordInput,
 } from "@/lib/validation";
 import {
     Dialog,
@@ -29,7 +29,7 @@ interface EncryptionKeyDialogProps {
 
 export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps) {
     const {
-        setIsEncryptionKeyProvided,
+        setIsUnlocked,
         keyValidationError,
         setKeyValidationError,
     } = useAppStore();
@@ -41,18 +41,18 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<EncryptionKeyInput>({
-        resolver: zodResolver(encryptionKeySchema),
+    } = useForm<PasswordInput>({
+        resolver: zodResolver(passwordSchema),
     });
 
-    const onSubmit = async (data: EncryptionKeyInput) => {
+    const onSubmit = async (data: PasswordInput) => {
         setIsLoading(true);
         setKeyValidationError(null);
         try {
             const result = await api.provideEncryptionKey(data.key);
 
             if (result.valid) {
-                setIsEncryptionKeyProvided(true);
+                setIsUnlocked(true);
                 reset();
                 onClose();
             }
@@ -60,7 +60,7 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
             const message =
                 err instanceof Error
                     ? err.message
-                    : "Invalid encryption key";
+                    : "Invalid password";
 
             setKeyValidationError({
                 message,
@@ -82,9 +82,9 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Provide Encryption Key</DialogTitle>
+                    <DialogTitle>Unlock PaddockControl</DialogTitle>
                     <DialogDescription>
-                        Enter your encryption key to unlock full functionality
+                        Enter your password to unlock full functionality
                     </DialogDescription>
                 </DialogHeader>
 
@@ -120,12 +120,12 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="dialog-key">Encryption Key</Label>
+                        <Label htmlFor="dialog-key">Password</Label>
                         <div className="relative">
                             <Input
                                 id="dialog-key"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Enter your encryption key"
+                                placeholder="Enter your password"
                                 disabled={isLoading}
                                 {...register("key")}
                                 className="pr-16"

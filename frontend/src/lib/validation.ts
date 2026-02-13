@@ -1,30 +1,30 @@
 import { z } from 'zod';
 
-// Encryption Key
-export const encryptionKeySchema = z.object({
+// Password
+export const passwordSchema = z.object({
   key: z
     .string()
-    .min(16, 'Encryption key must be at least 16 characters')
-    .max(256, 'Encryption key is too long'),
+    .min(16, 'Password must be at least 16 characters')
+    .max(256, 'Password is too long'),
 });
 
-export type EncryptionKeyInput = z.infer<typeof encryptionKeySchema>;
+export type PasswordInput = z.infer<typeof passwordSchema>;
 
-// Change Encryption Key
-export const changeEncryptionKeySchema = z.object({
+// Change Password
+export const changePasswordSchema = z.object({
   new_key: z
     .string()
-    .min(16, 'New encryption key must be at least 16 characters')
-    .max(256, 'Encryption key is too long'),
+    .min(16, 'New password must be at least 16 characters')
+    .max(256, 'Password is too long'),
   new_key_confirm: z
     .string()
-    .min(1, 'Please confirm your new encryption key'),
+    .min(1, 'Please confirm your new password'),
 }).refine((data) => data.new_key === data.new_key_confirm, {
-  message: "Encryption keys do not match",
+  message: "Passwords do not match",
   path: ["new_key_confirm"],
 });
 
-export type ChangeEncryptionKeyInput = z.infer<typeof changeEncryptionKeySchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 // Setup Request
 export const setupRequestSchema = z.object({
@@ -70,16 +70,16 @@ export const setupRequestSchema = z.object({
     .int('Must be a whole number')
     .min(2048, 'Key size must be at least 2048 bits')
     .max(8192, 'Key size cannot exceed 8192 bits'),
-  encryption_key: z
+  password: z
     .string()
-    .min(16, 'Encryption key must be at least 16 characters')
-    .max(256, 'Encryption key is too long'),
-  encryption_key_confirm: z
+    .min(16, 'Password must be at least 16 characters')
+    .max(256, 'Password is too long'),
+  password_confirm: z
     .string()
-    .min(1, 'Please confirm your encryption key'),
-}).refine((data) => data.encryption_key === data.encryption_key_confirm, {
-  message: "Encryption keys do not match",
-  path: ["encryption_key_confirm"],
+    .min(1, 'Please confirm your password'),
+}).refine((data) => data.password === data.password_confirm, {
+  message: "Passwords do not match",
+  path: ["password_confirm"],
 });
 
 export type SetupRequestInput = z.infer<typeof setupRequestSchema>;
@@ -96,7 +96,7 @@ export const setupStepFields = {
     "default_country",
   ],
   "cert-defaults": ["validity_period_days", "default_key_size"],
-  "encryption-key": ["encryption_key", "encryption_key_confirm"],
+  "password": ["password", "password_confirm"],
   review: [],
 } as const;
 
@@ -280,11 +280,3 @@ export const certificateFilterSchema = z.object({
 
 export type CertificateFilterInput = z.infer<typeof certificateFilterSchema>;
 
-// Backup encryption key
-export const backupKeySchema = z.object({
-  key: z
-    .string()
-    .min(16, 'Encryption key must be at least 16 characters'),
-});
-
-export type BackupKeyInput = z.infer<typeof backupKeySchema>;

@@ -11,8 +11,8 @@ interface AppState {
     setIsWaitingForEncryptionKey: (waiting: boolean) => void;
 
     // Track if key was actually provided (not skipped)
-    isEncryptionKeyProvided: boolean;
-    setIsEncryptionKeyProvided: (provided: boolean) => void;
+    isUnlocked: boolean;
+    setIsUnlocked: (provided: boolean) => void;
 
     // Key validation error (for showing which certs failed)
     keyValidationError: KeyValidationError | null;
@@ -41,9 +41,9 @@ export const useAppStore = create<AppState>((set) => ({
     setIsWaitingForEncryptionKey: (waiting) =>
         set({ isWaitingForEncryptionKey: waiting }),
 
-    isEncryptionKeyProvided: false,
-    setIsEncryptionKeyProvided: (provided) =>
-        set({ isEncryptionKeyProvided: provided }),
+    isUnlocked: false,
+    setIsUnlocked: (provided) =>
+        set({ isUnlocked: provided }),
 
     keyValidationError: null,
     setKeyValidationError: (error) => set({ keyValidationError: error }),

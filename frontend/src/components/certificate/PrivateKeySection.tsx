@@ -21,14 +21,14 @@ import {
 } from "@hugeicons/core-free-icons";
 
 interface PrivateKeySectionProps {
-    isEncryptionKeyProvided: boolean;
+    isUnlocked: boolean;
     privateKeyPEM: string | null;
     privateKeyLoading: boolean;
     privateKeyError: string | null;
 }
 
 export function PrivateKeySection({
-    isEncryptionKeyProvided,
+    isUnlocked,
     privateKeyPEM,
     privateKeyLoading,
     privateKeyError,
@@ -60,9 +60,9 @@ export function PrivateKeySection({
                 </CardHeader>
                 <CollapsibleContent>
                     <CardContent>
-                        {!isEncryptionKeyProvided ? (
+                        {!isUnlocked ? (
                             <p className="text-sm text-warning">
-                                Private key content can only be retrieved when the encryption key is provided.
+                                Private key content can only be retrieved when the app is unlocked.
                             </p>
                         ) : privateKeyLoading ? (
                             <LoadingSpinner text="Decrypting private key..." />

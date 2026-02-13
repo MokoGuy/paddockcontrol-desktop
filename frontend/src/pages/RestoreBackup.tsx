@@ -1,242 +1,79 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
 import { stepAnimations } from "@/lib/animations";
 import { useSetup } from "@/hooks/useSetup";
 import { useAppStore } from "@/stores/useAppStore";
-import { api } from "@/lib/api";
-import { backupKeySchema, type BackupKeyInput } from "@/lib/validation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { FileDropZone } from "@/components/shared/FileDropZone";
-import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
-import { formatDateTime } from "@/lib/theme";
-
-import { BackupData } from "@/types";
+import { BackupPeekInfo } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  EyeIcon,
-  ViewOffIcon,
-  Copy01Icon,
-  Tick02Icon,
-  Package01Icon,
-  AlertCircleIcon,
-} from "@hugeicons/core-free-icons";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { StatusAlert } from "@/components/shared/StatusAlert";
+import { ReviewSection, ReviewField } from "@/components/shared/ReviewField";
 
 export function RestoreBackup() {
   const navigate = useNavigate();
   const {
     setIsSetupComplete,
     setIsWaitingForEncryptionKey,
-    setIsEncryptionKeyProvided,
+    setIsUnlocked,
   } = useAppStore();
-  const { isLoading, error, validateBackupKey, restoreFromBackup } = useSetup();
-  const [step, setStep] = useState<"file" | "key" | "confirm">("file");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [backupData, setBackupData] = useState<BackupData | null>(null);
-  const [hasEmbeddedKey, setHasEmbeddedKey] = useState(false);
-  const [userProvidedKey, setUserProvidedKey] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [keyCopied, setKeyCopied] = useState(false);
+  const { isLoading, error, peekBackupInfo, restoreFromBackupFile, selectBackupFile, clearError } = useSetup();
+  const [step, setStep] = useState<"file" | "confirm">("file");
+  const [backupPath, setBackupPath] = useState<string | null>(null);
+  const [peekInfo, setPeekInfo] = useState<BackupPeekInfo | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<BackupKeyInput>({
-    resolver: zodResolver(backupKeySchema),
-  });
-
-  const handleFileSelect = async (file: File) => {
+  const handleSelectFile = async () => {
+    clearError();
+    setIsSelecting(true);
     try {
-      console.log("📁 Selected backup file:", file.name);
-      console.log("📊 File size:", (file.size / 1024).toFixed(2), "KB");
-
-      const content = await file.text();
-      console.log("📄 File content read successfully");
-
-      const data = JSON.parse(content);
-      console.log("✅ JSON parsed successfully");
-      console.log("Backup structure:", {
-        version: data.version,
-        exportDate: data.export_date,
-        hasConfig: !!data.config,
-        certificateCount: data.certificates?.length || 0,
-        hasEncryptionKey: !!data.encryption_key,
-      });
-
-      setBackupData(data);
-      setSelectedFile(file);
-
-      // Check if backup has embedded encryption key
-      if (data.encryption_key) {
-        console.log("🔑 Backup has embedded encryption key");
-        setHasEmbeddedKey(true);
-      } else {
-        console.log("🔓 Backup requires user to provide encryption key");
-        setHasEmbeddedKey(false);
+      const path = await selectBackupFile();
+      if (!path) {
+        setIsSelecting(false);
+        return;
       }
-      // Always go to key step
-      setStep("key");
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Unknown error";
-      console.error("❌ Failed to parse backup file:", {
-        error: err,
-        fileName: file.name,
-        fileSize: file.size,
-      });
-      alert(`Invalid backup file format:\n${errorMsg}`);
-    }
-  };
 
-  const handleKeySubmit = async (data: BackupKeyInput) => {
-    if (!backupData) return;
+      setBackupPath(path);
+      const info = await peekBackupInfo(path);
+      setIsSelecting(false);
 
-    try {
-      console.log("🔐 Validating backup encryption key...");
-      await validateBackupKey(backupData, data.key);
-      console.log("✅ Encryption key validated successfully");
-      // Store the user-provided key for later use during restore
-      setUserProvidedKey(data.key);
+      if (!info) return; // error is set by the hook
+      setPeekInfo(info);
       setStep("confirm");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to validate backup key";
-      console.error("❌ Encryption key validation failed:", {
-        error: err,
-        message,
-      });
-      alert(`Encryption key validation failed:\n${message}`);
-      reset();
+    } catch {
+      setIsSelecting(false);
     }
   };
 
   const handleRestore = async () => {
-    if (!backupData) return;
+    if (!backupPath) return;
 
-    try {
-      console.log("🔄 Starting backup restoration...");
-      console.log("Backup data:", {
-        version: backupData.version,
-        certificateCount: backupData.certificates?.length || 0,
-        hasConfig: !!backupData.config,
-        hasEncryptionKey: !!backupData.encryption_key,
-      });
+    await restoreFromBackupFile(backupPath);
 
-      // Get the encryption key (either embedded or user-provided)
-      const keyToUse = backupData.encryption_key || userProvidedKey;
+    // After restore, app needs to be unlocked with the backup's password
+    setIsSetupComplete(true);
+    setIsWaitingForEncryptionKey(false);
+    setIsUnlocked(false);
 
-      if (!keyToUse) {
-        throw new Error("No encryption key available for backup restoration");
-      }
-
-      // Provide encryption key to backend before restore
-      console.log("🔐 Providing encryption key to backend...");
-      await api.provideEncryptionKey(keyToUse);
-      setIsEncryptionKeyProvided(true);
-      console.log("✅ Encryption key provided to backend");
-
-      console.log("📦 Calling restoreFromBackup API...");
-      await restoreFromBackup(backupData);
-
-      console.log("✅ Backup restoration successful!");
-      console.log("🚀 Updating frontend state...");
-
-      // Update frontend state to reflect successful restore
-      setIsSetupComplete(true);
-      setIsWaitingForEncryptionKey(false); // We provided the key during restore
-
-      console.log("🚀 Waiting for backend state sync...");
-      // Wait to ensure backend has fully processed the restore
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("🚀 Navigating to dashboard...");
-      navigate("/", { replace: true });
-      console.log("✅ Navigation complete");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to restore backup";
-      console.error("❌ Backup restoration failed:", {
-        error: err,
-        message,
-      });
-      alert(message);
-    }
+    // Navigate to dashboard — the app will detect locked state
+    // and prompt for the password
+    navigate("/", { replace: true });
   };
 
   const handleBack = () => {
     if (step === "file") {
       navigate("/setup", { replace: true });
-    } else if (step === "key") {
-      setBackupData(null);
-      setSelectedFile(null);
-      setUserProvidedKey(null);
-      setStep("file");
     } else {
-      // Going back from confirm to either key or file
-      if (hasEmbeddedKey) {
-        setBackupData(null);
-        setSelectedFile(null);
-        setHasEmbeddedKey(false);
-        setUserProvidedKey(null);
-        setStep("file");
-      } else {
-        setUserProvidedKey(null);
-        setStep("key");
-      }
+      setBackupPath(null);
+      setPeekInfo(null);
+      clearError();
+      setStep("file");
     }
-  };
-
-  const handleCopyEncryptionKey = async () => {
-    const keyToCopy = backupData?.encryption_key || userProvidedKey;
-    if (!keyToCopy) return;
-
-    try {
-      await api.copyToClipboard(keyToCopy);
-      setKeyCopied(true);
-      setTimeout(() => setKeyCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy encryption key:", err);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Only handle Enter key
-    if (e.key !== "Enter") return;
-
-    // Don't handle if loading
-    if (isLoading) return;
-
-    // Don't handle if in a textarea
-    if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
-
-    // Handle based on current step
-    if (step === "key" && hasEmbeddedKey) {
-      // Embedded key step - advance to confirm
-      e.preventDefault();
-      setStep("confirm");
-    } else if (step === "confirm") {
-      // Confirm step - trigger restore
-      e.preventDefault();
-      handleRestore();
-    }
-    // For manual key entry form, let the form submit naturally
   };
 
   return (
@@ -247,380 +84,180 @@ export function RestoreBackup() {
           Restore from Backup
         </h1>
         <p className="text-muted-foreground">
-          Restore your configuration and certificates from a backup file
+          Restore your database from a backup file
         </p>
       </div>
 
-      <Card className="shadow-sm border-border" onKeyDown={handleKeyDown}>
-          {/* Step Indicator */}
-          <div className="border-b border-border px-6 pb-4">
-            <div className="flex items-center gap-2 text-sm">
-              {/* Step 1: Select File */}
-              <div
-                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
-                  step === "file" || step === "key" || step === "confirm"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {step === "key" || step === "confirm" ? "✓" : "1"}
-              </div>
-              <span
-                className={`transition-colors duration-200 ${
-                  step === "file"
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Select File
-              </span>
-              <div className="flex-1 h-0.5 mx-2 bg-muted transition-colors duration-200" />
-
-              {/* Step 2: Encryption Key */}
-              <div
-                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
-                  step === "key" || step === "confirm"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {step === "confirm" ? "✓" : "2"}
-              </div>
-              <span
-                className={`transition-colors duration-200 ${
-                  step === "key"
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Encryption Key
-              </span>
-              <div className="flex-1 h-0.5 mx-2 bg-muted transition-colors duration-200" />
-
-              {/* Step 3: Confirm */}
-              <div
-                className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
-                  step === "confirm"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                3
-              </div>
-              <span
-                className={`transition-colors duration-200 ${
-                  step === "confirm"
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Confirm
-              </span>
+      <Card className="shadow-sm border-border">
+        {/* Step Indicator */}
+        <div className="border-b border-border px-6 pb-4">
+          <div className="flex items-center gap-2 text-sm">
+            <div
+              className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
+                step === "file" || step === "confirm"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {step === "confirm" ? "\u2713" : "1"}
             </div>
+            <span
+              className={`transition-colors duration-200 ${
+                step === "file"
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Select File
+            </span>
+            <div className="flex-1 h-0.5 mx-2 bg-muted transition-colors duration-200" />
+
+            <div
+              className={`flex items-center justify-center w-6 h-6 rounded-full font-semibold transition-all duration-200 ${
+                step === "confirm"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              2
+            </div>
+            <span
+              className={`transition-colors duration-200 ${
+                step === "confirm"
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Confirm
+            </span>
           </div>
+        </div>
 
-          <CardContent>
-            <AnimatePresence mode="wait">
-              {/* Step 1: File Selection */}
-              {step === "file" && (
-                <motion.div
-                  key="file"
-                  {...stepAnimations}
-                  className="space-y-6"
+        <CardContent>
+          <AnimatePresence mode="wait">
+            {/* Step 1: File Selection */}
+            {step === "file" && (
+              <motion.div
+                key="file"
+                {...stepAnimations}
+                className="space-y-6"
+              >
+                <div className="space-y-2">
+                  <Label>Select Backup File</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a .db database backup file to restore from.
+                    This will replace your current database entirely.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleSelectFile}
+                  disabled={isSelecting || isLoading}
+                  className="w-full"
                 >
-                  <div className="space-y-2">
-                    <Label>Select Backup File</Label>
-                    <FileDropZone
-                      onFileSelect={handleFileSelect}
-                      accept=".json"
-                      acceptedExtensions={[".json"]}
-                      label="Click to select or drag and drop"
-                      sublabel="JSON backup file (.json)"
-                      dropLabel="Drop backup file here"
-                      icon={
-                        <HugeiconsIcon
-                          icon={Package01Icon}
-                          className="w-8 h-8 text-muted-foreground"
-                          strokeWidth={1.5}
-                        />
-                      }
-                      selectedFile={selectedFile}
-                    />
-                  </div>
+                  {isSelecting ? "Reading backup..." : "Select Backup File (.db)"}
+                </Button>
 
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBack}
+                  className="w-full"
+                >
+                  Back
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Step 2: Confirm */}
+            {step === "confirm" && peekInfo && (
+              <motion.div
+                key="confirm"
+                {...stepAnimations}
+                className="space-y-4"
+              >
+                <ReviewSection title="Backup Contents">
+                  <ReviewField label="Certificates" value={String(peekInfo.certificate_count)} />
+                  {peekInfo.ca_name && (
+                    <ReviewField label="CA Name" value={peekInfo.ca_name} />
+                  )}
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Security Keys</span>
+                    <Badge variant={peekInfo.has_security_keys ? "default" : "secondary"}>
+                      {peekInfo.has_security_keys ? "Present" : "None"}
+                    </Badge>
+                  </div>
+                </ReviewSection>
+
+                {peekInfo.hostnames.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Hostnames</Label>
+                    <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto border border-border p-2">
+                      {peekInfo.hostnames.map((hostname) => (
+                        <Badge
+                          key={hostname}
+                          variant="secondary"
+                          className="font-mono text-xs"
+                        >
+                          {hostname}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <StatusAlert variant="warning">
+                  This will replace your current database. After restore, you will
+                  need to enter the backup's password to unlock.
+                </StatusAlert>
+
+                <div className="flex gap-3">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    className="w-full"
+                    disabled={isLoading}
+                    className="flex-1"
                   >
                     Back
                   </Button>
-                </motion.div>
-              )}
-
-              {/* Step 2: Encryption Key */}
-              {step === "key" &&
-                backupData &&
-                (hasEmbeddedKey ? (
-                  <motion.div
-                    key="key-embedded"
-                    {...stepAnimations}
-                    className="space-y-6"
+                  <Button
+                    type="button"
+                    onClick={handleRestore}
+                    disabled={isLoading}
+                    className="flex-1"
                   >
-                    <div className="space-y-2">
-                      <Label htmlFor="embedded-key">Encryption Key *</Label>
-                      <div className="relative">
-                        <Input
-                          id="embedded-key"
-                          type={showPassword ? "text" : "password"}
-                          value={backupData.encryption_key || ""}
-                          disabled
-                          className="pr-20 font-mono"
-                        />
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => setShowPassword(!showPassword)}
-                            title={showPassword ? "Hide key" : "Show key"}
-                          >
-                            <HugeiconsIcon
-                              icon={showPassword ? ViewOffIcon : EyeIcon}
-                              className="w-4 h-4"
-                              strokeWidth={2}
-                            />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={handleCopyEncryptionKey}
-                            title="Copy to clipboard"
-                          >
-                            <HugeiconsIcon
-                              icon={keyCopied ? Tick02Icon : Copy01Icon}
-                              className={`w-4 h-4 ${keyCopied ? "text-success" : ""}`}
-                              strokeWidth={2}
-                            />
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Key included in backup file
-                      </p>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleBack}
-                        className="flex-1"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setStep("confirm")}
-                        className="flex-1"
-                      >
-                        Continue
-                      </Button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.form
-                    key="key-manual"
-                    {...stepAnimations}
-                    onSubmit={handleSubmit(handleKeySubmit)}
-                    className="space-y-6"
-                  >
-                    <div className="space-y-2">
-                      <Label htmlFor="key">Encryption Key *</Label>
-                      <div className="relative">
-                        <Input
-                          id="key"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter the backup encryption key"
-                          disabled={isLoading}
-                          {...register("key")}
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          <HugeiconsIcon
-                            icon={showPassword ? ViewOffIcon : EyeIcon}
-                            className="w-4 h-4"
-                            strokeWidth={2}
-                          />
-                        </Button>
-                      </div>
-                      {errors.key && (
-                        <p className="text-sm text-destructive">
-                          {errors.key.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleBack}
-                        disabled={isLoading}
-                        className="flex-1"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1"
-                      >
-                        {isLoading ? "Validating..." : "Continue"}
-                      </Button>
-                    </div>
-                  </motion.form>
-                ))}
-
-              {/* Step 3: Confirmation */}
-              {step === "confirm" && backupData && (
-                <motion.div
-                  key="confirm"
-                  {...stepAnimations}
-                  className="space-y-4"
-                >
-                  <ReviewSection title="Backup Info">
-                    <ReviewField label="Version" value={backupData.version} />
-                    <ReviewField label="Export Date" value={formatDateTime(backupData.exported_at)} />
-                    <div className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">Encryption Key</span>
-                      <Badge variant={backupData.encryption_key ? "default" : "secondary"}>
-                        {backupData.encryption_key ? "Embedded" : "User Provided"}
-                      </Badge>
-                    </div>
-                  </ReviewSection>
-
-                  {backupData.config && (
-                    <ReviewSection title="Configuration to Restore">
-                      <ReviewField label="CA Name" value={backupData.config.ca_name} />
-                      <ReviewField label="Owner Email" value={backupData.config.owner_email} />
-                      <ReviewField label="Hostname Suffix" value={backupData.config.hostname_suffix} />
-                      <ReviewField label="Organization" value={backupData.config.default_organization} />
-                    </ReviewSection>
-                  )}
-
-                  <ReviewSection title={`Certificates (${backupData.certificates?.length || 0})`}>
-                    {backupData.certificates &&
-                    backupData.certificates.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Hostname</TableHead>
-                            <TableHead className="text-right">
-                              Includes
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {backupData.certificates.map((cert) => (
-                            <TableRow key={cert.hostname}>
-                              <TableCell>
-                                <Badge
-                                  variant="secondary"
-                                  className="font-mono"
-                                >
-                                  {cert.hostname}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  {cert.certificate_pem && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs px-1.5 py-0"
-                                    >
-                                      cert
-                                    </Badge>
-                                  )}
-                                  {cert.pending_csr_pem && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs px-1.5 py-0"
-                                    >
-                                      pending
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="px-3 py-4 text-sm text-muted-foreground text-center border border-border">
-                        No certificates in backup
-                      </div>
-                    )}
-                  </ReviewSection>
-
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleBack}
-                      disabled={isLoading}
-                      className="flex-1"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        console.log("🚀 Restore button clicked");
-                        handleRestore();
-                      }}
-                      disabled={isLoading}
-                      className="flex-1"
-                    >
-                      {isLoading ? "Restoring..." : "Restore Now"}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Error Message */}
-            {error && (
-              <StatusAlert
-                variant="destructive"
-                className="mt-4"
-                icon={
-                  <HugeiconsIcon
-                    icon={AlertCircleIcon}
-                    className="size-4"
-                    strokeWidth={2}
-                  />
-                }
-              >
-                {error}
-              </StatusAlert>
+                    {isLoading ? "Restoring..." : "Restore Now"}
+                  </Button>
+                </div>
+              </motion.div>
             )}
+          </AnimatePresence>
 
-            {/* Loading State */}
-            {isLoading && step !== "file" && (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner text="Processing..." />
-              </div>
-            )}
-          </CardContent>
+          {/* Error Message */}
+          {error && (
+            <StatusAlert
+              variant="destructive"
+              className="mt-4"
+              icon={
+                <HugeiconsIcon
+                  icon={AlertCircleIcon}
+                  className="size-4"
+                  strokeWidth={2}
+                />
+              }
+            >
+              {error}
+            </StatusAlert>
+          )}
+
+          {/* Loading State */}
+          {isLoading && step !== "file" && (
+            <div className="flex items-center justify-center py-8">
+              <LoadingSpinner text="Processing..." />
+            </div>
+          )}
+        </CardContent>
       </Card>
     </>
   );

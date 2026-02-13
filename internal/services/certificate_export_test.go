@@ -15,7 +15,7 @@ func TestGetCSRForDownload_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -78,7 +78,7 @@ func TestGetCertificateForDownload_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	csrPEM, encryptedKey, privateKey := generateTestCSRAndKey(t, hostname, encryptionKey)
 	certPEM, err := selfSignCertFromCSR(csrPEM, privateKey)
@@ -145,7 +145,7 @@ func TestGetPrivateKeyForDownload_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -158,7 +158,7 @@ func TestGetPrivateKeyForDownload_Success(t *testing.T) {
 		t.Fatalf("failed to create certificate: %v", err)
 	}
 
-	result, err := svc.GetPrivateKeyForDownload(ctx, hostname, []byte(encryptionKey))
+	result, err := svc.GetPrivateKeyForDownload(ctx, hostname, encryptionKey)
 	if err != nil {
 		t.Fatalf("GetPrivateKeyForDownload failed: %v", err)
 	}
@@ -194,8 +194,8 @@ func TestGetPrivateKeyForDownload_WrongKey_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
-	wrongKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
+	wrongKey := testutil.RandomMasterKey(t)
 
 	key, err := crypto.GenerateRSAKey(2048)
 	if err != nil {
@@ -219,7 +219,7 @@ func TestGetPrivateKeyForDownload_WrongKey_ReturnsError(t *testing.T) {
 		t.Fatalf("failed to create certificate: %v", err)
 	}
 
-	_, err = svc.GetPrivateKeyForDownload(ctx, hostname, []byte(wrongKey))
+	_, err = svc.GetPrivateKeyForDownload(ctx, hostname, wrongKey)
 	if err == nil {
 		t.Fatal("expected error with wrong encryption key, got nil")
 	}
@@ -232,7 +232,7 @@ func TestGetPendingPrivateKeyForDownload_Success(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -245,7 +245,7 @@ func TestGetPendingPrivateKeyForDownload_Success(t *testing.T) {
 		t.Fatalf("failed to create certificate: %v", err)
 	}
 
-	result, err := svc.GetPendingPrivateKeyForDownload(ctx, hostname, []byte(encryptionKey))
+	result, err := svc.GetPendingPrivateKeyForDownload(ctx, hostname, encryptionKey)
 	if err != nil {
 		t.Fatalf("GetPendingPrivateKeyForDownload failed: %v", err)
 	}
@@ -281,8 +281,8 @@ func TestGetPendingPrivateKeyForDownload_WrongKey_ReturnsError(t *testing.T) {
 	svc, database := setupTestService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
-	encryptionKey := testutil.RandomEncryptionKey(t)
-	wrongKey := testutil.RandomEncryptionKey(t)
+	encryptionKey := testutil.RandomMasterKey(t)
+	wrongKey := testutil.RandomMasterKey(t)
 
 	_, encryptedKey, _ := generateTestCSRAndKey(t, hostname, encryptionKey)
 
@@ -295,7 +295,7 @@ func TestGetPendingPrivateKeyForDownload_WrongKey_ReturnsError(t *testing.T) {
 		t.Fatalf("failed to create certificate: %v", err)
 	}
 
-	_, err = svc.GetPendingPrivateKeyForDownload(ctx, hostname, []byte(wrongKey))
+	_, err = svc.GetPendingPrivateKeyForDownload(ctx, hostname, wrongKey)
 	if err == nil {
 		t.Fatal("expected error with wrong encryption key, got nil")
 	}

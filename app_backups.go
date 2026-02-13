@@ -130,13 +130,13 @@ func (a *App) RestoreLocalBackup(filename string) error {
 	}
 
 	// Clear encryption key — restored DB may not match in-memory key
-	if a.encryptionKey != nil {
-		for i := range a.encryptionKey {
-			a.encryptionKey[i] = 0
+	if a.masterKey != nil {
+		for i := range a.masterKey {
+			a.masterKey[i] = 0
 		}
-		a.encryptionKey = nil
+		a.masterKey = nil
 	}
-	a.encryptionKeyProvided = false
+	a.isUnlocked = false
 	a.waitingForEncryptionKey = false
 
 	// Re-initialize all services

@@ -14,9 +14,8 @@ export type Config = models.Config;
 export type SetupRequest = models.SetupRequest;
 export type UpdateConfigRequest = models.UpdateConfigRequest;
 export type SetupDefaults = models.SetupDefaults;
-export type BackupData = models.BackupData;
-export type BackupCertificate = models.BackupCertificate;
-export type BackupValidationResult = models.BackupValidationResult;
+export type CertImportResult = models.CertImportResult;
+export type BackupPeekInfo = models.BackupPeekInfo;
 export type KeyValidationResult = models.KeyValidationResult;
 export type ChainCertificateInfo = models.ChainCertificateInfo;
 export type HistoryEntry = models.HistoryEntry;
@@ -45,14 +44,18 @@ export interface CertificateUploadPreview {
     key_match: boolean;
 }
 
-// Frontend-only types (not in Go backend)
-export interface ImportResult {
-    success: number;
-    skipped: number;
-    failed: number;
-    conflicts?: string[];
+// Security key types
+export type SecurityKeyMethod = "password" | "os_native" | "fido2";
+
+export interface SecurityKeyInfo {
+    id: number;
+    method: SecurityKeyMethod;
+    label: string;
+    created_at: number;
+    last_used_at?: number;
 }
 
+// Frontend-only types (not in Go backend)
 export interface Toast {
     id: string;
     title: string;

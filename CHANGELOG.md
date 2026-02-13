@@ -81,7 +81,7 @@ Initial public release of PaddockControl Desktop — a certificate management ap
 ### Features
 
 * Certificate lifecycle management (CSR generation, certificate installation, renewal tracking)
-* AES-encrypted private key storage with password-based access control
+* AES-256-GCM encrypted private key storage with master key wrapping and Argon2id key derivation
 * Local backup and restore with content summaries
 * Auto-update and version checking from GitHub releases
 * SQLite-based persistent storage with automatic migrations

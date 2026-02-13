@@ -43,7 +43,7 @@ export function Dashboard() {
     const navigate = useNavigate();
     const { certificates, isLoading, error, listCertificates, setCertificateReadOnly } =
         useCertificates();
-    const { isEncryptionKeyProvided } = useAppStore();
+    const { isUnlocked } = useAppStore();
     const { updateCertificate } = useCertificateStore();
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -150,7 +150,7 @@ export function Dashboard() {
                 <div className="flex gap-2">
                     <AdminGatedButton
                         requireAdminMode={false}
-                        requireEncryptionKey
+                        requireUnlocked
                         onClick={() => navigate("/certificates/generate")}
                     >
                         Generate CSR
@@ -158,7 +158,7 @@ export function Dashboard() {
                     <AdminGatedButton
                         variant="outline"
                         requireAdminMode={false}
-                        requireEncryptionKey
+                        requireUnlocked
                         onClick={() => navigate("/certificates/import")}
                     >
                         Import Certificate
@@ -190,7 +190,7 @@ export function Dashboard() {
             )}
 
             {/* Limited Mode Notice */}
-            {!isEncryptionKeyProvided && (
+            {!isUnlocked && (
                 <LimitedModeNotice
                     className="mb-6"
                     onProvideKey={() => setShowKeyDialog(true)}

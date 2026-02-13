@@ -3,10 +3,8 @@ package services
 import (
 	"context"
 	"testing"
-	"time"
 
 	"paddockcontrol-desktop/internal/models"
-	"paddockcontrol-desktop/internal/testutil"
 )
 
 func TestSetupFromScratch_Success(t *testing.T) {
@@ -180,124 +178,6 @@ func TestSetupFromScratch_StoresAllFields(t *testing.T) {
 	}
 	if cfg.DefaultKeySize != 4096 {
 		t.Errorf("expected key size 4096, got %d", cfg.DefaultKeySize)
-	}
-}
-
-func TestSetupFromBackup_Success(t *testing.T) {
-	svc, database := setupSetupService(t)
-	ctx := context.Background()
-
-	backup := makeTestBackupWithConfig([]*models.BackupCertificate{
-		{Hostname: "server1.example.com", CreatedAt: time.Now().Unix()},
-		{Hostname: "server2.example.com", CreatedAt: time.Now().Unix()},
-	})
-
-	err := svc.SetupFromBackup(ctx, backup, nil)
-	if err != nil {
-		t.Fatalf("SetupFromBackup failed: %v", err)
-	}
-
-	configured, err := svc.IsConfigured(ctx)
-	if err != nil {
-		t.Fatalf("IsConfigured failed: %v", err)
-	}
-	if !configured {
-		t.Error("expected IsConfigured to be true after backup setup")
-	}
-
-	// Verify certs imported
-	cert, err := database.Queries().GetCertificateByHostname(ctx, "server1.example.com")
-	if err != nil {
-		t.Fatalf("failed to get server1: %v", err)
-	}
-	if cert.Hostname != "server1.example.com" {
-		t.Error("expected server1 to be imported")
-	}
-}
-
-func TestSetupFromBackup_WithEncryptedKeys(t *testing.T) {
-	svc, database := setupSetupService(t)
-	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
-
-	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
-
-	backup := makeTestBackupWithConfig([]*models.BackupCertificate{
-		{
-			Hostname:     "server.example.com",
-			EncryptedKey: encryptedKey,
-			CreatedAt:    time.Now().Unix(),
-		},
-	})
-
-	err := svc.SetupFromBackup(ctx, backup, []byte(encryptionKey))
-	if err != nil {
-		t.Fatalf("SetupFromBackup failed: %v", err)
-	}
-
-	cert, err := database.Queries().GetCertificateByHostname(ctx, "server.example.com")
-	if err != nil {
-		t.Fatalf("failed to get certificate: %v", err)
-	}
-	if len(cert.EncryptedPrivateKey) == 0 {
-		t.Error("expected encrypted private key to be stored")
-	}
-}
-
-func TestSetupFromBackup_WrongEncryptionKey_ReturnsError(t *testing.T) {
-	svc, _ := setupSetupService(t)
-	ctx := context.Background()
-	encryptionKey := testutil.RandomEncryptionKey(t)
-	wrongKey := testutil.RandomEncryptionKey(t)
-
-	_, encryptedKey, _ := generateTestCSRAndKey(t, "server.example.com", encryptionKey)
-
-	backup := makeTestBackupWithConfig([]*models.BackupCertificate{
-		{
-			Hostname:     "server.example.com",
-			EncryptedKey: encryptedKey,
-			CreatedAt:    time.Now().Unix(),
-		},
-	})
-
-	err := svc.SetupFromBackup(ctx, backup, []byte(wrongKey))
-	if err == nil {
-		t.Fatal("expected error with wrong encryption key, got nil")
-	}
-	if !containsSubstring(err.Error(), "encryption key") {
-		t.Errorf("expected encryption key error, got: %v", err)
-	}
-}
-
-func TestSetupFromBackup_NoEncryptedKeys_SkipsKeyValidation(t *testing.T) {
-	svc, _ := setupSetupService(t)
-	ctx := context.Background()
-
-	backup := makeTestBackupWithConfig([]*models.BackupCertificate{
-		{
-			Hostname:       "server.example.com",
-			CertificatePEM: "cert-pem",
-			CreatedAt:      time.Now().Unix(),
-		},
-	})
-
-	// Should succeed even without encryption key since backup has no keys
-	err := svc.SetupFromBackup(ctx, backup, nil)
-	if err != nil {
-		t.Fatalf("SetupFromBackup should succeed without keys: %v", err)
-	}
-}
-
-func TestSetupFromBackup_NilBackup_ReturnsError(t *testing.T) {
-	svc, _ := setupSetupService(t)
-	ctx := context.Background()
-
-	err := svc.SetupFromBackup(ctx, nil, nil)
-	if err == nil {
-		t.Fatal("expected error for nil backup, got nil")
-	}
-	if !containsSubstring(err.Error(), "nil") {
-		t.Errorf("expected nil error, got: %v", err)
 	}
 }
 

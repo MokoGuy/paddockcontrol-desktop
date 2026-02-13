@@ -47,7 +47,7 @@ func (s *CertificateService) GetPrivateKeyForDownload(ctx context.Context, hostn
 	}
 
 	// Decrypt private key
-	decryptedKey, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, string(encryptionKey))
+	decryptedKey, err := crypto.DecryptPrivateKey(cert.EncryptedPrivateKey, encryptionKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt private key: %w", err)
 	}
@@ -67,7 +67,7 @@ func (s *CertificateService) GetPendingPrivateKeyForDownload(ctx context.Context
 	}
 
 	// Decrypt pending private key
-	decryptedKey, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, string(encryptionKey))
+	decryptedKey, err := crypto.DecryptPrivateKey(cert.PendingEncryptedPrivateKey, encryptionKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt pending private key: %w", err)
 	}

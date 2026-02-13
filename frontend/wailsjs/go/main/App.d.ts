@@ -23,7 +23,9 @@ export function DeleteLocalBackup(arg1:string):Promise<void>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
 
-export function ExportBackup(arg1:boolean):Promise<void>;
+export function EnrollOSNative():Promise<void>;
+
+export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
 
@@ -53,17 +55,25 @@ export function GetSetupDefaults():Promise<models.SetupDefaults>;
 
 export function GetUpdateHistory(arg1:number):Promise<Array<models.UpdateHistoryEntry>>;
 
+export function HasSecurityKeys():Promise<boolean>;
+
 export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
-export function IsEncryptionKeyProvided():Promise<boolean>;
+export function IsOSKeystoreAvailable():Promise<boolean>;
 
 export function IsSetupComplete():Promise<boolean>;
+
+export function IsUnlocked():Promise<boolean>;
 
 export function IsWaitingForEncryptionKey():Promise<boolean>;
 
 export function ListCertificates(arg1:models.CertificateFilter):Promise<Array<models.CertificateListItem>>;
 
 export function ListLocalBackups():Promise<Array<models.LocalBackupInfo>>;
+
+export function ListSecurityKeys():Promise<Array<models.SecurityKeyInfo>>;
+
+export function NeedsMigration():Promise<boolean>;
 
 export function OpenBugReport():Promise<void>;
 
@@ -75,11 +85,13 @@ export function PreviewCertificateUpload(arg1:string,arg2:string):Promise<models
 
 export function ProvideEncryptionKey(arg1:string):Promise<models.KeyValidationResult>;
 
+export function RemoveSecurityKey(arg1:number):Promise<void>;
+
 export function ResetDatabase():Promise<void>;
 
 export function RestartApp():Promise<void>;
 
-export function RestoreFromBackup(arg1:models.BackupData):Promise<void>;
+export function RestoreFromBackupFile(arg1:string):Promise<void>;
 
 export function RestoreLocalBackup(arg1:string):Promise<void>;
 
@@ -97,6 +109,8 @@ export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 
 export function SkipEncryptionKey():Promise<void>;
 
+export function TryAutoUnlock():Promise<boolean>;
+
 export function UpdateCertificateNote(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateConfig(arg1:models.UpdateConfigRequest):Promise<models.Config>;
@@ -105,6 +119,8 @@ export function UpdatePendingNote(arg1:string,arg2:string):Promise<void>;
 
 export function UploadCertificate(arg1:string,arg2:string):Promise<void>;
 
-export function ValidateBackupFile(arg1:string):Promise<models.BackupValidationResult>;
+export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
 
-export function ValidateEncryptionKeyForBackup(arg1:models.BackupData,arg2:string):Promise<void>;
+export function PeekBackupInfo(arg1:string):Promise<models.BackupPeekInfo>;
+
+export function SelectBackupFile():Promise<string>;
