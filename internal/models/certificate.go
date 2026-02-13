@@ -110,6 +110,7 @@ type BackupPeekInfo struct {
 	CAName           string   `json:"ca_name"`
 	HasSecurityKeys  bool     `json:"has_security_keys"`
 	Hostnames        []string `json:"hostnames"`
+	SchemaVersion    int      `json:"schema_version"`
 }
 
 // LocalBackupInfo represents metadata about a local database backup file

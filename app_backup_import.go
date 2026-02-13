@@ -40,6 +40,11 @@ func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
 
 	info := &models.BackupPeekInfo{}
 
+	// Check schema version
+	version, dirty := getBackupSchemaVersion(backupDB)
+	info.SchemaVersion = int(version)
+	log.Info("backup schema version", slog.Uint64("version", uint64(version)), slog.Bool("dirty", dirty))
+
 	// Get certificate count and hostnames
 	rows, err := backupDB.Query("SELECT hostname FROM certificates ORDER BY hostname")
 	if err != nil {
@@ -82,6 +87,7 @@ func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
 		slog.Int("certificates", info.CertificateCount),
 		slog.String("ca_name", info.CAName),
 		slog.Bool("has_security_keys", info.HasSecurityKeys),
+		slog.Int("schema_version", info.SchemaVersion),
 	)
 
 	return info, nil
@@ -108,6 +114,16 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 		return nil, err
 	}
 	defer backupDB.Close()
+
+	// Verify backup schema version supports master key wrapping
+	version, dirty := getBackupSchemaVersion(backupDB)
+	log.Info("backup schema version", slog.Uint64("version", uint64(version)), slog.Bool("dirty", dirty))
+	if dirty {
+		return nil, fmt.Errorf("backup database has a dirty migration state and cannot be imported")
+	}
+	if version < 4 {
+		return nil, fmt.Errorf("backup is from an older version (schema v%d) that doesn't support master key wrapping; full restore is required instead of certificate import", version)
+	}
 
 	// Get backup's master key by unwrapping with the provided password
 	backupMasterKey, err := unwrapBackupMasterKey(backupDB, backupPassword)
@@ -257,7 +273,14 @@ func (a *App) RestoreFromBackupFile(path string) error {
 	if err != nil {
 		return fmt.Errorf("invalid backup file: %w", err)
 	}
+
+	version, dirty := getBackupSchemaVersion(testDB)
+	log.Info("backup schema version", slog.Uint64("version", uint64(version)), slog.Bool("dirty", dirty))
 	testDB.Close()
+
+	if dirty {
+		return fmt.Errorf("backup database has a dirty migration state and cannot be restored")
+	}
 
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -338,6 +361,18 @@ func (a *App) SelectBackupFile() (string, error) {
 // ============================================================================
 // Internal helpers
 // ============================================================================
+
+// getBackupSchemaVersion reads the schema version from a backup's schema_migrations table.
+// Returns 0 if the table doesn't exist (pre-migration DB or not a paddockcontrol DB).
+func getBackupSchemaVersion(backupDB *sql.DB) (uint, bool) {
+	var version uint
+	var dirty bool
+	err := backupDB.QueryRow("SELECT version, dirty FROM schema_migrations LIMIT 1").Scan(&version, &dirty)
+	if err != nil {
+		return 0, false
+	}
+	return version, dirty
+}
 
 // validateBackupPath checks that the backup path is valid and the file exists.
 func validateBackupPath(path string) error {
