@@ -409,6 +409,43 @@ func TestImportCertificates_Success(t *testing.T) {
 	}
 }
 
+func TestImportCertificates_RollsBackOnFailure(t *testing.T) {
+	// Certs are inserted in slice (rowid) order; corrupt the LAST one so the
+	// first two are inserted within the transaction before the failure.
+	backupPath, _ := createTestBackupDB(t, testBackupDBOpts{
+		hostnames: []string{"keep1.example.com", "keep2.example.com", "corrupt.example.com"},
+		password:  testPassword,
+	})
+
+	// Truncate the corrupt cert's encrypted key so re-encryption fails mid-loop.
+	bdb, err := sql.Open("sqlite", backupPath)
+	if err != nil {
+		t.Fatalf("open backup: %v", err)
+	}
+	if _, err := bdb.Exec("UPDATE certificates SET encrypted_private_key = ? WHERE hostname = ?",
+		[]byte{0x00, 0x01, 0x02}, "corrupt.example.com"); err != nil {
+		t.Fatalf("corrupt key: %v", err)
+	}
+	bdb.Close()
+
+	app := setupUnlockedApp(t)
+
+	if _, err := app.ImportCertificatesFromBackup(backupPath, testPassword); err == nil {
+		t.Fatal("expected import to fail on the corrupt certificate")
+	}
+
+	// The transaction must have rolled back: none of the certs persisted.
+	for _, hostname := range []string{"keep1.example.com", "keep2.example.com", "corrupt.example.com"} {
+		exists, err := app.db.Queries().CertificateExists(app.ctx, hostname)
+		if err != nil {
+			t.Fatalf("CertificateExists(%s): %v", hostname, err)
+		}
+		if exists != 0 {
+			t.Fatalf("expected %s to be rolled back, but it persisted", hostname)
+		}
+	}
+}
+
 func TestImportCertificates_ReEncryptsKeys(t *testing.T) {
 	backupPath, backupMasterKey := createTestBackupDB(t, testBackupDBOpts{
 		hostnames: []string{"reencrypt.example.com"},
