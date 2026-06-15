@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { UpdateConfigRequest } from "@/types";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,19 +68,23 @@ export function ConfigEditForm({
     };
 
     return (
-        <Dialog
+        <Sheet
             open={open}
             onOpenChange={(isOpen) => !isOpen && handleCancel()}
         >
-            <DialogContent
-                className="!max-w-3xl sm:!max-w-3xl max-h-[90vh] overflow-y-auto"
-                showCloseButton={false}
+            <SheetContent
+                side="right"
+                className="top-16 bottom-0 h-[calc(100%-4rem)] sm:max-w-xl"
             >
-                <DialogHeader>
-                    <DialogTitle>Edit Configuration</DialogTitle>
-                </DialogHeader>
+                <SheetHeader>
+                    <SheetTitle>Edit Configuration</SheetTitle>
+                </SheetHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="flex-1 flex flex-col min-h-0"
+                >
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-1">
                     {/* Instance Configuration */}
                     <Card>
                         <CardHeader>
@@ -471,8 +475,10 @@ export function ConfigEditForm({
                         </CardContent>
                     </Card>
 
+                    </div>
+
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t">
+                    <div className="flex gap-3 pt-4 mt-4 border-t shrink-0">
                         <Button type="submit" disabled={isLoading || !isDirty}>
                             {isLoading ? "Saving..." : "Save Changes"}
                         </Button>
@@ -486,7 +492,7 @@ export function ConfigEditForm({
                         </Button>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </SheetContent>
+        </Sheet>
     );
 }
