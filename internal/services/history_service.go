@@ -21,9 +21,19 @@ func NewHistoryService(database *db.Database) *HistoryService {
 	}
 }
 
-// LogEvent adds a new history entry for a certificate
+// LogEvent adds a new history entry for a certificate.
 func (s *HistoryService) LogEvent(ctx context.Context, hostname, eventType, message string) error {
-	return s.db.Queries().AddHistoryEntry(ctx, sqlc.AddHistoryEntryParams{
+	return logEvent(ctx, s.db.Queries(), hostname, eventType, message)
+}
+
+// LogEventTx adds a history entry using the provided transaction-scoped queries
+// so it commits atomically with the caller's other writes.
+func (s *HistoryService) LogEventTx(ctx context.Context, q *sqlc.Queries, hostname, eventType, message string) error {
+	return logEvent(ctx, q, hostname, eventType, message)
+}
+
+func logEvent(ctx context.Context, q *sqlc.Queries, hostname, eventType, message string) error {
+	return q.AddHistoryEntry(ctx, sqlc.AddHistoryEntryParams{
 		Hostname:  hostname,
 		EventType: eventType,
 		Message:   message,

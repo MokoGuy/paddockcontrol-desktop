@@ -114,45 +114,45 @@ func (s *CertificateService) GenerateCSR(ctx context.Context, req models.CSRRequ
 	}
 	log.Debug("profile: EncryptPrivateKey", slog.Duration("duration", time.Since(t)))
 
-	// Store in database
+	// Store the CSR and record the history event atomically.
 	t = time.Now()
-	if req.IsRenewal {
-		// Update existing certificate with pending renewal
-		err = s.db.Queries().UpdatePendingCSR(ctx, sqlc.UpdatePendingCSRParams{
-			Hostname:                   req.Hostname,
-			PendingCsrPem:              sql.NullString{String: string(csrPEM), Valid: true},
-			PendingEncryptedPrivateKey: encryptedKey,
-			PendingNote:                sql.NullString{String: req.Note, Valid: req.Note != ""},
-		})
-	} else {
-		// Create new certificate record
-		// Key stored in pending column — ActivateCertificate moves it to active on upload
-		err = s.db.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
-			Hostname:                   req.Hostname,
-			PendingEncryptedPrivateKey: encryptedKey,
-			PendingCsrPem:              sql.NullString{String: string(csrPEM), Valid: true},
-			Note:                       sql.NullString{String: req.Note, Valid: req.Note != ""},
-			ReadOnly:                   0,
-		})
-	}
-	log.Debug("profile: Database write", slog.Duration("duration", time.Since(t)))
-
-	if err != nil {
-		log.Error("failed to store CSR", logger.Err(err))
-		return nil, fmt.Errorf("failed to store CSR: %w", err)
-	}
-
-	// Log history entry
 	eventType := models.EventCSRGenerated
 	message := fmt.Sprintf("CSR generated (%d-bit key, %d SANs)", req.KeySize, len(req.SANs))
 	if req.IsRenewal {
 		eventType = models.EventCSRRegenerated
 		message = fmt.Sprintf("CSR regenerated for renewal (%d-bit key, %d SANs)", req.KeySize, len(req.SANs))
 	}
-	if err := s.history.LogEvent(ctx, req.Hostname, eventType, message); err != nil {
-		log.Warn("failed to log history entry", logger.Err(err))
-		// Don't fail the operation for history logging errors
+
+	if err = s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if req.IsRenewal {
+			// Update existing certificate with pending renewal
+			if err := q.UpdatePendingCSR(ctx, sqlc.UpdatePendingCSRParams{
+				Hostname:                   req.Hostname,
+				PendingCsrPem:              sql.NullString{String: string(csrPEM), Valid: true},
+				PendingEncryptedPrivateKey: encryptedKey,
+				PendingNote:                sql.NullString{String: req.Note, Valid: req.Note != ""},
+			}); err != nil {
+				return fmt.Errorf("failed to store CSR: %w", err)
+			}
+		} else {
+			// Create new certificate record
+			// Key stored in pending column — ActivateCertificate moves it to active on upload
+			if err := q.CreateCertificate(ctx, sqlc.CreateCertificateParams{
+				Hostname:                   req.Hostname,
+				PendingEncryptedPrivateKey: encryptedKey,
+				PendingCsrPem:              sql.NullString{String: string(csrPEM), Valid: true},
+				Note:                       sql.NullString{String: req.Note, Valid: req.Note != ""},
+				ReadOnly:                   0,
+			}); err != nil {
+				return fmt.Errorf("failed to store CSR: %w", err)
+			}
+		}
+		return s.history.LogEventTx(ctx, q, req.Hostname, eventType, message)
+	}); err != nil {
+		log.Error("failed to store CSR", logger.Err(err))
+		return nil, err
 	}
+	log.Debug("profile: Database write", slog.Duration("duration", time.Since(t)))
 
 	log.Info("CSR generated successfully",
 		slog.Duration("total_duration", time.Since(start)),
