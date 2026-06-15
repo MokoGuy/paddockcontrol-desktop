@@ -149,6 +149,51 @@ func (q *Queries) GetCertificateByHostname(ctx context.Context, hostname string)
 	return i, err
 }
 
+const importCertificate = `-- name: ImportCertificate :exec
+INSERT INTO certificates (
+    hostname,
+    encrypted_private_key,
+    pending_encrypted_private_key,
+    pending_csr_pem,
+    certificate_pem,
+    created_at,
+    expires_at,
+    note,
+    pending_note,
+    read_only
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`
+
+type ImportCertificateParams struct {
+	Hostname                   string         `json:"hostname"`
+	EncryptedPrivateKey        []byte         `json:"encrypted_private_key"`
+	PendingEncryptedPrivateKey []byte         `json:"pending_encrypted_private_key"`
+	PendingCsrPem              sql.NullString `json:"pending_csr_pem"`
+	CertificatePem             sql.NullString `json:"certificate_pem"`
+	CreatedAt                  int64          `json:"created_at"`
+	ExpiresAt                  sql.NullInt64  `json:"expires_at"`
+	Note                       sql.NullString `json:"note"`
+	PendingNote                sql.NullString `json:"pending_note"`
+	ReadOnly                   int64          `json:"read_only"`
+}
+
+// Insert a certificate preserving its original created_at (used by backup import)
+func (q *Queries) ImportCertificate(ctx context.Context, arg ImportCertificateParams) error {
+	_, err := q.exec(ctx, q.importCertificateStmt, importCertificate,
+		arg.Hostname,
+		arg.EncryptedPrivateKey,
+		arg.PendingEncryptedPrivateKey,
+		arg.PendingCsrPem,
+		arg.CertificatePem,
+		arg.CreatedAt,
+		arg.ExpiresAt,
+		arg.Note,
+		arg.PendingNote,
+		arg.ReadOnly,
+	)
+	return err
+}
+
 const listAllCertificates = `-- name: ListAllCertificates :many
 SELECT hostname, encrypted_private_key, pending_csr_pem, certificate_pem, pending_encrypted_private_key, created_at, expires_at, last_modified, note, pending_note, read_only FROM certificates
 ORDER BY created_at DESC

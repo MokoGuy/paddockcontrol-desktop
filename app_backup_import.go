@@ -236,13 +236,14 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 			}
 		}
 
-		// Insert into current database
-		err = database.Queries().CreateCertificate(a.ctx, dbsqlc.CreateCertificateParams{
+		// Insert into current database, preserving the backup's original created_at
+		err = database.Queries().ImportCertificate(a.ctx, dbsqlc.ImportCertificateParams{
 			Hostname:                   cert.hostname,
 			EncryptedPrivateKey:        newEncryptedKey,
 			PendingCsrPem:              cert.pendingCSR,
 			PendingEncryptedPrivateKey: newPendingEncryptedKey,
 			CertificatePem:             cert.certificatePEM,
+			CreatedAt:                  cert.createdAt,
 			ExpiresAt:                  cert.expiresAt,
 			Note:                       cert.note,
 			PendingNote:                cert.pendingNote,

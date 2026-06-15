@@ -12,6 +12,21 @@ INSERT INTO certificates (
     read_only
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- name: ImportCertificate :exec
+-- Insert a certificate preserving its original created_at (used by backup import)
+INSERT INTO certificates (
+    hostname,
+    encrypted_private_key,
+    pending_encrypted_private_key,
+    pending_csr_pem,
+    certificate_pem,
+    created_at,
+    expires_at,
+    note,
+    pending_note,
+    read_only
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 -- name: GetCertificateByHostname :one
 -- Get a certificate by hostname
 SELECT * FROM certificates WHERE hostname = ? LIMIT 1;
