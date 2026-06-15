@@ -106,11 +106,23 @@ type CertImportResult struct {
 
 // BackupPeekInfo represents a summary of a backup file's contents
 type BackupPeekInfo struct {
-	CertificateCount int      `json:"certificate_count"`
-	CAName           string   `json:"ca_name"`
-	HasSecurityKeys  bool     `json:"has_security_keys"`
-	Hostnames        []string `json:"hostnames"`
-	SchemaVersion    int      `json:"schema_version"`
+	CertificateCount int                     `json:"certificate_count"`
+	CAName           string                  `json:"ca_name"`
+	HasSecurityKeys  bool                    `json:"has_security_keys"`
+	Hostnames        []string                `json:"hostnames"`
+	Certificates     []BackupCertificateInfo `json:"certificates"`
+	SchemaVersion    int                     `json:"schema_version"`
+}
+
+// BackupCertificateInfo represents a single certificate inside a backup file,
+// with the same display fields as the dashboard certificate list.
+type BackupCertificateInfo struct {
+	Hostname  string   `json:"hostname"`
+	Status    string   `json:"status"` // computed: pending/active/expiring/expired
+	SANs      []string `json:"sans,omitempty"`
+	KeySize   int      `json:"key_size,omitempty"`
+	CreatedAt int64    `json:"created_at"`
+	ExpiresAt *int64   `json:"expires_at,omitempty"`
 }
 
 // LocalBackupInfo represents metadata about a local database backup file

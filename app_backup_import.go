@@ -24,12 +24,17 @@ import (
 
 // PeekBackupInfo opens a backup DB file read-only and returns a summary of its contents.
 func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
-	log := logger.WithComponent("app")
-	log.Info("peeking backup info", slog.String("path", path))
-
 	if err := validateBackupPath(path); err != nil {
 		return nil, err
 	}
+	return peekBackupAtPath(path)
+}
+
+// peekBackupAtPath opens a backup DB file read-only and returns a summary of its
+// contents. Callers are responsible for validating/authorizing the path first.
+func peekBackupAtPath(path string) (*models.BackupPeekInfo, error) {
+	log := logger.WithComponent("app")
+	log.Info("peeking backup info", slog.String("path", path))
 
 	backupDB, err := openBackupDB(path)
 	if err != nil {
@@ -44,25 +49,17 @@ func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
 	info.SchemaVersion = int(version)
 	log.Info("backup schema version", slog.Uint64("version", uint64(version)), slog.Bool("dirty", dirty))
 
-	// Get certificate count and hostnames
-	rows, err := backupDB.Query("SELECT hostname FROM certificates ORDER BY hostname")
+	// Get certificate details (hostname, status, SANs, created/expires)
+	certs, err := readBackupCertificates(backupDB)
 	if err != nil {
 		log.Error("failed to query backup certificates", logger.Err(err))
 		return nil, fmt.Errorf("failed to read backup certificates: %w", err)
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var hostname string
-		if err := rows.Scan(&hostname); err != nil {
-			return nil, fmt.Errorf("failed to scan hostname: %w", err)
-		}
-		info.Hostnames = append(info.Hostnames, hostname)
+	info.Certificates = certs
+	for _, c := range certs {
+		info.Hostnames = append(info.Hostnames, c.Hostname)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate hostnames: %w", err)
-	}
-	info.CertificateCount = len(info.Hostnames)
+	info.CertificateCount = len(certs)
 
 	// Get CA name from config
 	var caName sql.NullString
@@ -81,6 +78,9 @@ func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
 	if info.Hostnames == nil {
 		info.Hostnames = []string{}
 	}
+	if info.Certificates == nil {
+		info.Certificates = []models.BackupCertificateInfo{}
+	}
 
 	log.Info("backup peek complete",
 		slog.Int("certificates", info.CertificateCount),
@@ -90,6 +90,72 @@ func (a *App) PeekBackupInfo(path string) (*models.BackupPeekInfo, error) {
 	)
 
 	return info, nil
+}
+
+// readBackupCertificates reads all certificates from a backup DB (opened read-only)
+// and returns their display fields: status, SANs, key size, created/expires. Only
+// public data (certificate PEM / pending CSR) is parsed — no master key is needed.
+func readBackupCertificates(backupDB *sql.DB) ([]models.BackupCertificateInfo, error) {
+	rows, err := backupDB.Query(
+		"SELECT hostname, certificate_pem, pending_csr_pem, created_at, expires_at FROM certificates ORDER BY hostname",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []models.BackupCertificateInfo
+	for rows.Next() {
+		var (
+			hostname   string
+			certPEM    sql.NullString
+			pendingCSR sql.NullString
+			createdAt  int64
+			expiresAt  sql.NullInt64
+		)
+		if err := rows.Scan(&hostname, &certPEM, &pendingCSR, &createdAt, &expiresAt); err != nil {
+			return nil, fmt.Errorf("failed to scan certificate: %w", err)
+		}
+
+		// Reuse the shared status computation by reconstructing a sqlc row.
+		status := db.ComputeStatus(&dbsqlc.Certificate{
+			Hostname:       hostname,
+			CertificatePem: certPEM,
+			PendingCsrPem:  pendingCSR,
+			CreatedAt:      createdAt,
+			ExpiresAt:      expiresAt,
+		})
+
+		info := models.BackupCertificateInfo{
+			Hostname:  hostname,
+			Status:    string(status),
+			CreatedAt: createdAt,
+		}
+		if expiresAt.Valid {
+			e := expiresAt.Int64
+			info.ExpiresAt = &e
+		}
+
+		// SANs + key size: from the signed certificate if present, else the pending CSR.
+		if certPEM.Valid && certPEM.String != "" {
+			if cert, err := crypto.ParseCertificate([]byte(certPEM.String)); err == nil {
+				if details, _ := crypto.ExtractCertificateDetails(cert); details != nil {
+					info.SANs = details.SANs
+					info.KeySize = details.KeySize
+				}
+			}
+		} else if pendingCSR.Valid && pendingCSR.String != "" {
+			if csr, err := crypto.ParseCSR([]byte(pendingCSR.String)); err == nil {
+				if details, _ := crypto.ExtractCSRDetails(csr); details != nil {
+					info.SANs = details.SANs
+					info.KeySize = details.KeySize
+				}
+			}
+		}
+
+		out = append(out, info)
+	}
+	return out, rows.Err()
 }
 
 // ImportCertificatesFromBackup selectively imports certificates from a backup DB file.

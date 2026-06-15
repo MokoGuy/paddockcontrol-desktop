@@ -16,6 +16,7 @@ export type UpdateConfigRequest = models.UpdateConfigRequest;
 export type SetupDefaults = models.SetupDefaults;
 export type CertImportResult = models.CertImportResult;
 export type BackupPeekInfo = models.BackupPeekInfo;
+export type BackupCertificateInfo = models.BackupCertificateInfo;
 export type KeyValidationResult = models.KeyValidationResult;
 export type ChainCertificateInfo = models.ChainCertificateInfo;
 export type HistoryEntry = models.HistoryEntry;

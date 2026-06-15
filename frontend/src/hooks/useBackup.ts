@@ -12,6 +12,7 @@ interface UseBackupReturn {
         password: string,
     ) => Promise<CertImportResult | null>;
     peekBackupInfo: (path: string) => Promise<BackupPeekInfo | null>;
+    peekLocalBackup: (filename: string) => Promise<BackupPeekInfo | null>;
     selectBackupFile: () => Promise<string | null>;
     copyToClipboard: (text: string) => Promise<void>;
     getDataDirectory: () => Promise<string | null>;
@@ -63,6 +64,18 @@ export function useBackup(): UseBackupReturn {
         setError(null);
         try {
             return await api.peekBackupInfo(path);
+        } catch (err) {
+            handleError(err);
+            return null;
+        }
+    };
+
+    const peekLocalBackup = async (
+        filename: string,
+    ): Promise<BackupPeekInfo | null> => {
+        setError(null);
+        try {
+            return await api.peekLocalBackup(filename);
         } catch (err) {
             handleError(err);
             return null;
@@ -156,6 +169,7 @@ export function useBackup(): UseBackupReturn {
         error,
         importCertificatesFromBackup,
         peekBackupInfo,
+        peekLocalBackup,
         selectBackupFile,
         copyToClipboard,
         getDataDirectory,
