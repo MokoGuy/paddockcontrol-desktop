@@ -6,12 +6,18 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"unsafe"
 
 	"github.com/go-ctap/ctaphid/pkg/webauthntypes"
 	"github.com/go-ctap/winhello"
 	"github.com/go-ctap/winhello/hiddenwindow"
 	"github.com/ldclabs/cose/iana"
 	"golang.org/x/sys/windows"
+)
+
+var (
+	user32          = windows.NewLazySystemDLL("user32.dll")
+	procFindWindowW = user32.NewProc("FindWindowW")
 )
 
 // Available reports whether the native Windows WebAuthn API is usable.
@@ -21,15 +27,14 @@ func Available() bool {
 
 // Enroll creates a NON-resident passkey (the user picks Windows Hello or a
 // security key) with the PRF extension enabled, and returns its credential id
-// plus the secret derived for salt. Non-resident means nothing is stored on the
-// authenticator: we hold the credential id and pass it back on every Derive.
-func Enroll(rpID, rpName, userName string, salt []byte) (*Credential, error) {
-	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), rpName)
+// plus the secret derived for salt. windowTitle is the app's top-level window
+// title, used to parent the Windows Hello / security-key dialog.
+func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credential, error) {
+	hWnd, cleanup, err := windowHandle(windowTitle, rpName)
 	if err != nil {
-		return nil, fmt.Errorf("create window: %w", err)
+		return nil, err
 	}
-	defer wnd.Close()
-	hWnd := wnd.WindowHandle()
+	defer cleanup()
 
 	resp, err := winhello.MakeCredential(
 		hWnd,
@@ -67,13 +72,13 @@ func Enroll(rpID, rpName, userName string, salt []byte) (*Credential, error) {
 }
 
 // Derive re-derives the PRF secret for an existing credential id + salt.
-func Derive(rpID string, credentialID, salt []byte) ([]byte, error) {
-	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), rpID)
+func Derive(windowTitle, rpID string, credentialID, salt []byte) ([]byte, error) {
+	hWnd, cleanup, err := windowHandle(windowTitle, rpID)
 	if err != nil {
-		return nil, fmt.Errorf("create window: %w", err)
+		return nil, err
 	}
-	defer wnd.Close()
-	return derive(wnd.WindowHandle(), rpID, credentialID, salt)
+	defer cleanup()
+	return derive(hWnd, rpID, credentialID, salt)
 }
 
 func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte) ([]byte, error) {
@@ -106,4 +111,37 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte) ([]byte, 
 		return nil, fmt.Errorf("unexpected PRF secret length %d", len(secret))
 	}
 	return secret, nil
+}
+
+// windowHandle returns the app's top-level window so the WebAuthn dialog is
+// parented to it (correct focus/positioning). It falls back to a transient
+// hidden window if the app window can't be located.
+func windowHandle(title, fallbackName string) (windows.HWND, func(), error) {
+	if h := appWindowHandle(title); h != 0 {
+		return h, func() {}, nil
+	}
+	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), fallbackName)
+	if err != nil {
+		return 0, nil, fmt.Errorf("create window: %w", err)
+	}
+	return wnd.WindowHandle(), func() { wnd.Close() }, nil
+}
+
+// appWindowHandle finds the app's top-level window: the foreground window (which
+// is the app's, since enroll/unlock are triggered by a user action in it),
+// validated; otherwise by exact title.
+func appWindowHandle(title string) windows.HWND {
+	if h := windows.GetForegroundWindow(); h != 0 && windows.IsWindow(h) {
+		return h
+	}
+	return findWindowByTitle(title)
+}
+
+func findWindowByTitle(title string) windows.HWND {
+	p, err := windows.UTF16PtrFromString(title)
+	if err != nil {
+		return 0
+	}
+	r, _, _ := procFindWindowW.Call(0, uintptr(unsafe.Pointer(p)))
+	return windows.HWND(r)
 }
