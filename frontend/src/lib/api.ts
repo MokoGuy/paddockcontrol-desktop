@@ -41,12 +41,9 @@ export const api = {
     hasSecurityKeys: () => App.HasSecurityKeys() as Promise<boolean>,
     enrollPasswordMethod: (password: string, label: string) => App.EnrollPasswordMethod(password, label),
     removeSecurityKey: (id: number) => App.RemoveSecurityKey(id),
-    isOSKeystoreAvailable: () => App.IsOSKeystoreAvailable() as Promise<boolean>,
-    enrollOSNative: () => App.EnrollOSNative(),
     isWebAuthnAvailable: () => App.IsWebAuthnAvailable() as Promise<boolean>,
     enrollWebAuthn: (label: string) => App.EnrollWebAuthn(label),
     unlockWithWebAuthn: () => App.UnlockWithWebAuthn() as Promise<boolean>,
-    tryAutoUnlock: () => App.TryAutoUnlock() as Promise<boolean>,
 
     // Setup
     isSetupComplete: () => App.IsSetupComplete(),

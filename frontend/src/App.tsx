@@ -90,9 +90,9 @@ function AppContent() {
                 const setupComplete = await api.isSetupComplete();
                 setIsSetupComplete(setupComplete);
 
-                // Try auto-unlock via OS keyring, then check unlock state
+                // The app starts locked; unlock is user-initiated (password or
+                // passkey). Reflect any existing unlocked state.
                 if (setupComplete) {
-                    await api.tryAutoUnlock();
                     const unlocked = await api.isUnlocked();
                     setIsUnlocked(unlocked);
                 }
