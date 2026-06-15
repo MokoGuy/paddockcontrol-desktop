@@ -369,8 +369,8 @@ func (a *App) migrateLegacyEncryption(log *slog.Logger, password string) ([]byte
 			if err != nil {
 				return nil, fmt.Errorf("failed to decrypt key for %s during migration: %w", cert.Hostname, err)
 			}
-			// EncryptPrivateKey wipes plaintext, so we're good
 			encrypted, err := crypto.EncryptPrivateKey(plaintext, masterKey)
+			crypto.Zero(plaintext)
 			if err != nil {
 				return nil, fmt.Errorf("failed to re-encrypt key for %s: %w", cert.Hostname, err)
 			}
@@ -383,6 +383,7 @@ func (a *App) migrateLegacyEncryption(log *slog.Logger, password string) ([]byte
 				return nil, fmt.Errorf("failed to decrypt pending key for %s during migration: %w", cert.Hostname, err)
 			}
 			encrypted, err := crypto.EncryptPrivateKey(plaintext, masterKey)
+			crypto.Zero(plaintext)
 			if err != nil {
 				return nil, fmt.Errorf("failed to re-encrypt pending key for %s: %w", cert.Hostname, err)
 			}

@@ -216,6 +216,7 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 				return nil, fmt.Errorf("failed to decrypt private key for %s: %w", cert.hostname, err)
 			}
 			newEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
+			crypto.Zero(plaintext)
 			if err != nil {
 				return nil, fmt.Errorf("failed to re-encrypt private key for %s: %w", cert.hostname, err)
 			}
@@ -229,6 +230,7 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 				return nil, fmt.Errorf("failed to decrypt pending private key for %s: %w", cert.hostname, err)
 			}
 			newPendingEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
+			crypto.Zero(plaintext)
 			if err != nil {
 				return nil, fmt.Errorf("failed to re-encrypt pending private key for %s: %w", cert.hostname, err)
 			}

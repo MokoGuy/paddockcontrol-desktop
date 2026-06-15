@@ -71,16 +71,15 @@ func EncryptPrivateKeyLegacy(pemData []byte, password string) ([]byte, error) {
 
 	ciphertext := gcm.Seal(nonce, nonce, pemData, nil)
 
-	for i := range pemData {
-		pemData[i] = 0
-	}
-
 	return ciphertext, nil
 }
 
 // EncryptPrivateKey encrypts private key PEM data using AES-256-GCM.
 // The key must be exactly 32 bytes (the raw master key).
 // Returns: nonce (12 bytes) + ciphertext.
+//
+// The caller retains ownership of pemData and should wipe it with Zero once it
+// is no longer needed — this function does not mutate or clear its input.
 func EncryptPrivateKey(pemData []byte, key []byte) ([]byte, error) {
 	log := logger.WithComponent("crypto")
 	log.Debug("encrypting private key", slog.Int("data_size", len(pemData)))
@@ -112,11 +111,6 @@ func EncryptPrivateKey(pemData []byte, key []byte) ([]byte, error) {
 
 	// Encrypt (nonce will be prepended to ciphertext by Seal)
 	ciphertext := gcm.Seal(nonce, nonce, pemData, nil)
-
-	// Wipe plaintext from memory
-	for i := range pemData {
-		pemData[i] = 0
-	}
 
 	log.Debug("private key encrypted successfully", slog.Int("encrypted_size", len(ciphertext)))
 	return ciphertext, nil
