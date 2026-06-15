@@ -207,6 +207,7 @@ func (s *CertificateService) ImportCertificate(ctx context.Context, req models.I
 
 	// Encrypt private key
 	encryptedKey, err := crypto.EncryptPrivateKey(keyPEM, encryptionKey)
+	crypto.Zero(keyPEM)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt private key: %w", err)
 	}
