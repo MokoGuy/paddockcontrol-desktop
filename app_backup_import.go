@@ -285,6 +285,13 @@ func (a *App) RestoreFromBackupFile(path string) error {
 		return fmt.Errorf("backup database has a dirty migration state and cannot be restored")
 	}
 
+	// Reject databases with an unknown schema version. getBackupSchemaVersion
+	// returns 0 when schema_migrations is missing/unreadable (a corrupt file or
+	// not a PaddockControl database), which must not overwrite the live database.
+	if version == 0 {
+		return fmt.Errorf("unrecognized backup: file is not a valid PaddockControl database")
+	}
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
