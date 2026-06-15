@@ -46,8 +46,9 @@ var prfSalt = []byte("paddockcontrol/master-key-wrap/v1")
 
 // selected at startup from CLI args
 var (
-	attachment    = winhello.WinHelloAuthenticatorAttachmentPlatform
-	stateFileName = "winhello-prf.credid.platform"
+	attachment      = winhello.WinHelloAuthenticatorAttachmentPlatform
+	stateFileName   = "winhello-prf.credid.platform"
+	requireResident = true // platform (Hello) creds are discoverable; security keys use non-resident
 )
 
 func main() {
@@ -57,6 +58,7 @@ func main() {
 		case "key": // target a roaming FIDO2 security key (e.g. YubiKey)
 			attachment = winhello.WinHelloAuthenticatorAttachmentCrossPlatform
 			stateFileName = "winhello-prf.credid.key"
+			requireResident = false // non-resident: nothing stored on the key, no slot used
 		case "cleanup":
 			cleanup = true
 		}
@@ -65,7 +67,11 @@ func main() {
 	if attachment == winhello.WinHelloAuthenticatorAttachmentCrossPlatform {
 		mode = "security key (cross-platform / YubiKey)"
 	}
-	fmt.Printf("[INFO] mode: %s\n", mode)
+	residency := "non-resident (credential id held by us, nothing stored on the authenticator)"
+	if requireResident {
+		residency = "resident/discoverable (stored on the authenticator)"
+	}
+	fmt.Printf("[INFO] mode: %s | %s\n", mode, residency)
 
 	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), "PaddockControl PRF Spike")
 	if err != nil {
@@ -156,7 +162,7 @@ func ensureCredential(hWnd windows.HWND) (credID []byte, fresh bool) {
 		&winhello.AuthenticatorMakeCredentialOptions{
 			AuthenticatorAttachment:     attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
-			RequireResidentKey:          true,
+			RequireResidentKey:          requireResident,
 		},
 	)
 	if err != nil {
