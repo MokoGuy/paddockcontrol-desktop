@@ -7,14 +7,13 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useSecurityKeys } from "@/hooks/useSecurityKeys";
 import { SecurityKeyInfo } from "@/types";
 
 interface UnlockMethodsCardProps {
-    isUnlocked: boolean;
     onChangePassword: () => void;
     className?: string;
 }
@@ -49,7 +48,6 @@ function MethodRow({
 }
 
 export function UnlockMethodsCard({
-    isUnlocked,
     onChangePassword,
     className,
 }: UnlockMethodsCardProps) {
@@ -79,8 +77,6 @@ export function UnlockMethodsCard({
         }
     };
 
-    const lockedHint = !isUnlocked ? "Unlock the app first" : undefined;
-
     return (
         <>
             <Card className={`shadow-sm border-border ${className ?? ""}`}>
@@ -105,15 +101,15 @@ export function UnlockMethodsCard({
                             </Badge>
                         }
                         action={
-                            <Button
+                            <AdminGatedButton
                                 variant="outline"
                                 size="sm"
+                                requireAdminMode={false}
+                                requireUnlocked
                                 onClick={onChangePassword}
-                                disabled={!isUnlocked}
-                                title={lockedHint}
                             >
                                 Change
-                            </Button>
+                            </AdminGatedButton>
                         }
                     />
 
@@ -138,30 +134,33 @@ export function UnlockMethodsCard({
                             }
                             action={
                                 passkey ? (
-                                    <Button
+                                    <AdminGatedButton
                                         variant="outline"
                                         size="sm"
+                                        requireAdminMode={false}
+                                        requireUnlocked
                                         className="text-destructive hover:bg-destructive/10"
                                         onClick={() => setRemoveTarget(passkey)}
                                         disabled={busy}
                                     >
                                         Remove
-                                    </Button>
+                                    </AdminGatedButton>
                                 ) : (
-                                    <Button
+                                    <AdminGatedButton
                                         variant="outline"
                                         size="sm"
+                                        requireAdminMode={false}
+                                        requireUnlocked
                                         onClick={() =>
                                             run(
                                                 () => enrollWebAuthn("Passkey"),
                                                 "Passkey enrolled",
                                             )
                                         }
-                                        disabled={!isUnlocked || busy}
-                                        title={lockedHint}
+                                        disabled={busy}
                                     >
                                         {busy ? "Waiting…" : "Enable"}
-                                    </Button>
+                                    </AdminGatedButton>
                                 )
                             }
                         />

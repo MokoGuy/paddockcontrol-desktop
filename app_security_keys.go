@@ -145,6 +145,13 @@ func (a *App) EnrollPasswordMethod(password, label string) error {
 
 // RemoveSecurityKey removes a security key (unlock method) by ID.
 func (a *App) RemoveSecurityKey(id int64) error {
+	// Changing the set of unlock methods is a security-config change: require the
+	// app to be unlocked, just like enrolling one. Otherwise anyone with access to
+	// a locked app could strip its unlock methods.
+	if err := a.requireUnlocked(); err != nil {
+		return fmt.Errorf("app must be unlocked to remove an unlock method: %w", err)
+	}
+
 	a.mu.RLock()
 	database := a.db
 	a.mu.RUnlock()
