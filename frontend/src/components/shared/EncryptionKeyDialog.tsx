@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppStore } from "@/stores/useAppStore";
@@ -35,6 +35,51 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
     } = useAppStore();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [hasPasskey, setHasPasskey] = useState(false);
+    const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        void (async () => {
+            try {
+                const [available, keys] = await Promise.all([
+                    api.isWebAuthnAvailable(),
+                    api.listSecurityKeys(),
+                ]);
+                if (!cancelled) {
+                    setHasPasskey(
+                        available && keys.some((k) => k.method === "fido2"),
+                    );
+                }
+            } catch {
+                if (!cancelled) setHasPasskey(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [open]);
+
+    const handlePasskey = async () => {
+        setPasskeyLoading(true);
+        setKeyValidationError(null);
+        try {
+            const ok = await api.unlockWithWebAuthn();
+            if (!ok) throw new Error("Passkey unlock failed");
+            setIsUnlocked(true);
+            reset();
+            onClose();
+        } catch (err) {
+            setKeyValidationError({
+                message:
+                    err instanceof Error ? err.message : "Passkey unlock failed",
+                failedHostnames: [],
+            });
+        } finally {
+            setPasskeyLoading(false);
+        }
+    };
 
     const {
         register,
@@ -144,6 +189,20 @@ export function EncryptionKeyDialog({ open, onClose }: EncryptionKeyDialogProps)
                             </p>
                         )}
                     </div>
+
+                    {hasPasskey && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={handlePasskey}
+                            disabled={passkeyLoading || isLoading}
+                        >
+                            {passkeyLoading
+                                ? "Waiting for passkey…"
+                                : "Unlock with passkey"}
+                        </Button>
+                    )}
 
                     <DialogFooter>
                         <Button
