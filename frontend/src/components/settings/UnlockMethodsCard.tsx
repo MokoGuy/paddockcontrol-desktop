@@ -53,17 +53,9 @@ export function UnlockMethodsCard({
     onChangePassword,
     className,
 }: UnlockMethodsCardProps) {
-    const {
-        methods,
-        osAvailable,
-        webAuthnAvailable,
-        refresh,
-        enrollOSNative,
-        enrollWebAuthn,
-        remove,
-    } = useSecurityKeys();
+    const { methods, webAuthnAvailable, refresh, enrollWebAuthn, remove } =
+        useSecurityKeys();
 
-    const [enableOSOpen, setEnableOSOpen] = useState(false);
     const [removeTarget, setRemoveTarget] = useState<SecurityKeyInfo | null>(
         null,
     );
@@ -73,7 +65,6 @@ export function UnlockMethodsCard({
         void refresh();
     }, [refresh]);
 
-    const osNative = methods.find((m) => m.method === "os_native");
     const passkey = methods.find((m) => m.method === "fido2");
 
     const run = async (fn: () => Promise<void>, ok: string) => {
@@ -126,51 +117,6 @@ export function UnlockMethodsCard({
                         }
                     />
 
-                    {/* OS keyring auto-unlock */}
-                    {(osNative || osAvailable) && (
-                        <MethodRow
-                            title="OS auto-unlock (this PC)"
-                            description={
-                                osNative
-                                    ? "Unlocks automatically via your system credential store"
-                                    : "Skip the password on this device (no biometric prompt — convenience only)"
-                            }
-                            badge={
-                                osNative ? (
-                                    <Badge
-                                        variant="outline"
-                                        className="border-success/40 bg-success/10 text-success"
-                                    >
-                                        Enabled
-                                    </Badge>
-                                ) : undefined
-                            }
-                            action={
-                                osNative ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-destructive hover:bg-destructive/10"
-                                        onClick={() => setRemoveTarget(osNative)}
-                                        disabled={busy}
-                                    >
-                                        Disable
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setEnableOSOpen(true)}
-                                        disabled={!isUnlocked || busy}
-                                        title={lockedHint}
-                                    >
-                                        Enable
-                                    </Button>
-                                )
-                            }
-                        />
-                    )}
-
                     {/* Passkey — Windows Hello / security key */}
                     {(passkey || webAuthnAvailable) && (
                         <MethodRow
@@ -222,21 +168,6 @@ export function UnlockMethodsCard({
                     )}
                 </CardContent>
             </Card>
-
-            {/* Enable OS auto-unlock — trade-off confirmation */}
-            <ConfirmDialog
-                open={enableOSOpen}
-                title="Enable OS auto-unlock?"
-                description="The app will unlock automatically on this PC using your system credential store, without asking for your password. Anyone who can sign in to your operating-system account will be able to open the app. Only enable this on a trusted, single-user machine — your password remains as the recovery method."
-                confirmText="Enable"
-                cancelText="Cancel"
-                isLoading={busy}
-                onConfirm={async () => {
-                    await run(enrollOSNative, "OS auto-unlock enabled");
-                    setEnableOSOpen(false);
-                }}
-                onCancel={() => setEnableOSOpen(false)}
-            />
 
             {/* Remove a method */}
             <ConfirmDialog

@@ -1,9 +1,10 @@
 package models
 
-// SecurityKeyMethod constants for unlock method types
+// SecurityKeyMethod constants for unlock method types.
+// (The DB CHECK still allows the deprecated "os_native" value, but the app no
+// longer uses it — only password and passkey/FIDO2.)
 const (
 	SecurityKeyMethodPassword = "password"
-	SecurityKeyMethodOSNative = "os_native"
 	SecurityKeyMethodFIDO2    = "fido2"
 )
 

@@ -23,7 +23,6 @@ export function DeleteLocalBackup(arg1:string):Promise<void>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
 
-export function EnrollOSNative():Promise<void>;
 
 export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
@@ -63,7 +62,6 @@ export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
 export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
 
-export function IsOSKeystoreAvailable():Promise<boolean>;
 
 export function IsSetupComplete():Promise<boolean>;
 
@@ -121,7 +119,6 @@ export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 
 export function SkipEncryptionKey():Promise<void>;
 
-export function TryAutoUnlock():Promise<boolean>;
 
 export function UnlockWithWebAuthn():Promise<boolean>;
 

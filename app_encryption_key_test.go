@@ -520,48 +520,6 @@ func TestRemoveSecurityKey_NotFound(t *testing.T) {
 }
 
 // ============================================================================
-// TryAutoUnlock
-// ============================================================================
-
-func TestTryAutoUnlock_AlreadyUnlocked(t *testing.T) {
-	app := setupUnlockedApp(t)
-
-	ok, err := app.TryAutoUnlock()
-	if err != nil {
-		t.Fatalf("TryAutoUnlock() error: %v", err)
-	}
-	if !ok {
-		t.Fatal("expected true when already unlocked")
-	}
-}
-
-func TestTryAutoUnlock_NilDatabase(t *testing.T) {
-	app := &App{db: nil}
-
-	ok, err := app.TryAutoUnlock()
-	if err != nil {
-		t.Fatalf("TryAutoUnlock() error: %v", err)
-	}
-	if ok {
-		t.Fatal("expected false when database is nil")
-	}
-}
-
-func TestTryAutoUnlock_NoOSNativeEntries(t *testing.T) {
-	app := setupUnlockedApp(t)
-	app.ClearEncryptionKey()
-
-	// Only password entries exist — no OS-native
-	ok, err := app.TryAutoUnlock()
-	if err != nil {
-		t.Fatalf("TryAutoUnlock() error: %v", err)
-	}
-	if ok {
-		t.Fatal("expected false when no OS-native entries exist")
-	}
-}
-
-// ============================================================================
 // ListSecurityKeys
 // ============================================================================
 
