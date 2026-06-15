@@ -19,6 +19,10 @@ import (
 // must resolve.
 const webAuthnRPID = "paddockcontrol.local"
 
+// appWindowTitle must match the Wails window Title in main.go — it's used to
+// parent the WebAuthn dialog to the app's top-level window.
+const appWindowTitle = "paddockcontrol"
+
 // IsWebAuthnAvailable reports whether platform WebAuthn (Windows Hello / security
 // keys) is usable on this OS.
 func (a *App) IsWebAuthnAvailable() bool {
@@ -58,7 +62,7 @@ func (a *App) EnrollWebAuthn(label string) error {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	cred, err := webauthn.Enroll(webAuthnRPID, "PaddockControl", "paddock", salt)
+	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt)
 	if err != nil {
 		return fmt.Errorf("passkey enrollment failed: %w", err)
 	}
@@ -128,7 +132,7 @@ func (a *App) UnlockWithWebAuthn() (bool, error) {
 			continue
 		}
 
-		secret, err := webauthn.Derive(webAuthnRPID, meta.CredentialID, meta.Salt)
+		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt)
 		if err != nil {
 			// User cancelled, wrong authenticator, or this credential isn't present.
 			log.Debug("passkey derive failed", logger.Err(err))
