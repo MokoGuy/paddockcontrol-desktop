@@ -43,6 +43,7 @@ import { GetBuildInfo, OpenDataDirectory, ExportLogs, GetLogInfo } from "../../w
 import { logger } from "../../wailsjs/go/models";
 import { ConfigEditForm } from "@/components/settings/ConfigEditForm";
 import { ChangePasswordDialog } from "@/components/settings/ChangePasswordDialog";
+import { UnlockMethodsCard } from "@/components/settings/UnlockMethodsCard";
 import { LocalBackupsCard } from "@/components/settings/LocalBackupsCard";
 import { UpdateCard } from "@/components/settings/UpdateCard";
 import { DangerZoneCard } from "@/components/shared/DangerZoneCard";
@@ -503,27 +504,12 @@ export function Settings() {
             {/* Application Updates */}
             <UpdateCard />
 
-            {/* Change Password */}
-            <Card className="mt-6 shadow-sm border-border">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Security</CardTitle>
-                            <CardDescription>
-                                Change your unlock password
-                            </CardDescription>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setChangeKeyOpen(true)}
-                            disabled={!isUnlocked}
-                        >
-                            Change Password
-                        </Button>
-                    </div>
-                </CardHeader>
-            </Card>
+            {/* Unlock methods (password / OS keyring / passkey) */}
+            <UnlockMethodsCard
+                className="mt-6"
+                isUnlocked={isUnlocked}
+                onChangePassword={() => setChangeKeyOpen(true)}
+            />
 
             {/* Danger Zone - Reset Database */}
             <DangerZoneCard
