@@ -28,6 +28,30 @@ func DefaultArgon2idParams() Argon2idParams {
 	}
 }
 
+// Validate enforces lower bounds on Argon2id parameters. It guards against
+// derivation from absent/zero metadata (which would otherwise panic inside
+// argon2.IDKey when iterations or parallelism are 0) and against a tampered
+// database silently downgrading the KDF cost to make cracking cheap.
+func (p Argon2idParams) Validate() error {
+	// 19 MiB is the OWASP minimum for Argon2id; the app default is 64 MiB.
+	if p.Memory < 19*1024 {
+		return fmt.Errorf("argon2id memory too low: %d KiB", p.Memory)
+	}
+	if p.Iterations < 1 {
+		return fmt.Errorf("argon2id iterations too low: %d", p.Iterations)
+	}
+	if p.Parallelism < 1 {
+		return fmt.Errorf("argon2id parallelism too low: %d", p.Parallelism)
+	}
+	if p.KeyLength != 32 {
+		return fmt.Errorf("argon2id key length must be 32, got %d", p.KeyLength)
+	}
+	if p.SaltLength < 16 {
+		return fmt.Errorf("argon2id salt too short: %d bytes", p.SaltLength)
+	}
+	return nil
+}
+
 // GenerateSalt generates a cryptographically random salt.
 func GenerateSalt(length uint32) ([]byte, error) {
 	salt := make([]byte, length)

@@ -449,6 +449,9 @@ func unwrapBackupMasterKey(backupDB *sql.DB, password string) ([]byte, error) {
 			KeyLength:   32,
 			SaltLength:  uint32(len(metadata.Salt)),
 		}
+		if err := params.Validate(); err != nil {
+			continue // Unusable/untrusted KDF parameters — skip this entry
+		}
 
 		wrappingKey := crypto.DeriveKeyFromPassword(password, metadata.Salt, params)
 		masterKey, err := crypto.UnwrapMasterKey(wrappedKey, wrappingKey)
