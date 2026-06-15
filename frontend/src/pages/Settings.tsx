@@ -507,7 +507,6 @@ export function Settings() {
             {/* Unlock methods (password / OS keyring / passkey) */}
             <UnlockMethodsCard
                 className="mt-6"
-                isUnlocked={isUnlocked}
                 onChangePassword={() => setChangeKeyOpen(true)}
             />
 
