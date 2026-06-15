@@ -1,8 +1,10 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,11 +35,21 @@ func NewDatabase(dataDir string) (*Database, error) {
 
 	var dbPath string
 
+	// Connection pragmas. modernc.org/sqlite applies each `_pragma=` on every new
+	// connection (mattn-style `_journal_mode=WAL` is silently ignored by this
+	// driver, which is why WAL/foreign-keys were previously never enabled).
+	//   - foreign_keys(1): enforce ON DELETE CASCADE (certificate_history)
+	//   - busy_timeout(5000): wait on a held lock instead of failing immediately
+	//   - journal_mode(WAL): readers don't block the writer (file DBs only)
+	// _txlock=immediate starts every transaction as a writer, avoiding the
+	// SQLITE_BUSY deadlock when a deferred read transaction upgrades to a write.
+	commonPragmas := "_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_txlock=immediate"
+
 	// Check if in-memory mode is requested (for testing)
 	if dataDir == ":memory:" {
-		// Use shared memory mode so migrations persist across connections
-		// WAL mode doesn't apply to in-memory databases
-		dbPath = "file::memory:?cache=shared"
+		// Use shared memory mode so migrations persist across connections.
+		// WAL mode doesn't apply to in-memory databases.
+		dbPath = "file::memory:?cache=shared&" + commonPragmas
 		log.Debug("using in-memory database")
 	} else {
 		// Ensure data directory exists
@@ -45,8 +57,7 @@ func NewDatabase(dataDir string) (*Database, error) {
 			log.Error("failed to create data directory", logger.Err(err))
 			return nil, fmt.Errorf("failed to create data directory: %w", err)
 		}
-		// Construct database path with WAL mode for file-based databases
-		dbPath = filepath.Join(dataDir, "certificates.db") + "?_journal_mode=WAL"
+		dbPath = filepath.Join(dataDir, "certificates.db") + "?_pragma=journal_mode(WAL)&" + commonPragmas
 		log.Debug("database path", slog.String("path", dbPath))
 	}
 
@@ -56,6 +67,16 @@ func NewDatabase(dataDir string) (*Database, error) {
 		log.Error("failed to open database", logger.Err(err))
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
+
+	// SQLite allows only one writer at a time. Serializing all access through a
+	// single connection eliminates "database is locked" errors entirely — the
+	// right trade-off for a local single-user desktop app. Keeping that one
+	// connection alive (no idle/lifetime reaping) is also required so the
+	// shared-cache in-memory database used in tests is never dropped.
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxIdleTime(0)
+	db.SetConnMaxLifetime(0)
 
 	// Test connection
 	if err := db.Ping(); err != nil {
@@ -178,6 +199,38 @@ func (d *Database) Queries() *sqlc.Queries {
 // GetDB returns the underlying database connection for transaction support
 func (d *Database) GetDB() *sql.DB {
 	return d.db
+}
+
+// WithTx runs fn inside a single database transaction, passing transaction-scoped
+// queries. The transaction is committed if fn returns nil, and rolled back if fn
+// returns an error or panics (the panic is re-raised after rollback). Use it for
+// any operation that performs more than one mutation so a mid-operation failure
+// can never leave a partial/inconsistent state.
+func (d *Database) WithTx(ctx context.Context, fn func(q *sqlc.Queries) error) (err error) {
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p)
+		}
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil && !errors.Is(rbErr, sql.ErrTxDone) {
+				err = errors.Join(err, fmt.Errorf("rollback: %w", rbErr))
+			}
+		}
+	}()
+
+	if err = fn(d.queries.WithTx(tx)); err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+	return nil
 }
 
 // ensureDir ensures a directory exists, creating it if necessary

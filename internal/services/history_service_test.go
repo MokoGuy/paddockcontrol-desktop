@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"paddockcontrol-desktop/internal/db"
+	"paddockcontrol-desktop/internal/db/sqlc"
 	"paddockcontrol-desktop/internal/models"
 )
 
@@ -18,9 +19,23 @@ func setupHistoryService(t *testing.T) (*HistoryService, *db.Database) {
 	return NewHistoryService(database), database
 }
 
+// seedCert inserts a minimal certificate so history rows for it satisfy the
+// certificate_history -> certificates foreign key (enforced now that
+// foreign_keys is enabled). In production, history is always logged for an
+// existing certificate.
+func seedCert(t *testing.T, database *db.Database, hostname string) {
+	t.Helper()
+	if err := database.Queries().CreateCertificate(context.Background(), sqlc.CreateCertificateParams{
+		Hostname: hostname,
+	}); err != nil {
+		t.Fatalf("failed to seed certificate %q: %v", hostname, err)
+	}
+}
+
 func TestLogEvent_Success(t *testing.T) {
-	svc, _ := setupHistoryService(t)
+	svc, database := setupHistoryService(t)
 	ctx := context.Background()
+	seedCert(t, database, "test.example.com")
 
 	err := svc.LogEvent(ctx, "test.example.com", models.EventCSRGenerated, "CSR generated")
 	if err != nil {
@@ -46,9 +61,10 @@ func TestLogEvent_Success(t *testing.T) {
 }
 
 func TestGetHistory_ReturnsEntries(t *testing.T) {
-	svc, _ := setupHistoryService(t)
+	svc, database := setupHistoryService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
+	seedCert(t, database, hostname)
 
 	// Log multiple events
 	events := []struct {
@@ -75,9 +91,10 @@ func TestGetHistory_ReturnsEntries(t *testing.T) {
 }
 
 func TestGetHistory_DefaultLimit(t *testing.T) {
-	svc, _ := setupHistoryService(t)
+	svc, database := setupHistoryService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
+	seedCert(t, database, hostname)
 
 	// Log a few events
 	for i := 0; i < 3; i++ {
@@ -105,9 +122,10 @@ func TestGetHistory_DefaultLimit(t *testing.T) {
 }
 
 func TestGetHistory_CustomLimit(t *testing.T) {
-	svc, _ := setupHistoryService(t)
+	svc, database := setupHistoryService(t)
 	ctx := context.Background()
 	hostname := "test.example.com"
+	seedCert(t, database, hostname)
 
 	for i := 0; i < 5; i++ {
 		if err := svc.LogEvent(ctx, hostname, models.EventCSRGenerated, "event"); err != nil {
@@ -138,8 +156,10 @@ func TestGetHistory_EmptyHistory(t *testing.T) {
 }
 
 func TestGetHistory_FiltersByHostname(t *testing.T) {
-	svc, _ := setupHistoryService(t)
+	svc, database := setupHistoryService(t)
 	ctx := context.Background()
+	seedCert(t, database, "host1.example.com")
+	seedCert(t, database, "host2.example.com")
 
 	// Log events for two different hostnames
 	if err := svc.LogEvent(ctx, "host1.example.com", models.EventCSRGenerated, "event 1"); err != nil {
