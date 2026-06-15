@@ -97,6 +97,7 @@ func (a *App) EnrollPasswordMethod(password, label string) error {
 	copy(masterKey, a.masterKey)
 	database := a.db
 	a.mu.RUnlock()
+	defer crypto.Zero(masterKey)
 
 	if len(masterKey) != 32 {
 		return fmt.Errorf("master key is not available")
@@ -112,6 +113,7 @@ func (a *App) EnrollPasswordMethod(password, label string) error {
 	}
 
 	wrappingKey := crypto.DeriveKeyFromPassword(password, salt, params)
+	defer crypto.Zero(wrappingKey)
 	wrappedMasterKey, err := crypto.WrapMasterKey(masterKey, wrappingKey)
 	if err != nil {
 		return fmt.Errorf("failed to wrap master key: %w", err)
@@ -216,6 +218,7 @@ func (a *App) EnrollOSNative() error {
 	copy(masterKey, a.masterKey)
 	database := a.db
 	a.mu.RUnlock()
+	defer crypto.Zero(masterKey)
 
 	log := logger.WithComponent("app")
 	log.Info("enrolling OS-native keyring unlock method")
@@ -225,6 +228,7 @@ func (a *App) EnrollOSNative() error {
 	if err != nil {
 		return fmt.Errorf("failed to generate wrapping key: %w", err)
 	}
+	defer crypto.Zero(wrappingKey)
 
 	wrappedMasterKey, err := crypto.WrapMasterKey(masterKey, wrappingKey)
 	if err != nil {

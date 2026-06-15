@@ -130,12 +130,14 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 		log.Error("failed to unwrap backup master key", logger.Err(err))
 		return nil, fmt.Errorf("wrong password or invalid backup: %w", err)
 	}
+	defer crypto.Zero(backupMasterKey)
 
 	// Get current master key
 	a.mu.RLock()
 	currentMasterKey := make([]byte, len(a.masterKey))
 	copy(currentMasterKey, a.masterKey)
 	a.mu.RUnlock()
+	defer crypto.Zero(currentMasterKey)
 
 	if len(currentMasterKey) != 32 {
 		return nil, fmt.Errorf("master key is not available")
