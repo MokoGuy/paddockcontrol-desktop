@@ -489,10 +489,10 @@ func TestRemoveSecurityKey_CannotRemoveLastPassword(t *testing.T) {
 	}
 }
 
-func TestRemoveSecurityKey_CanRemoveSecondPassword(t *testing.T) {
+func TestRemoveSecurityKey_CannotRemoveSecondPassword(t *testing.T) {
 	app := setupUnlockedApp(t)
 
-	// Enroll second password
+	// Enroll a second password
 	app.EnrollPasswordMethod("second-password-16-chars", "Second")
 
 	keys, _ := app.ListSecurityKeys()
@@ -500,14 +500,13 @@ func TestRemoveSecurityKey_CanRemoveSecondPassword(t *testing.T) {
 		t.Fatalf("expected 2 keys, got %d", len(keys))
 	}
 
-	// Remove the second one
-	err := app.RemoveSecurityKey(keys[1].ID)
-	if err != nil {
-		t.Fatalf("RemoveSecurityKey() error: %v", err)
+	// Password is the permanent root unlock method: no password entry can be
+	// removed, even a non-last one (it is changed via ChangeEncryptionKey).
+	if err := app.RemoveSecurityKey(keys[1].ID); err == nil {
+		t.Fatal("password methods should be unremovable, even a non-last one")
 	}
-
-	if n := countPasswordKeys(t, app); n != 1 {
-		t.Fatalf("expected 1 password key after removal, got %d", n)
+	if n := countPasswordKeys(t, app); n != 2 {
+		t.Fatalf("expected both password keys to remain, got %d", n)
 	}
 }
 
