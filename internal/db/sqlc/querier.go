@@ -54,6 +54,8 @@ type Querier interface {
 	GetUpdateHistory(ctx context.Context, limit int64) ([]UpdateHistory, error)
 	// Check if any security keys exist
 	HasAnySecurityKeys(ctx context.Context) (int64, error)
+	// Insert a certificate preserving its original created_at (used by backup import)
+	ImportCertificate(ctx context.Context, arg ImportCertificateParams) error
 	// Insert a new security key and return the created row
 	InsertSecurityKey(ctx context.Context, arg InsertSecurityKeyParams) (SecurityKey, error)
 	// Check if initial setup is complete

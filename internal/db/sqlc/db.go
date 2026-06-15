@@ -87,6 +87,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.hasAnySecurityKeysStmt, err = db.PrepareContext(ctx, hasAnySecurityKeys); err != nil {
 		return nil, fmt.Errorf("error preparing query HasAnySecurityKeys: %w", err)
 	}
+	if q.importCertificateStmt, err = db.PrepareContext(ctx, importCertificate); err != nil {
+		return nil, fmt.Errorf("error preparing query ImportCertificate: %w", err)
+	}
 	if q.insertSecurityKeyStmt, err = db.PrepareContext(ctx, insertSecurityKey); err != nil {
 		return nil, fmt.Errorf("error preparing query InsertSecurityKey: %w", err)
 	}
@@ -239,6 +242,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing hasAnySecurityKeysStmt: %w", cerr)
 		}
 	}
+	if q.importCertificateStmt != nil {
+		if cerr := q.importCertificateStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing importCertificateStmt: %w", cerr)
+		}
+	}
 	if q.insertSecurityKeyStmt != nil {
 		if cerr := q.insertSecurityKeyStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing insertSecurityKeyStmt: %w", cerr)
@@ -369,6 +377,7 @@ type Queries struct {
 	getSecurityKeysByMethodStmt    *sql.Stmt
 	getUpdateHistoryStmt           *sql.Stmt
 	hasAnySecurityKeysStmt         *sql.Stmt
+	importCertificateStmt          *sql.Stmt
 	insertSecurityKeyStmt          *sql.Stmt
 	isConfiguredStmt               *sql.Stmt
 	listAllCertificatesStmt        *sql.Stmt
@@ -410,6 +419,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getSecurityKeysByMethodStmt:    q.getSecurityKeysByMethodStmt,
 		getUpdateHistoryStmt:           q.getUpdateHistoryStmt,
 		hasAnySecurityKeysStmt:         q.hasAnySecurityKeysStmt,
+		importCertificateStmt:          q.importCertificateStmt,
 		insertSecurityKeyStmt:          q.insertSecurityKeyStmt,
 		isConfiguredStmt:               q.isConfiguredStmt,
 		listAllCertificatesStmt:        q.listAllCertificatesStmt,
