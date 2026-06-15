@@ -64,6 +64,15 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credentia
 		return nil, fmt.Errorf("the chosen authenticator does not support PRF")
 	}
 
+	// Modern Windows returns the PRF/hmac-secret straight from credential creation
+	// (we passed the salt as the global eval), so enrollment is a single ceremony.
+	// hmac-secret is deterministic for a (credential, salt) pair, so this matches
+	// what unlock re-derives via an assertion. Older Windows leaves it nil → fall
+	// back to a second (assertion) ceremony to obtain the secret.
+	if resp.HMACSecret != nil && len(resp.HMACSecret.First) == SecretLen {
+		return &Credential{CredentialID: resp.CredentialID, Secret: resp.HMACSecret.First}, nil
+	}
+
 	secret, err := derive(hWnd, rpID, resp.CredentialID, salt)
 	if err != nil {
 		return nil, err
