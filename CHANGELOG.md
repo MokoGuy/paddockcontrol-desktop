@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.4.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.3.0...v1.4.0) (2026-06-15)
+
+
+### Features
+
+* add backup details drawer ([fd98431](https://github.com/MokoGuy/paddockcontrol-desktop/commit/fd98431e7121b18cacbf821bad4adff8122d71bc))
+* add DB backup import, peek, and restore-from-file methods ([7dc447c](https://github.com/MokoGuy/paddockcontrol-desktop/commit/7dc447cee5a588deff8740ca151936b8e98455a4))
+* add EnrollOSNative and EnrollPasswordMethod functions to App API ([079a547](https://github.com/MokoGuy/paddockcontrol-desktop/commit/079a5479694310d0c1a5882993dabc56bb6e9520))
+* implement master key wrapping with multi-method unlock ([1becb7c](https://github.com/MokoGuy/paddockcontrol-desktop/commit/1becb7ca67a4f0f652630547ddce675a20fc9da4))
+* update frontend for DB-only backup system ([a3df303](https://github.com/MokoGuy/paddockcontrol-desktop/commit/a3df303cee0528acb7e25281d5b0813d450adb68))
+
+
+### Bug Fixes
+
+* address Copilot review feedback on PR [#85](https://github.com/MokoGuy/paddockcontrol-desktop/issues/85) ([639947d](https://github.com/MokoGuy/paddockcontrol-desktop/commit/639947dcbd3745386a77ca2f498bccc7e706f7b8))
+* guard DeleteLocalBackup with requireSetupOnly ([e6a07df](https://github.com/MokoGuy/paddockcontrol-desktop/commit/e6a07df9f86d09a7f5a8906b98abc53affba5f72))
+* preserve original created_at on certificate import ([fb969e5](https://github.com/MokoGuy/paddockcontrol-desktop/commit/fb969e513c738558431f4c955f8c799184bc9892))
+* reject unknown-schema (v0) backups on restore ([3f6b120](https://github.com/MokoGuy/paddockcontrol-desktop/commit/3f6b1204849ef051fd34fecffb4ea98db164f0f0))
+* terminology for app unlocking ([f28ce7b](https://github.com/MokoGuy/paddockcontrol-desktop/commit/f28ce7b7322da8bcadf56b56c5359d519f100da4))
+* validate Argon2id params before key derivation ([d3d4a13](https://github.com/MokoGuy/paddockcontrol-desktop/commit/d3d4a13dd8d9702c712334eb2ab37399c06f4ded))
+* validate backup schema version before import/restore ([a3ce557](https://github.com/MokoGuy/paddockcontrol-desktop/commit/a3ce55762c87b10753517a798b9b7b428b69e4d8))
+
+
+### Code Refactoring
+
+* migrate Edit Configuration modal to drawer ([86d9958](https://github.com/MokoGuy/paddockcontrol-desktop/commit/86d99589de4e1986d4c9d05317fda41f612303f0))
+* move plaintext wiping to EncryptPrivateKey callers ([7928f40](https://github.com/MokoGuy/paddockcontrol-desktop/commit/7928f40d799820ddff6f57444511fddb8ffb3746))
+* remove JSON backup export/import infrastructure ([39cba0b](https://github.com/MokoGuy/paddockcontrol-desktop/commit/39cba0b572b6c8b97d03bf33e86fd115e8a98fac))
+* wipe master-key copies after use ([53aef9f](https://github.com/MokoGuy/paddockcontrol-desktop/commit/53aef9f19ec5fb83844dbb2ea583709c6131bc82))
+
+
+### Tests
+
+* add backup import, peek, and restore test coverage ([5a84df6](https://github.com/MokoGuy/paddockcontrol-desktop/commit/5a84df68fd1df0ac50345e10e2e713ec65d930cf))
+* add service-level tests and remove redundant crypto tests ([5912189](https://github.com/MokoGuy/paddockcontrol-desktop/commit/5912189c797de5555ec5f952d4e251dcaf5c1b8c))
+
+
+### Documentation
+
+* document DB-only backup architecture in CLAUDE.md ([f7e5543](https://github.com/MokoGuy/paddockcontrol-desktop/commit/f7e5543ef6ece932d50e35dd95b62a7b5ed576f5))
+* update documentation for master key wrapping architecture ([c3bce6e](https://github.com/MokoGuy/paddockcontrol-desktop/commit/c3bce6ecbfac53161600462bfd24f17a4796d84b))
+
 ## [1.3.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.2.0...v1.3.0) (2026-02-12)
 
 
