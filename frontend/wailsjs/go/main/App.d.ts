@@ -27,6 +27,8 @@ export function EnrollOSNative():Promise<void>;
 
 export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
+export function EnrollWebAuthn(arg1:string):Promise<void>;
+
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
 
 export function ExportLogs():Promise<void>;
@@ -68,6 +70,8 @@ export function IsSetupComplete():Promise<boolean>;
 export function IsUnlocked():Promise<boolean>;
 
 export function IsWaitingForEncryptionKey():Promise<boolean>;
+
+export function IsWebAuthnAvailable():Promise<boolean>;
 
 export function ListCertificates(arg1:models.CertificateFilter):Promise<Array<models.CertificateListItem>>;
 
@@ -118,6 +122,8 @@ export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 export function SkipEncryptionKey():Promise<void>;
 
 export function TryAutoUnlock():Promise<boolean>;
+
+export function UnlockWithWebAuthn():Promise<boolean>;
 
 export function UpdateCertificateNote(arg1:string,arg2:string):Promise<void>;
 

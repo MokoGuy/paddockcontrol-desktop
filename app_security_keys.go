@@ -365,22 +365,25 @@ func (a *App) TryAutoUnlock() (bool, error) {
 		// Update last_used_at
 		_ = database.Queries().UpdateSecurityKeyLastUsed(a.ctx, key.ID)
 
-		// Store master key and initialize services
-		a.mu.Lock()
-		a.masterKey = masterKey
-		a.waitingForEncryptionKey = false
-		a.isUnlocked = true
-		a.needsMigration = false
-
-		a.configService = config.NewService(a.db)
-		a.certificateService = services.NewCertificateService(a.db, a.configService)
-		a.setupService = services.NewSetupService(a.db, a.configService)
-		a.mu.Unlock()
-
+		a.finalizeUnlock(masterKey)
 		log.Info("auto-unlock via OS keyring succeeded")
 		return true, nil
 	}
 
 	log.Debug("OS keyring auto-unlock failed - wrapping key may have changed")
 	return false, nil
+}
+
+// finalizeUnlock stores the master key in memory and (re)initializes the
+// key-dependent services. Shared by every non-password unlock path.
+func (a *App) finalizeUnlock(masterKey []byte) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.masterKey = masterKey
+	a.waitingForEncryptionKey = false
+	a.isUnlocked = true
+	a.needsMigration = false
+	a.configService = config.NewService(a.db)
+	a.certificateService = services.NewCertificateService(a.db, a.configService)
+	a.setupService = services.NewSetupService(a.db, a.configService)
 }

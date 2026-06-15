@@ -50,6 +50,10 @@ export function EnrollPasswordMethod(arg1, arg2) {
   return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
+export function EnrollWebAuthn(arg1) {
+  return window['go']['main']['App']['EnrollWebAuthn'](arg1);
+}
+
 export function ExportCertificateZip(arg1, arg2) {
   return window['go']['main']['App']['ExportCertificateZip'](arg1, arg2);
 }
@@ -132,6 +136,10 @@ export function IsUnlocked() {
 
 export function IsWaitingForEncryptionKey() {
   return window['go']['main']['App']['IsWaitingForEncryptionKey']();
+}
+
+export function IsWebAuthnAvailable() {
+  return window['go']['main']['App']['IsWebAuthnAvailable']();
 }
 
 export function ListCertificates(arg1) {
@@ -232,6 +240,10 @@ export function SkipEncryptionKey() {
 
 export function TryAutoUnlock() {
   return window['go']['main']['App']['TryAutoUnlock']();
+}
+
+export function UnlockWithWebAuthn() {
+  return window['go']['main']['App']['UnlockWithWebAuthn']();
 }
 
 export function UpdateCertificateNote(arg1, arg2) {
