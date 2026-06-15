@@ -258,69 +258,76 @@ func (a *App) ImportCertificatesFromBackup(backupPath string, backupPassword str
 	database := a.db
 	a.mu.RUnlock()
 
-	for _, cert := range certs {
-		certLog := log.With(slog.String("hostname", cert.hostname))
+	// Wrap the whole import in one transaction: either every non-conflicting
+	// certificate is inserted, or none are. A failure midway (e.g. a corrupt
+	// key on cert N) rolls back the certs already inserted in this run.
+	if err := database.WithTx(a.ctx, func(q *dbsqlc.Queries) error {
+		for _, cert := range certs {
+			certLog := log.With(slog.String("hostname", cert.hostname))
 
-		// Check for hostname conflicts
-		exists, err := database.Queries().CertificateExists(a.ctx, cert.hostname)
-		if err != nil {
-			return nil, fmt.Errorf("failed to check certificate existence for %s: %w", cert.hostname, err)
-		}
-		if exists == 1 {
-			certLog.Debug("skipping duplicate hostname")
-			result.Skipped++
-			result.Conflicts = append(result.Conflicts, cert.hostname)
-			continue
-		}
-
-		// Re-encrypt keys: decrypt with backup master key, encrypt with current master key
-		var newEncryptedKey []byte
-		if len(cert.encryptedKey) > 0 {
-			plaintext, err := crypto.DecryptPrivateKey(cert.encryptedKey, backupMasterKey)
+			// Check for hostname conflicts
+			exists, err := q.CertificateExists(a.ctx, cert.hostname)
 			if err != nil {
-				certLog.Error("failed to decrypt private key from backup", logger.Err(err))
-				return nil, fmt.Errorf("failed to decrypt private key for %s: %w", cert.hostname, err)
+				return fmt.Errorf("failed to check certificate existence for %s: %w", cert.hostname, err)
 			}
-			newEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
-			crypto.Zero(plaintext)
-			if err != nil {
-				return nil, fmt.Errorf("failed to re-encrypt private key for %s: %w", cert.hostname, err)
+			if exists == 1 {
+				certLog.Debug("skipping duplicate hostname")
+				result.Skipped++
+				result.Conflicts = append(result.Conflicts, cert.hostname)
+				continue
 			}
-		}
 
-		var newPendingEncryptedKey []byte
-		if len(cert.pendingEncryptedKey) > 0 {
-			plaintext, err := crypto.DecryptPrivateKey(cert.pendingEncryptedKey, backupMasterKey)
-			if err != nil {
-				certLog.Error("failed to decrypt pending private key from backup", logger.Err(err))
-				return nil, fmt.Errorf("failed to decrypt pending private key for %s: %w", cert.hostname, err)
+			// Re-encrypt keys: decrypt with backup master key, encrypt with current master key
+			var newEncryptedKey []byte
+			if len(cert.encryptedKey) > 0 {
+				plaintext, err := crypto.DecryptPrivateKey(cert.encryptedKey, backupMasterKey)
+				if err != nil {
+					certLog.Error("failed to decrypt private key from backup", logger.Err(err))
+					return fmt.Errorf("failed to decrypt private key for %s: %w", cert.hostname, err)
+				}
+				newEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
+				crypto.Zero(plaintext)
+				if err != nil {
+					return fmt.Errorf("failed to re-encrypt private key for %s: %w", cert.hostname, err)
+				}
 			}
-			newPendingEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
-			crypto.Zero(plaintext)
-			if err != nil {
-				return nil, fmt.Errorf("failed to re-encrypt pending private key for %s: %w", cert.hostname, err)
+
+			var newPendingEncryptedKey []byte
+			if len(cert.pendingEncryptedKey) > 0 {
+				plaintext, err := crypto.DecryptPrivateKey(cert.pendingEncryptedKey, backupMasterKey)
+				if err != nil {
+					certLog.Error("failed to decrypt pending private key from backup", logger.Err(err))
+					return fmt.Errorf("failed to decrypt pending private key for %s: %w", cert.hostname, err)
+				}
+				newPendingEncryptedKey, err = crypto.EncryptPrivateKey(plaintext, currentMasterKey)
+				crypto.Zero(plaintext)
+				if err != nil {
+					return fmt.Errorf("failed to re-encrypt pending private key for %s: %w", cert.hostname, err)
+				}
 			}
-		}
 
-		// Insert into current database, preserving the backup's original created_at
-		err = database.Queries().ImportCertificate(a.ctx, dbsqlc.ImportCertificateParams{
-			Hostname:                   cert.hostname,
-			EncryptedPrivateKey:        newEncryptedKey,
-			PendingCsrPem:              cert.pendingCSR,
-			PendingEncryptedPrivateKey: newPendingEncryptedKey,
-			CertificatePem:             cert.certificatePEM,
-			CreatedAt:                  cert.createdAt,
-			ExpiresAt:                  cert.expiresAt,
-			Note:                       cert.note,
-			PendingNote:                cert.pendingNote,
-			ReadOnly:                   cert.readOnly,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert certificate %s: %w", cert.hostname, err)
-		}
+			// Insert into current database, preserving the backup's original created_at
+			if err := q.ImportCertificate(a.ctx, dbsqlc.ImportCertificateParams{
+				Hostname:                   cert.hostname,
+				EncryptedPrivateKey:        newEncryptedKey,
+				PendingCsrPem:              cert.pendingCSR,
+				PendingEncryptedPrivateKey: newPendingEncryptedKey,
+				CertificatePem:             cert.certificatePEM,
+				CreatedAt:                  cert.createdAt,
+				ExpiresAt:                  cert.expiresAt,
+				Note:                       cert.note,
+				PendingNote:                cert.pendingNote,
+				ReadOnly:                   cert.readOnly,
+			}); err != nil {
+				return fmt.Errorf("failed to insert certificate %s: %w", cert.hostname, err)
+			}
 
-		certLog.Debug("certificate imported")
-		result.Imported++
+			certLog.Debug("certificate imported")
+			result.Imported++
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	log.Info("certificate import completed",
