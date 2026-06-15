@@ -13,6 +13,7 @@ import (
 	"paddockcontrol-desktop/internal/logger"
 	"paddockcontrol-desktop/internal/models"
 
+	"github.com/Masterminds/semver/v3"
 	selfupdate "github.com/creativeprojects/go-selfupdate"
 )
 
@@ -138,7 +139,16 @@ func (s *UpdateService) CheckForUpdate(ctx context.Context, force bool) (*models
 		info.ReleaseNotes = release.ReleaseNotes
 		info.PublishedAt = release.PublishedAt.Format(time.RFC3339)
 		info.AssetSize = int64(release.AssetByteSize)
-		info.UpdateAvailable = release.GreaterThan(s.currentVersion)
+		// release.GreaterThan parses s.currentVersion with semver.MustParse, which
+		// panics on a non-release version string (e.g. "dev"). Guard it so a
+		// non-semver build can never crash the app on the update check.
+		if _, verr := semver.NewVersion(s.currentVersion); verr != nil {
+			s.log.Warn("current version is not valid semver; skipping update comparison",
+				slog.String("current_version", s.currentVersion))
+			info.UpdateAvailable = false
+		} else {
+			info.UpdateAvailable = release.GreaterThan(s.currentVersion)
+		}
 	} else {
 		info.LatestVersion = s.currentVersion
 	}
