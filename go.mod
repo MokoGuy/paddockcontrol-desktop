@@ -3,6 +3,7 @@ module paddockcontrol-desktop
 go 1.25.0
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/creativeprojects/go-selfupdate v1.5.2
 	github.com/go-ctap/ctaphid v0.7.0
 	github.com/go-ctap/winhello v0.1.0
@@ -18,7 +19,6 @@ require (
 require (
 	code.gitea.io/sdk/gitea v0.22.1 // indirect
 	github.com/42wim/httpsig v1.2.3 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
