@@ -279,6 +279,12 @@ func (a *App) unlockWithPassword(log *slog.Logger, password string) ([]byte, err
 			KeyLength:   32,
 			SaltLength:  uint32(len(metadata.Salt)),
 		}
+		if err := params.Validate(); err != nil {
+			// Absent/zero or downgraded KDF params (would otherwise panic in
+			// argon2.IDKey) — skip this entry rather than trust it.
+			log.Error("invalid KDF parameters in security key metadata", slog.Int64("key_id", key.ID), logger.Err(err))
+			continue
+		}
 
 		wrappingKey := crypto.DeriveKeyFromPassword(password, metadata.Salt, params)
 		masterKey, err := crypto.UnwrapMasterKey(key.WrappedMasterKey, wrappingKey)
