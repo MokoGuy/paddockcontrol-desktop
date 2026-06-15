@@ -58,6 +58,8 @@ export const api = {
     // Backup import and restore
     peekBackupInfo: (path: string) =>
         App.PeekBackupInfo(path) as Promise<BackupPeekInfo>,
+    peekLocalBackup: (filename: string) =>
+        App.PeekLocalBackup(filename) as Promise<BackupPeekInfo>,
     importCertificatesFromBackup: (path: string, password: string) =>
         App.ImportCertificatesFromBackup(path, password) as Promise<CertImportResult>,
     restoreFromBackupFile: (path: string) => App.RestoreFromBackupFile(path),

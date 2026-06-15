@@ -25,79 +25,67 @@ export namespace logger {
 
 export namespace models {
 	
+	export class BackupCertificateInfo {
+	    hostname: string;
+	    status: string;
+	    sans?: string[];
+	    key_size?: number;
+	    created_at: number;
+	    expires_at?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new BackupCertificateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hostname = source["hostname"];
+	        this.status = source["status"];
+	        this.sans = source["sans"];
+	        this.key_size = source["key_size"];
+	        this.created_at = source["created_at"];
+	        this.expires_at = source["expires_at"];
+	    }
+	}
 	export class BackupPeekInfo {
 	    certificate_count: number;
 	    ca_name: string;
 	    has_security_keys: boolean;
 	    hostnames: string[];
+	    certificates: BackupCertificateInfo[];
 	    schema_version: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new BackupPeekInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.certificate_count = source["certificate_count"];
 	        this.ca_name = source["ca_name"];
 	        this.has_security_keys = source["has_security_keys"];
 	        this.hostnames = source["hostnames"];
+	        this.certificates = this.convertValues(source["certificates"], BackupCertificateInfo);
 	        this.schema_version = source["schema_version"];
 	    }
-	}
-	export class CertImportResult {
-	    imported: number;
-	    skipped: number;
-	    conflicts?: string[];
-
-	    static createFrom(source: any = {}) {
-	        return new CertImportResult(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.imported = source["imported"];
-	        this.skipped = source["skipped"];
-	        this.conflicts = source["conflicts"];
-	    }
-	}
-	export class Config {
-	    id: number;
-	    owner_email: string;
-	    ca_name: string;
-	    hostname_suffix: string;
-	    validity_period_days: number;
-	    default_organization: string;
-	    default_organizational_unit?: string;
-	    default_city: string;
-	    default_state: string;
-	    default_country: string;
-	    default_key_size: number;
-	    is_configured: number;
-	    created_at: number;
-	    last_modified: number;
 	
-	    static createFrom(source: any = {}) {
-	        return new Config(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.owner_email = source["owner_email"];
-	        this.ca_name = source["ca_name"];
-	        this.hostname_suffix = source["hostname_suffix"];
-	        this.validity_period_days = source["validity_period_days"];
-	        this.default_organization = source["default_organization"];
-	        this.default_organizational_unit = source["default_organizational_unit"];
-	        this.default_city = source["default_city"];
-	        this.default_state = source["default_state"];
-	        this.default_country = source["default_country"];
-	        this.default_key_size = source["default_key_size"];
-	        this.is_configured = source["is_configured"];
-	        this.created_at = source["created_at"];
-	        this.last_modified = source["last_modified"];
-	    }
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class SANEntry {
 	    value: string;
@@ -177,6 +165,22 @@ export namespace models {
 	        this.hostname = source["hostname"];
 	        this.csr = source["csr"];
 	        this.message = source["message"];
+	    }
+	}
+	export class CertImportResult {
+	    imported: number;
+	    skipped: number;
+	    conflicts?: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CertImportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.imported = source["imported"];
+	        this.skipped = source["skipped"];
+	        this.conflicts = source["conflicts"];
 	    }
 	}
 	export class Certificate {
@@ -339,7 +343,44 @@ export namespace models {
 	        this.pem = source["pem"];
 	    }
 	}
+	export class Config {
+	    id: number;
+	    owner_email: string;
+	    ca_name: string;
+	    hostname_suffix: string;
+	    validity_period_days: number;
+	    default_organization: string;
+	    default_organizational_unit?: string;
+	    default_city: string;
+	    default_state: string;
+	    default_country: string;
+	    default_key_size: number;
+	    is_configured: number;
+	    created_at: number;
+	    last_modified: number;
 	
+	    static createFrom(source: any = {}) {
+	        return new Config(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.owner_email = source["owner_email"];
+	        this.ca_name = source["ca_name"];
+	        this.hostname_suffix = source["hostname_suffix"];
+	        this.validity_period_days = source["validity_period_days"];
+	        this.default_organization = source["default_organization"];
+	        this.default_organizational_unit = source["default_organizational_unit"];
+	        this.default_city = source["default_city"];
+	        this.default_state = source["default_state"];
+	        this.default_country = source["default_country"];
+	        this.default_key_size = source["default_key_size"];
+	        this.is_configured = source["is_configured"];
+	        this.created_at = source["created_at"];
+	        this.last_modified = source["last_modified"];
+	    }
+	}
 	export class ExportOptions {
 	    certificate: boolean;
 	    chain: boolean;

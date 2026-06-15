@@ -19,6 +19,19 @@ import (
 // Local Backup Operations
 // ============================================================================
 
+// validateLocalBackupFilename ensures a filename refers to a known local backup
+// file: only the recognized prefixes, with no path-traversal characters.
+func validateLocalBackupFilename(filename string) error {
+	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") || strings.Contains(filename, "..") {
+		return fmt.Errorf("invalid backup filename")
+	}
+	if !strings.HasPrefix(filename, "certificates.db.autobackup.") &&
+		!strings.HasPrefix(filename, "certificates.db.backup.manual.") {
+		return fmt.Errorf("invalid backup filename")
+	}
+	return nil
+}
+
 // ListLocalBackups returns metadata for all local database backup files.
 func (a *App) ListLocalBackups() ([]models.LocalBackupInfo, error) {
 	a.mu.RLock()
@@ -30,6 +43,26 @@ func (a *App) ListLocalBackups() ([]models.LocalBackupInfo, error) {
 	}
 
 	return autoBackup.ListBackups()
+}
+
+// PeekLocalBackup opens a local backup file read-only and returns a summary of
+// its contents (certificate count, hostnames, CA name, schema version, whether it
+// carries security keys). Used by the backup details drawer.
+func (a *App) PeekLocalBackup(filename string) (*models.BackupPeekInfo, error) {
+	if err := a.requireSetupOnly(); err != nil {
+		return nil, err
+	}
+
+	if err := validateLocalBackupFilename(filename); err != nil {
+		return nil, err
+	}
+
+	backupPath := filepath.Join(a.dataDir, "backups", filename)
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("backup file not found")
+	}
+
+	return peekBackupAtPath(backupPath)
 }
 
 // CreateManualBackup creates a manual database backup snapshot.
@@ -74,13 +107,8 @@ func (a *App) RestoreLocalBackup(filename string) error {
 	log := logger.WithComponent("app")
 	log.Info("restoring from local backup", slog.String("filename", filename))
 
-	// Validate filename: only known prefixes, no path traversal
-	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") || strings.Contains(filename, "..") {
-		return fmt.Errorf("invalid backup filename")
-	}
-	if !strings.HasPrefix(filename, "certificates.db.autobackup.") &&
-		!strings.HasPrefix(filename, "certificates.db.backup.manual.") {
-		return fmt.Errorf("invalid backup filename")
+	if err := validateLocalBackupFilename(filename); err != nil {
+		return err
 	}
 
 	backupPath := filepath.Join(a.dataDir, "backups", filename)

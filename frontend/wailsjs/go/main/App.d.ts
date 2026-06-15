@@ -59,6 +59,8 @@ export function HasSecurityKeys():Promise<boolean>;
 
 export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
+export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
+
 export function IsOSKeystoreAvailable():Promise<boolean>;
 
 export function IsSetupComplete():Promise<boolean>;
@@ -80,6 +82,10 @@ export function OpenBugReport():Promise<void>;
 export function OpenDataDirectory():Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
+
+export function PeekBackupInfo(arg1:string):Promise<models.BackupPeekInfo>;
+
+export function PeekLocalBackup(arg1:string):Promise<models.BackupPeekInfo>;
 
 export function PreviewCertificateUpload(arg1:string,arg2:string):Promise<models.CertificateUploadPreview>;
 
@@ -105,6 +111,8 @@ export function SavePrivateKeyToFile(arg1:string):Promise<void>;
 
 export function SaveSetup(arg1:models.SetupRequest):Promise<void>;
 
+export function SelectBackupFile():Promise<string>;
+
 export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 
 export function SkipEncryptionKey():Promise<void>;
@@ -118,9 +126,3 @@ export function UpdateConfig(arg1:models.UpdateConfigRequest):Promise<models.Con
 export function UpdatePendingNote(arg1:string,arg2:string):Promise<void>;
 
 export function UploadCertificate(arg1:string,arg2:string):Promise<void>;
-
-export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
-
-export function PeekBackupInfo(arg1:string):Promise<models.BackupPeekInfo>;
-
-export function SelectBackupFile():Promise<string>;

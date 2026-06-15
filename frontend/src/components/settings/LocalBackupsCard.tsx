@@ -8,18 +8,17 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminGatedButton } from "@/components/shared/AdminGatedButton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ImportCertificatesDialog } from "@/components/settings/ImportCertificatesDialog";
+import { BackupDetailsDrawer } from "@/components/settings/BackupDetailsDrawer";
 import { formatDateTime, getRelativeTime, formatFileSize } from "@/lib/theme";
 import { LocalBackupInfo } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-    Delete02Icon,
-    DatabaseRestoreIcon,
     DatabaseIcon,
+    ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 
 interface LocalBackupsCardProps {
@@ -45,6 +44,9 @@ export function LocalBackupsCard({
 }: LocalBackupsCardProps) {
     const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [detailsTarget, setDetailsTarget] = useState<LocalBackupInfo | null>(
+        null,
+    );
     const [importOpen, setImportOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
@@ -137,7 +139,16 @@ export function LocalBackupsCard({
                             {localBackups.map((backup) => (
                                 <div
                                     key={backup.filename}
-                                    className="flex items-center justify-between rounded-none border border-border px-3 py-2"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => setDetailsTarget(backup)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            setDetailsTarget(backup);
+                                        }
+                                    }}
+                                    className="flex items-center justify-between rounded-none border border-border px-3 py-2 cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <Badge
@@ -178,42 +189,11 @@ export function LocalBackupsCard({
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0 ml-2">
-                                        <AdminGatedButton
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setRestoreTarget(
-                                                    backup.filename,
-                                                )
-                                            }
-                                            disabled={isLoading}
-                                        >
-                                            <HugeiconsIcon
-                                                icon={DatabaseRestoreIcon}
-                                                className="size-3.5 mr-1"
-                                                strokeWidth={2}
-                                            />
-                                            Restore
-                                        </AdminGatedButton>
-                                        <AdminGatedButton
-                                            variant="outline"
-                                            size="sm"
-                                            className="text-destructive hover:bg-destructive/10"
-                                            onClick={() =>
-                                                setDeleteTarget(
-                                                    backup.filename,
-                                                )
-                                            }
-                                            disabled={isLoading}
-                                        >
-                                            <HugeiconsIcon
-                                                icon={Delete02Icon}
-                                                className="size-3.5"
-                                                strokeWidth={2}
-                                            />
-                                        </AdminGatedButton>
-                                    </div>
+                                    <HugeiconsIcon
+                                        icon={ArrowRight01Icon}
+                                        className="size-4 shrink-0 ml-2 text-muted-foreground"
+                                        strokeWidth={2}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -244,6 +224,24 @@ export function LocalBackupsCard({
                 isLoading={isLoading}
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteTarget(null)}
+            />
+
+            {/* Backup Details Drawer */}
+            <BackupDetailsDrawer
+                backup={detailsTarget}
+                open={detailsTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open) setDetailsTarget(null);
+                }}
+                onRestore={(filename) => {
+                    setDetailsTarget(null);
+                    setRestoreTarget(filename);
+                }}
+                onDelete={(filename) => {
+                    setDetailsTarget(null);
+                    setDeleteTarget(filename);
+                }}
+                isLoading={isLoading}
             />
 
             {/* Import Certificates Dialog */}

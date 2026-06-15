@@ -114,6 +114,10 @@ export function ImportCertificate(arg1) {
   return window['go']['main']['App']['ImportCertificate'](arg1);
 }
 
+export function ImportCertificatesFromBackup(arg1, arg2) {
+  return window['go']['main']['App']['ImportCertificatesFromBackup'](arg1, arg2);
+}
+
 export function IsOSKeystoreAvailable() {
   return window['go']['main']['App']['IsOSKeystoreAvailable']();
 }
@@ -156,6 +160,14 @@ export function OpenDataDirectory() {
 
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
+}
+
+export function PeekBackupInfo(arg1) {
+  return window['go']['main']['App']['PeekBackupInfo'](arg1);
+}
+
+export function PeekLocalBackup(arg1) {
+  return window['go']['main']['App']['PeekLocalBackup'](arg1);
 }
 
 export function PreviewCertificateUpload(arg1, arg2) {
@@ -206,6 +218,10 @@ export function SaveSetup(arg1) {
   return window['go']['main']['App']['SaveSetup'](arg1);
 }
 
+export function SelectBackupFile() {
+  return window['go']['main']['App']['SelectBackupFile']();
+}
+
 export function SetCertificateReadOnly(arg1, arg2) {
   return window['go']['main']['App']['SetCertificateReadOnly'](arg1, arg2);
 }
@@ -232,16 +248,4 @@ export function UpdatePendingNote(arg1, arg2) {
 
 export function UploadCertificate(arg1, arg2) {
   return window['go']['main']['App']['UploadCertificate'](arg1, arg2);
-}
-
-export function ImportCertificatesFromBackup(arg1, arg2) {
-  return window['go']['main']['App']['ImportCertificatesFromBackup'](arg1, arg2);
-}
-
-export function PeekBackupInfo(arg1) {
-  return window['go']['main']['App']['PeekBackupInfo'](arg1);
-}
-
-export function SelectBackupFile() {
-  return window['go']['main']['App']['SelectBackupFile']();
 }
