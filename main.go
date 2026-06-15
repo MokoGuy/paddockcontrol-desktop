@@ -11,13 +11,18 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// appWindowTitle is the native window title. It is also used to locate the app's
+// top-level window when parenting the WebAuthn dialog (see app_webauthn.go), so
+// it must stay a single source of truth.
+const appWindowTitle = "paddockcontrol"
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     "paddockcontrol",
+		Title:     appWindowTitle,
 		Width:     1024,
 		Height:    768,
 		Frameless: true,

@@ -19,9 +19,8 @@ import (
 // must resolve.
 const webAuthnRPID = "paddockcontrol.local"
 
-// appWindowTitle must match the Wails window Title in main.go — it's used to
-// parent the WebAuthn dialog to the app's top-level window.
-const appWindowTitle = "paddockcontrol"
+// appWindowTitle (the native window title used to parent the WebAuthn dialog) is
+// defined once in main.go alongside the Wails window Title.
 
 // IsWebAuthnAvailable reports whether platform WebAuthn (Windows Hello / security
 // keys) is usable on this OS.
