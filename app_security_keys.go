@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -163,15 +164,11 @@ func (a *App) RemoveSecurityKey(id int64) error {
 		return fmt.Errorf("security key not found: %w", err)
 	}
 
-	// If removing a password method, ensure it's not the last one
+	// Password is the permanent root unlock method and can never be removed — it
+	// is changed (not removed) via ChangeEncryptionKey. Only convenience methods
+	// (OS keyring, future webauthn) are revocable.
 	if key.Method == models.SecurityKeyMethodPassword {
-		count, err := database.Queries().CountSecurityKeysByMethod(a.ctx, models.SecurityKeyMethodPassword)
-		if err != nil {
-			return fmt.Errorf("failed to count password methods: %w", err)
-		}
-		if count <= 1 {
-			return fmt.Errorf("cannot remove the last password unlock method")
-		}
+		return fmt.Errorf("the password unlock method cannot be removed; use Change Password instead")
 	}
 
 	if err := database.Queries().DeleteSecurityKey(a.ctx, id); err != nil {
@@ -223,6 +220,15 @@ func (a *App) EnrollOSNative() error {
 	log := logger.WithComponent("app")
 	log.Info("enrolling OS-native keyring unlock method")
 
+	// The OS keyring has a single master-key slot, so only one OS-native method
+	// can exist. Reject a second enrollment rather than overwrite the keyring
+	// entry and orphan the existing row.
+	if existing, err := database.Queries().GetSecurityKeysByMethod(a.ctx, models.SecurityKeyMethodOSNative); err != nil {
+		return fmt.Errorf("failed to check existing OS keyring method: %w", err)
+	} else if len(existing) > 0 {
+		return fmt.Errorf("OS keyring unlock is already enrolled")
+	}
+
 	// Generate a random wrapping key for the OS-native method
 	wrappingKey, err := crypto.GenerateMasterKey() // 32 random bytes as wrapping key
 	if err != nil {
@@ -235,26 +241,81 @@ func (a *App) EnrollOSNative() error {
 		return fmt.Errorf("failed to wrap master key: %w", err)
 	}
 
-	// Store the wrapping key in the OS keyring
+	// Store the wrapping key in the OS keyring and verify it actually persisted.
 	if err := ks.Store(keystore.ServiceName, keystore.AccountMasterKey, wrappingKey); err != nil {
 		return fmt.Errorf("failed to store in OS keyring: %w", err)
 	}
+	if got, rerr := ks.Retrieve(keystore.ServiceName, keystore.AccountMasterKey); rerr != nil || !bytes.Equal(got, wrappingKey) {
+		_ = ks.Delete(keystore.ServiceName, keystore.AccountMasterKey)
+		return fmt.Errorf("failed to verify OS keyring entry after store")
+	}
 
-	// Store the wrapped master key in the database
-	_, err = database.Queries().InsertSecurityKey(a.ctx, sqlc.InsertSecurityKeyParams{
-		Method:           models.SecurityKeyMethodOSNative,
-		Label:            "OS Keyring",
-		WrappedMasterKey: wrappedMasterKey,
-		Metadata:         sql.NullString{Valid: false},
-	})
-	if err != nil {
-		// Roll back: remove from OS keyring
+	// Insert the DB row in a transaction; if it fails, compensate by removing the
+	// keyring entry so the two systems never disagree (cross-system saga — a DB
+	// transaction can't span the keyring).
+	if err := database.WithTx(a.ctx, func(q *sqlc.Queries) error {
+		_, e := q.InsertSecurityKey(a.ctx, sqlc.InsertSecurityKeyParams{
+			Method:           models.SecurityKeyMethodOSNative,
+			Label:            "OS Keyring",
+			WrappedMasterKey: wrappedMasterKey,
+			Metadata:         sql.NullString{Valid: false},
+		})
+		return e
+	}); err != nil {
 		_ = ks.Delete(keystore.ServiceName, keystore.AccountMasterKey)
 		return fmt.Errorf("failed to store security key: %w", err)
 	}
 
 	log.Info("OS-native keyring unlock method enrolled successfully")
 	return nil
+}
+
+// reconcileSecurityKeys repairs the inherently non-atomic boundary between the
+// security_keys table and the OS keyring (a DB transaction can't span both). It
+// runs at startup and self-heals the two crash/partial-failure orphan cases for
+// the single-slot OS-native method:
+//   - DB has os_native rows but the keyring entry is gone → the rows reference a
+//     wrapping key that no longer exists, so drop them.
+//   - keyring has an entry but no os_native row → a leftover wrapping key, so
+//     delete it.
+func (a *App) reconcileSecurityKeys() {
+	a.mu.RLock()
+	database := a.db
+	a.mu.RUnlock()
+	if database == nil {
+		return
+	}
+	log := logger.WithComponent("app")
+
+	rows, err := database.Queries().GetSecurityKeysByMethod(a.ctx, models.SecurityKeyMethodOSNative)
+	if err != nil {
+		log.Error("reconcile: failed to read os_native security keys", logger.Err(err))
+		return
+	}
+
+	ks := keystore.New()
+	if !ks.Available() {
+		// Keyring unusable on this run — can't tell orphans from a transient
+		// outage, so leave both sides untouched.
+		return
+	}
+	_, kerr := ks.Retrieve(keystore.ServiceName, keystore.AccountMasterKey)
+	keyringHas := kerr == nil
+
+	switch {
+	case len(rows) > 0 && !keyringHas:
+		if err := database.Queries().DeleteSecurityKeysByMethod(a.ctx, models.SecurityKeyMethodOSNative); err != nil {
+			log.Error("reconcile: failed to remove orphaned os_native rows", logger.Err(err))
+		} else {
+			log.Warn("reconcile: removed orphaned OS-native unlock rows (keyring entry missing)", slog.Int("count", len(rows)))
+		}
+	case len(rows) == 0 && keyringHas:
+		if err := ks.Delete(keystore.ServiceName, keystore.AccountMasterKey); err != nil {
+			log.Error("reconcile: failed to delete orphaned keyring entry", logger.Err(err))
+		} else {
+			log.Warn("reconcile: deleted orphaned OS keyring entry (no security_keys row)")
+		}
+	}
 }
 
 // TryAutoUnlock attempts to unlock the app using the OS keyring.

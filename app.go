@@ -107,6 +107,10 @@ func (a *App) startup(ctx context.Context) {
 	a.initializeServicesWithoutKey()
 	log.Info("services initialized without encryption key")
 
+	// Repair any DB<->OS-keyring inconsistency left by a partial enroll/remove
+	// before auto-unlock runs.
+	a.reconcileSecurityKeys()
+
 	// Auto-skip encryption key at startup (limited mode by default)
 	// Users can provide key anytime via Settings
 	a.waitingForEncryptionKey = false
