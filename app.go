@@ -152,7 +152,7 @@ func (a *App) shutdown(ctx context.Context) {
 // getDataDirectory returns the platform-specific data directory
 // Supports PADDOCKCONTROL_DATA_DIR env var override for testing
 func (a *App) getDataDirectory() (string, error) {
-	// Check for environment variable override (useful for testing)
+	// Explicit override always wins (CI / tests).
 	if envDir := os.Getenv("PADDOCKCONTROL_DATA_DIR"); envDir != "" {
 		// Skip directory creation for in-memory mode (testing)
 		if envDir != ":memory:" {
@@ -161,6 +161,17 @@ func (a *App) getDataDirectory() (string, error) {
 			}
 		}
 		return envDir, nil
+	}
+
+	// Dev builds use an isolated directory under the OS temp folder
+	// (%TEMP%\paddockcontrol-dev on Windows, /tmp/paddockcontrol-dev on Linux) so
+	// running a dev/test build never touches production data or backups.
+	if !ProductionMode {
+		dataDir := filepath.Join(os.TempDir(), "paddockcontrol-dev")
+		if err := os.MkdirAll(dataDir, 0700); err != nil {
+			return "", fmt.Errorf("failed to create dev data directory: %w", err)
+		}
+		return dataDir, nil
 	}
 
 	homeDir, err := os.UserHomeDir()
