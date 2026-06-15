@@ -50,30 +50,31 @@ func (s *SetupService) SetupFromScratch(ctx context.Context, req models.SetupReq
 	}
 	log.Debug("setup request validated")
 
-	// Create config record in database
-	err := s.db.Queries().CreateConfig(ctx, sqlc.CreateConfigParams{
-		OwnerEmail:                req.OwnerEmail,
-		CaName:                    req.CAName,
-		HostnameSuffix:            req.HostnameSuffix,
-		DefaultOrganization:       req.DefaultOrganization,
-		DefaultOrganizationalUnit: stringToNullString(req.DefaultOrganizationalUnit),
-		DefaultCity:               req.DefaultCity,
-		DefaultState:              req.DefaultState,
-		DefaultCountry:            req.DefaultCountry,
-		DefaultKeySize:            int64(req.DefaultKeySize),
-		ValidityPeriodDays:        int64(req.ValidityPeriodDays),
-	})
-	if err != nil {
-		log.Error("failed to create configuration", logger.Err(err))
-		return fmt.Errorf("failed to create configuration: %w", err)
-	}
-	log.Debug("configuration record created")
-
-	// Mark as configured
-	err = s.config.SetConfigured(ctx)
-	if err != nil {
-		log.Error("failed to mark as configured", logger.Err(err))
-		return fmt.Errorf("failed to mark as configured: %w", err)
+	// Create the config record and mark setup complete atomically: a failure
+	// between the two would otherwise leave a config row with is_configured=0,
+	// trapping the user in the setup wizard despite a config existing.
+	if err := s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.CreateConfig(ctx, sqlc.CreateConfigParams{
+			OwnerEmail:                req.OwnerEmail,
+			CaName:                    req.CAName,
+			HostnameSuffix:            req.HostnameSuffix,
+			DefaultOrganization:       req.DefaultOrganization,
+			DefaultOrganizationalUnit: stringToNullString(req.DefaultOrganizationalUnit),
+			DefaultCity:               req.DefaultCity,
+			DefaultState:              req.DefaultState,
+			DefaultCountry:            req.DefaultCountry,
+			DefaultKeySize:            int64(req.DefaultKeySize),
+			ValidityPeriodDays:        int64(req.ValidityPeriodDays),
+		}); err != nil {
+			return fmt.Errorf("failed to create configuration: %w", err)
+		}
+		if err := q.SetConfigured(ctx); err != nil {
+			return fmt.Errorf("failed to mark as configured: %w", err)
+		}
+		return nil
+	}); err != nil {
+		log.Error("fresh setup failed", logger.Err(err))
+		return err
 	}
 
 	log.Info("fresh setup completed successfully")

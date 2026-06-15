@@ -75,21 +75,22 @@ func (s *CertificateService) UploadCertificate(ctx context.Context, hostname, ce
 	// Extract expiration date
 	expiresAt := parsedCert.NotAfter.Unix()
 
-	// Update in database
+	// Activate the certificate and record the history event atomically.
 	log.Info("activating certificate", slog.Int64("expires_at", expiresAt))
-	err = s.db.Queries().ActivateCertificate(ctx, sqlc.ActivateCertificateParams{
-		Hostname:       hostname,
-		CertificatePem: sql.NullString{String: certPEM, Valid: true},
-		ExpiresAt:      sql.NullInt64{Int64: expiresAt, Valid: true},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to activate certificate: %w", err)
-	}
-
-	// Log history entry
 	expiresDate := time.Unix(expiresAt, 0).Format("2006-01-02")
 	message := fmt.Sprintf("Certificate uploaded (expires %s)", expiresDate)
-	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateUploaded, message)
+	if err = s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.ActivateCertificate(ctx, sqlc.ActivateCertificateParams{
+			Hostname:       hostname,
+			CertificatePem: sql.NullString{String: certPEM, Valid: true},
+			ExpiresAt:      sql.NullInt64{Int64: expiresAt, Valid: true},
+		}); err != nil {
+			return fmt.Errorf("failed to activate certificate: %w", err)
+		}
+		return s.history.LogEventTx(ctx, q, hostname, models.EventCertificateUploaded, message)
+	}); err != nil {
+		return err
+	}
 
 	log.Info("certificate uploaded successfully", slog.String("expires", expiresDate))
 	return nil
@@ -224,23 +225,20 @@ func (s *CertificateService) ImportCertificate(ctx context.Context, req models.I
 	// Extract expiration date
 	expiresAt := parsedCert.NotAfter.Unix()
 
-	// Store in database
-	err = s.db.Queries().CreateCertificate(ctx, sqlc.CreateCertificateParams{
-		Hostname:            hostname,
-		EncryptedPrivateKey: encryptedKey,
-		CertificatePem:      sql.NullString{String: req.CertificatePEM, Valid: true},
-		ExpiresAt:           sql.NullInt64{Int64: expiresAt, Valid: true},
-		Note:                sql.NullString{String: req.Note, Valid: req.Note != ""},
-		ReadOnly:            0,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to import certificate: %w", err)
-	}
-
-	// Log history entry
+	// Store the certificate and record the history event atomically.
 	expiresDate := time.Unix(expiresAt, 0).Format("2006-01-02")
 	message := fmt.Sprintf("Certificate imported (expires %s)", expiresDate)
-	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateImported, message)
-
-	return nil
+	return s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.CreateCertificate(ctx, sqlc.CreateCertificateParams{
+			Hostname:            hostname,
+			EncryptedPrivateKey: encryptedKey,
+			CertificatePem:      sql.NullString{String: req.CertificatePEM, Valid: true},
+			ExpiresAt:           sql.NullInt64{Int64: expiresAt, Valid: true},
+			Note:                sql.NullString{String: req.Note, Valid: req.Note != ""},
+			ReadOnly:            0,
+		}); err != nil {
+			return fmt.Errorf("failed to import certificate: %w", err)
+		}
+		return s.history.LogEventTx(ctx, q, hostname, models.EventCertificateImported, message)
+	})
 }

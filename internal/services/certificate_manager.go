@@ -128,25 +128,23 @@ func (s *CertificateService) GetCertificate(ctx context.Context, hostname string
 
 // DeleteCertificate deletes a certificate
 func (s *CertificateService) DeleteCertificate(ctx context.Context, hostname string) error {
-	// Check read-only
-	cert, err := s.db.Queries().GetCertificateByHostname(ctx, hostname)
-	if err != nil {
-		return fmt.Errorf("failed to get certificate: %w", err)
-	}
-
-	if cert.ReadOnly == 1 {
-		return fmt.Errorf("certificate is read-only and cannot be deleted")
-	}
-
-	// Log history entry before delete (will be cascade deleted with certificate)
-	_ = s.history.LogEvent(ctx, hostname, models.EventCertificateDeleted, "Certificate deleted")
-
-	err = s.db.Queries().DeleteCertificate(ctx, hostname)
-	if err != nil {
-		return fmt.Errorf("failed to delete certificate: %w", err)
-	}
-
-	return nil
+	// Read-only check and delete run in one transaction so the guard can't be
+	// bypassed by a concurrent change between the check and the delete. The
+	// certificate's history rows are removed automatically via ON DELETE
+	// CASCADE, so no separate "deleted" history entry is recorded.
+	return s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		cert, err := q.GetCertificateByHostname(ctx, hostname)
+		if err != nil {
+			return fmt.Errorf("failed to get certificate: %w", err)
+		}
+		if cert.ReadOnly == 1 {
+			return fmt.Errorf("certificate is read-only and cannot be deleted")
+		}
+		if err := q.DeleteCertificate(ctx, hostname); err != nil {
+			return fmt.Errorf("failed to delete certificate: %w", err)
+		}
+		return nil
+	})
 }
 
 // ClearPendingCSR removes the pending CSR, pending private key, and pending note from a certificate
@@ -164,14 +162,13 @@ func (s *CertificateService) ClearPendingCSR(ctx context.Context, hostname strin
 		return fmt.Errorf("certificate has no pending CSR")
 	}
 
-	err = s.db.Queries().ClearPendingCSR(ctx, hostname)
-	if err != nil {
-		return fmt.Errorf("failed to clear pending CSR: %w", err)
-	}
-
-	_ = s.history.LogEvent(ctx, hostname, models.EventPendingCSRRemoved, "Pending renewal CSR cancelled")
-
-	return nil
+	// Clear the pending CSR and record the history event atomically.
+	return s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.ClearPendingCSR(ctx, hostname); err != nil {
+			return fmt.Errorf("failed to clear pending CSR: %w", err)
+		}
+		return s.history.LogEventTx(ctx, q, hostname, models.EventPendingCSRRemoved, "Pending renewal CSR cancelled")
+	})
 }
 
 // SetCertificateReadOnly sets the read-only status of a certificate
@@ -180,24 +177,23 @@ func (s *CertificateService) SetCertificateReadOnly(ctx context.Context, hostnam
 	if readOnly {
 		readOnlyValue = 1
 	}
-	err := s.db.Queries().UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
-		ReadOnly: readOnlyValue,
-		Hostname: hostname,
-	})
-	if err != nil {
-		return err
-	}
-
-	// Log history entry
 	eventType := models.EventReadOnlyDisabled
 	message := "Read-only protection removed"
 	if readOnly {
 		eventType = models.EventReadOnlyEnabled
 		message = "Marked as read-only"
 	}
-	_ = s.history.LogEvent(ctx, hostname, eventType, message)
 
-	return nil
+	// Update the flag and record the history event atomically.
+	return s.db.WithTx(ctx, func(q *sqlc.Queries) error {
+		if err := q.UpdateCertificateReadOnly(ctx, sqlc.UpdateCertificateReadOnlyParams{
+			ReadOnly: readOnlyValue,
+			Hostname: hostname,
+		}); err != nil {
+			return err
+		}
+		return s.history.LogEventTx(ctx, q, hostname, eventType, message)
+	})
 }
 
 // UpdateCertificateNote updates the note for a certificate
