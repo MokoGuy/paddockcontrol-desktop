@@ -148,6 +148,10 @@ func (a *App) RestoreLocalBackup(filename string) error {
 
 // DeleteLocalBackup removes a local backup file.
 func (a *App) DeleteLocalBackup(filename string) error {
+	if err := a.requireSetupOnly(); err != nil {
+		return err
+	}
+
 	a.mu.RLock()
 	autoBackup := a.autoBackupService
 	a.mu.RUnlock()
