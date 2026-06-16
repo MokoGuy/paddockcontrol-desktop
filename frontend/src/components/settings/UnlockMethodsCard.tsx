@@ -69,7 +69,14 @@ export function UnlockMethodsCard({
             await fn();
             toast.success(ok);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Operation failed");
+            // Wails rejects bound-method errors with a string, not an Error.
+            const message =
+                typeof err === "string"
+                    ? err
+                    : err instanceof Error
+                      ? err.message
+                      : "Operation failed";
+            toast.error(message);
         } finally {
             setBusy(false);
         }
