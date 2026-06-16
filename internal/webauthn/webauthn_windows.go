@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"unsafe"
 
+	"paddockcontrol-desktop/internal/logger"
+
 	"github.com/go-ctap/ctaphid/pkg/webauthntypes"
 	"github.com/go-ctap/winhello"
 	"github.com/go-ctap/winhello/hiddenwindow"
@@ -70,18 +72,35 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		return nil, fmt.Errorf("the chosen authenticator does not support PRF")
 	}
 
+	hmacLen := 0
+	if resp.HMACSecret != nil {
+		hmacLen = len(resp.HMACSecret.First)
+	}
+	log := logger.WithComponent("webauthn")
+	log.Info("passkey created",
+		slog.Bool("platform_requested", platform),
+		slog.Int("attachment_requested", int(attachment)),
+		slog.Bool("prf_enabled", resp.PRFEnabled),
+		slog.Bool("hmac_secret_at_create", hmacLen == SecretLen),
+		slog.Int("hmac_secret_len", hmacLen),
+		slog.Any("used_transport", resp.UsedTransport),
+		slog.Bool("resident_key", resp.ResidentKey),
+	)
+
 	// Modern Windows returns the PRF/hmac-secret straight from credential creation
 	// (we passed the salt as the global eval), so enrollment is a single ceremony.
 	// hmac-secret is deterministic for a (credential, salt) pair, so this matches
 	// what unlock re-derives via an assertion. Older Windows leaves it nil → fall
 	// back to a second (assertion) ceremony to obtain the secret.
-	if resp.HMACSecret != nil && len(resp.HMACSecret.First) == SecretLen {
+	if hmacLen == SecretLen {
+		log.Info("using PRF secret from creation (single ceremony, no assertion)")
 		return &Credential{CredentialID: resp.CredentialID, Secret: resp.HMACSecret.First}, nil
 	}
 
 	// Windows Hello does not return the hmac-secret at creation, so we must do one
 	// assertion to obtain it. Constrain it to the same authenticator class so
 	// Windows routes straight to it instead of re-showing the device chooser.
+	log.Info("no hmac-secret at creation → deriving via assertion (second ceremony)")
 	secret, err := derive(hWnd, rpID, resp.CredentialID, salt, platform)
 	if err != nil {
 		return nil, err
@@ -115,6 +134,12 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform 
 			webauthntypes.AuthenticatorTransportInternal,
 		}
 	}
+
+	logger.WithComponent("webauthn").Info("deriving PRF via assertion",
+		slog.Bool("platform", platform),
+		slog.Int("attachment", int(attachment)),
+		slog.Int("transports", len(descriptor.Transports)),
+	)
 
 	assertion, err := winhello.GetAssertion(
 		hWnd,
