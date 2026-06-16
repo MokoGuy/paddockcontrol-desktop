@@ -133,6 +133,58 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, excludeCred
 	return &Credential{CredentialID: resp.CredentialID, Secret: secret, Transports: transports}, nil
 }
 
+// Assert performs ONE assertion over all allowed credentials: the OS shows a
+// single chooser, the user picks an authenticator, and Assert returns which
+// credential id was used plus its PRF secret for salt. All credentials must
+// share the same salt (the assertion carries one global hmac-secret salt).
+func Assert(windowTitle, rpID string, allowed []AllowedCredential, salt []byte) (credentialID, secret []byte, err error) {
+	hWnd, cleanup, werr := windowHandle(windowTitle, rpID)
+	if werr != nil {
+		return nil, nil, werr
+	}
+	defer cleanup()
+
+	descriptors := make([]webauthntypes.PublicKeyCredentialDescriptor, len(allowed))
+	for i, a := range allowed {
+		descriptors[i] = webauthntypes.PublicKeyCredentialDescriptor{
+			ID:         a.CredentialID,
+			Type:       webauthntypes.PublicKeyCredentialTypePublicKey,
+			Transports: stringsToTransports(a.Transports),
+		}
+	}
+
+	logger.WithComponent("webauthn").Info("asserting passkey (multi-credential)",
+		slog.Int("candidates", len(descriptors)),
+	)
+
+	assertion, err := winhello.GetAssertion(
+		hWnd,
+		rpID,
+		[]byte("{}"),
+		descriptors,
+		&webauthntypes.GetAuthenticationExtensionsClientInputs{
+			GetHMACSecretInputs: &webauthntypes.GetHMACSecretInputs{
+				HMACGetSecret: webauthntypes.HMACGetSecretInput{Salt1: salt},
+			},
+		},
+		&winhello.AuthenticatorGetAssertionOptions{
+			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
+		},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get assertion: %w", err)
+	}
+	out := assertion.ExtensionOutputs
+	if out == nil || out.GetHMACSecretOutputs == nil {
+		return nil, nil, fmt.Errorf("assertion returned no hmac-secret output")
+	}
+	s := out.GetHMACSecretOutputs.HMACGetSecret.Output1
+	if len(s) != SecretLen {
+		return nil, nil, fmt.Errorf("unexpected hmac-secret length %d", len(s))
+	}
+	return assertion.Credential.ID, s, nil
+}
+
 // Derive re-derives the PRF secret for an existing credential id + salt. The
 // stored transports route the prompt straight to the authenticator that holds
 // the credential, so Windows skips the device chooser.

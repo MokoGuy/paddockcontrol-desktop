@@ -1,12 +1,10 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 
 	"paddockcontrol-desktop/internal/crypto"
@@ -20,6 +18,13 @@ import (
 // app (not a browser) this is just a stable relying-party id, not a domain that
 // must resolve.
 const webAuthnRPID = "paddockcontrol.local"
+
+// webAuthnSalt is the fixed PRF/hmac-secret salt shared by every passkey. A
+// single salt lets unlock offer all credentials in one assertion (the user picks
+// the authenticator at the OS dialog). It need not be secret: each credential's
+// secret is HMAC(credRandom, salt), and credRandom is unique per credential. Must
+// be exactly 32 bytes.
+var webAuthnSalt = []byte("paddockcontrol/passkey-prf/salt1")
 
 // appWindowTitle (the native window title used to parent the WebAuthn dialog) is
 // defined once in main.go alongside the Wails window Title.
@@ -55,10 +60,8 @@ func (a *App) EnrollPasskey() error {
 	log := logger.WithComponent("app")
 	log.Info("enrolling passkey (WebAuthn) unlock method")
 
-	salt := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		return fmt.Errorf("failed to generate salt: %w", err)
-	}
+	// All passkeys share webAuthnSalt so unlock can offer them in one assertion.
+	salt := webAuthnSalt
 
 	// Exclude already-enrolled passkeys so the same authenticator can't register a
 	// duplicate (which, for Windows Hello, would overwrite the existing one).
@@ -162,42 +165,53 @@ func (a *App) UnlockWithWebAuthn() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to read passkey methods: %w", err)
 	}
-	if len(keys) == 0 {
-		return false, fmt.Errorf("no passkey unlock method is enrolled")
-	}
 
+	// Offer every enrolled passkey in a single assertion so the OS shows one
+	// chooser and the user picks which authenticator to use.
+	type candidate struct {
+		id      int64
+		wrapped []byte
+		label   string
+	}
+	byCredID := make(map[string]candidate)
+	var allowed []webauthn.AllowedCredential
 	for _, key := range keys {
 		if !key.Metadata.Valid {
 			continue
 		}
 		var meta models.WebAuthnMetadata
-		if err := json.Unmarshal([]byte(key.Metadata.String), &meta); err != nil {
+		if json.Unmarshal([]byte(key.Metadata.String), &meta) != nil || len(meta.CredentialID) == 0 {
 			continue
 		}
-
-		log.Debug("attempting passkey unlock", slog.Int64("key_id", key.ID), slog.String("label", key.Label))
-
-		// The stored transports route the prompt straight to the authenticator
-		// that holds this credential (no device chooser).
-		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt, meta.Transports)
-		if err != nil {
-			// User cancelled, wrong authenticator, or this credential isn't present.
-			log.Debug("passkey derive failed", slog.Int64("key_id", key.ID), logger.Err(err))
-			continue
-		}
-		masterKey, uerr := crypto.UnwrapMasterKey(key.WrappedMasterKey, secret)
-		crypto.Zero(secret)
-		if uerr != nil {
-			log.Debug("passkey master-key unwrap failed", slog.Int64("key_id", key.ID))
-			continue
-		}
-
-		_ = database.Queries().UpdateSecurityKeyLastUsed(a.ctx, key.ID)
-		a.finalizeUnlock(masterKey)
-		logger.Audit("unlock.passkey_succeeded", slog.Int64("key_id", key.ID), slog.String("label", key.Label))
-		return true, nil
+		allowed = append(allowed, webauthn.AllowedCredential{
+			CredentialID: meta.CredentialID,
+			Transports:   meta.Transports,
+		})
+		byCredID[string(meta.CredentialID)] = candidate{key.ID, key.WrappedMasterKey, key.Label}
+	}
+	if len(allowed) == 0 {
+		return false, fmt.Errorf("no passkey unlock method is enrolled")
 	}
 
-	logger.Audit("unlock.passkey_failed", slog.Int("candidate_keys", len(keys)))
-	return false, fmt.Errorf("passkey unlock failed")
+	credID, secret, err := webauthn.Assert(appWindowTitle, webAuthnRPID, allowed, webAuthnSalt)
+	if err != nil {
+		log.Debug("passkey assertion failed", logger.Err(err))
+		logger.Audit("unlock.passkey_failed", slog.Int("candidate_keys", len(allowed)))
+		return false, fmt.Errorf("passkey unlock failed: %w", err)
+	}
+	defer crypto.Zero(secret)
+
+	cand, ok := byCredID[string(credID)]
+	if !ok {
+		return false, fmt.Errorf("the chosen passkey is not one of the enrolled methods")
+	}
+	masterKey, uerr := crypto.UnwrapMasterKey(cand.wrapped, secret)
+	if uerr != nil {
+		return false, fmt.Errorf("failed to unwrap master key: %w", uerr)
+	}
+
+	_ = database.Queries().UpdateSecurityKeyLastUsed(a.ctx, cand.id)
+	a.finalizeUnlock(masterKey)
+	logger.Audit("unlock.passkey_succeeded", slog.Int64("key_id", cand.id), slog.String("label", cand.label))
+	return true, nil
 }
