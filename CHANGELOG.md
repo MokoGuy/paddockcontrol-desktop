@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.5.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.4.0...v1.5.0) (2026-06-16)
+
+
+### Features
+
+* dev builds use an isolated temp data dir (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([2f6c652](https://github.com/MokoGuy/paddockcontrol-desktop/commit/2f6c65219fc9638dd68f0237519935df8e76418e))
+* **logging:** audit + debug logs for unlock-method operations (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([0f49245](https://github.com/MokoGuy/paddockcontrol-desktop/commit/0f49245121d37da6dcb56aaf845fc6326ce4ed70))
+* parent the WebAuthn dialog to the Wails window (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([5b60119](https://github.com/MokoGuy/paddockcontrol-desktop/commit/5b60119485cc81458a58dc38ed4fe076113adaee))
+* passkey (WebAuthn/PRF) unlock method — Phase 2 backend (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([36e5b15](https://github.com/MokoGuy/paddockcontrol-desktop/commit/36e5b155b3e6a3869fecc141ae268092a737f3db))
+* Unlock methods settings UI + passkey unlock — Phase 3 (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([6dd23b7](https://github.com/MokoGuy/paddockcontrol-desktop/commit/6dd23b732114b568d39933bbc2c876f1ec0300e6))
+* unlock-method backend hardening — password root + keyring saga (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([45c0830](https://github.com/MokoGuy/paddockcontrol-desktop/commit/45c08307ccbae8e6f6a12d83b7e628cecd8eada8))
+* **unlock-methods:** block duplicate passkey enrollment via excludeCredentials (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([385e0c2](https://github.com/MokoGuy/paddockcontrol-desktop/commit/385e0c28843fb9581cfec66a535f50243b298dcb))
+* **unlock-methods:** number passkey rows + show authenticator type (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([7a8d189](https://github.com/MokoGuy/paddockcontrol-desktop/commit/7a8d18991406a11b3cfe4bc872d593ccc91d9f7a))
+* **unlock-methods:** single native chooser at passkey unlock (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([5cc2438](https://github.com/MokoGuy/paddockcontrol-desktop/commit/5cc2438346422e0c3c189c8f18c068ac2869da30))
+* **unlock-methods:** single passkey enrollment (merge Hello + security key) (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([b36cc51](https://github.com/MokoGuy/paddockcontrol-desktop/commit/b36cc51d1e1a9d8d2c019583e66e10274224a7e6))
+* **unlock-methods:** split passkey enrollment into Windows Hello + security key (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([9c8298d](https://github.com/MokoGuy/paddockcontrol-desktop/commit/9c8298d147ec88a41fb7ec5efdcc678f5da65c76))
+* **webauthn:** graceful Windows Hello unsupported handling + TPM probe (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([a9b3a1b](https://github.com/MokoGuy/paddockcontrol-desktop/commit/a9b3a1bf1955750d97a06e4b95e9b4093129bfbd))
+* **webauthn:** single-ceremony enrollment via creation-time PRF secret (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([e08beb6](https://github.com/MokoGuy/paddockcontrol-desktop/commit/e08beb61a91739917ad2ab57f32da9e66d92ac9c))
+* **webauthn:** wire Windows Hello PRF unlock via MokoGuy/winhello fork (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([5e7fdf3](https://github.com/MokoGuy/paddockcontrol-desktop/commit/5e7fdf32d06667d4f299c82f7051cc520ba47e2f))
+
+
+### Bug Fixes
+
+* harden SQLite layer (WAL, foreign keys, busy_timeout, single-writer) + add WithTx ([6f29d79](https://github.com/MokoGuy/paddockcontrol-desktop/commit/6f29d79844f8228ca45c78d5cde76760e0bc46e8))
+* make certificate import atomic (wrap in WithTx) ([10b4b4f](https://github.com/MokoGuy/paddockcontrol-desktop/commit/10b4b4f7fd5f0762ad1ba7f625718264770d6cf8))
+* **spike:** Windows Hello needs PRF eval-at-create (pPRFGlobalEval) (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([437b4d0](https://github.com/MokoGuy/paddockcontrol-desktop/commit/437b4d00466f8b182dd34939aa65188a4a7d3556))
+* **unlock-methods:** gate method changes on unlocked + add disabled tooltips ([20a1f5f](https://github.com/MokoGuy/paddockcontrol-desktop/commit/20a1f5f590be64fbd3c43d8092a4940205e01960))
+* **unlock-methods:** show real error in passkey toast + log enroll failures ([b0ddeaa](https://github.com/MokoGuy/paddockcontrol-desktop/commit/b0ddeaa5b2a94299ed2ad771a600d9d4e4cc611d))
+* **update:** don't crash when current version isn't valid semver ([232d23c](https://github.com/MokoGuy/paddockcontrol-desktop/commit/232d23c0aba1eb7dab7a1efda727f7ace62d3a72))
+* **webauthn:** constrain the PRF assertion to the credential's authenticator (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([c284d24](https://github.com/MokoGuy/paddockcontrol-desktop/commit/c284d24f88bc83e4aa7aa3dd25b3231371e8ad91))
+* wrap remaining multi-write operations in transactions ([40e96fb](https://github.com/MokoGuy/paddockcontrol-desktop/commit/40e96fba099e5a17a3385f2c89e655ee1a9b66ad))
+
+
+### Code Refactoring
+
+* remove OS-keyring (os_native) unlock path — passkey only (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([427eaaf](https://github.com/MokoGuy/paddockcontrol-desktop/commit/427eaaf549f7bf1c62b1bb47ca04e94f78c212d6))
+* single source of truth for the window title ([38331f5](https://github.com/MokoGuy/paddockcontrol-desktop/commit/38331f55fb4e283eea2314e4fe5c00dbeb8b2643))
+* **spike:** two canonical passkey paths + documented findings (refs [#92](https://github.com/MokoGuy/paddockcontrol-desktop/issues/92)) ([cad6e7e](https://github.com/MokoGuy/paddockcontrol-desktop/commit/cad6e7edbc52b0e667cec5e8e1360296f4c82f77))
+
 ## [1.4.0](https://github.com/MokoGuy/paddockcontrol-desktop/compare/v1.3.0...v1.4.0) (2026-06-15)
 
 
