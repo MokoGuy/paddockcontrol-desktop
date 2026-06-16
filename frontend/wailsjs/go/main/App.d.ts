@@ -23,10 +23,9 @@ export function DeleteLocalBackup(arg1:string):Promise<void>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
 
-export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
-
 export function EnrollPasskey():Promise<void>;
 
+export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
 

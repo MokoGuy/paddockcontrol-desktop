@@ -59,8 +59,15 @@ func (a *App) EnrollPasskey() error {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt)
+	// Exclude already-enrolled passkeys so the same authenticator can't register a
+	// duplicate (which, for Windows Hello, would overwrite the existing one).
+	exclude := a.enrolledPasskeyCredentialIDs()
+
+	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, exclude)
 	if err != nil {
+		if errors.Is(err, webauthn.ErrCredentialAlreadyEnrolled) {
+			return fmt.Errorf("this authenticator already has a passkey here; use a different device or security key")
+		}
 		if errors.Is(err, webauthn.ErrPlatformAuthenticatorUnsupported) {
 			return fmt.Errorf("Windows Hello can't store a passkey on this device (it isn't backed by a TPM here); use a security key instead")
 		}
@@ -96,6 +103,32 @@ func (a *App) EnrollPasskey() error {
 
 	log.Info("passkey unlock method enrolled successfully")
 	return nil
+}
+
+// enrolledPasskeyCredentialIDs returns the credential ids of all enrolled
+// passkeys, used as a MakeCredential exclude list to block duplicate enrollment.
+func (a *App) enrolledPasskeyCredentialIDs() [][]byte {
+	a.mu.RLock()
+	database := a.db
+	a.mu.RUnlock()
+	if database == nil {
+		return nil
+	}
+	keys, err := database.Queries().GetSecurityKeysByMethod(a.ctx, models.SecurityKeyMethodFIDO2)
+	if err != nil {
+		return nil
+	}
+	var ids [][]byte
+	for _, k := range keys {
+		if !k.Metadata.Valid {
+			continue
+		}
+		var meta models.WebAuthnMetadata
+		if json.Unmarshal([]byte(k.Metadata.String), &meta) == nil && len(meta.CredentialID) > 0 {
+			ids = append(ids, meta.CredentialID)
+		}
+	}
+	return ids
 }
 
 // UnlockWithWebAuthn unlocks the app by deriving a passkey's PRF secret and

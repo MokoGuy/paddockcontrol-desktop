@@ -21,6 +21,12 @@ var ErrUnsupported = errors.New("platform WebAuthn is not supported on this OS")
 // NTE_NOT_SUPPORTED, 0x80090029). The roaming/security-key path still works.
 var ErrPlatformAuthenticatorUnsupported = errors.New("the platform authenticator (Windows Hello) cannot create a passkey on this device")
 
+// ErrCredentialAlreadyEnrolled is returned when enrollment targets an
+// authenticator that already holds one of our passkeys (excludeCredentials
+// match) — e.g. trying to add a second Windows Hello on the same machine, which
+// would otherwise overwrite the first on the TPM.
+var ErrCredentialAlreadyEnrolled = errors.New("this authenticator already has a passkey enrolled")
+
 // Credential is the result of a successful Enroll: the credential id (stored and
 // passed back on every Derive), the derived secret, and the authenticator
 // transports actually used — which both label the method (Windows Hello vs a
