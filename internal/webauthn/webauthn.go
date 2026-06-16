@@ -14,6 +14,13 @@ const SecretLen = 32
 // ErrUnsupported is returned on platforms without native WebAuthn support.
 var ErrUnsupported = errors.New("platform WebAuthn is not supported on this OS")
 
+// ErrPlatformAuthenticatorUnsupported is returned when the OS platform
+// authenticator (Windows Hello) cannot create the requested credential — most
+// often because Windows Hello is not backed by a TPM on this machine, so it
+// produces software keys that can't store passkeys (NGC MakeCredential returns
+// NTE_NOT_SUPPORTED, 0x80090029). The roaming/security-key path still works.
+var ErrPlatformAuthenticatorUnsupported = errors.New("the platform authenticator (Windows Hello) cannot create a passkey on this device")
+
 // Credential is the result of a successful Enroll: the credential id (which we
 // store and pass back on every Derive — the credential is non-resident, so
 // nothing is stored on the authenticator) plus the derived secret.
