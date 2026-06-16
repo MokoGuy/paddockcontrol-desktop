@@ -67,7 +67,7 @@ func (a *App) EnrollPasskey() error {
 
 	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, exclude)
 	if err != nil {
-		log.Debug("passkey enrollment failed", logger.Err(err))
+		log.Info("passkey enrollment did not complete", logger.Err(err))
 		if errors.Is(err, webauthn.ErrCredentialAlreadyEnrolled) {
 			return fmt.Errorf("this authenticator already has a passkey here; use a different device or security key")
 		}
