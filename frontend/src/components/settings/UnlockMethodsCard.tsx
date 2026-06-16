@@ -121,11 +121,21 @@ export function UnlockMethodsCard({
                     />
 
                     {/* Enrolled passkeys (Windows Hello / security key / phone) */}
-                    {passkeys.map((key) => (
+                    {passkeys.map((key, i) => (
                         <MethodRow
                             key={key.id}
-                            title={key.label}
-                            description="Passkey unlock"
+                            title={`Passkey #${i + 1}`}
+                            description={
+                                <>
+                                    Type: {key.label}
+                                    {key.label === "Windows Hello" && (
+                                        <span className="text-warning">
+                                            {" "}
+                                            · only one per device
+                                        </span>
+                                    )}
+                                </>
+                            }
                             badge={
                                 <Badge
                                     variant="outline"
