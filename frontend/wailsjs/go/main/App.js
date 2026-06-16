@@ -46,12 +46,8 @@ export function EnrollPasswordMethod(arg1, arg2) {
   return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
-export function EnrollSecurityKey() {
-  return window['go']['main']['App']['EnrollSecurityKey']();
-}
-
-export function EnrollWindowsHello() {
-  return window['go']['main']['App']['EnrollWindowsHello']();
+export function EnrollPasskey() {
+  return window['go']['main']['App']['EnrollPasskey']();
 }
 
 export function ExportCertificateZip(arg1, arg2) {

@@ -23,13 +23,8 @@ export function useSecurityKeys() {
         }
     }, []);
 
-    const enrollWindowsHello = useCallback(async () => {
-        await api.enrollWindowsHello();
-        await refresh();
-    }, [refresh]);
-
-    const enrollSecurityKey = useCallback(async () => {
-        await api.enrollSecurityKey();
+    const enrollPasskey = useCallback(async () => {
+        await api.enrollPasskey();
         await refresh();
     }, [refresh]);
 
@@ -46,8 +41,7 @@ export function useSecurityKeys() {
         webAuthnAvailable,
         isLoading,
         refresh,
-        enrollWindowsHello,
-        enrollSecurityKey,
+        enrollPasskey,
         remove,
     };
 }

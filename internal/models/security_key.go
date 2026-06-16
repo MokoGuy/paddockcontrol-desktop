@@ -27,9 +27,11 @@ type PasswordMetadata struct {
 }
 
 // WebAuthnMetadata holds the data needed to re-derive a passkey's PRF secret,
-// stored as JSON in security_keys.metadata for the "fido2" method. The
-// credential is non-resident, so we hold its id and the PRF salt here.
+// stored as JSON in security_keys.metadata for the "fido2" method. We hold the
+// credential id, the PRF salt, and the authenticator transports used (to route
+// the unlock prompt straight to the right authenticator).
 type WebAuthnMetadata struct {
-	CredentialID []byte `json:"credential_id"`
-	Salt         []byte `json:"salt"`
+	CredentialID []byte   `json:"credential_id"`
+	Salt         []byte   `json:"salt"`
+	Transports   []string `json:"transports,omitempty"`
 }

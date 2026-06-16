@@ -6,11 +6,11 @@ package webauthn
 func Available() bool { return false }
 
 // Enroll is unsupported off Windows.
-func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bool) (*Credential, error) {
+func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credential, error) {
 	return nil, ErrUnsupported
 }
 
 // Derive is unsupported off Windows.
-func Derive(windowTitle, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
+func Derive(windowTitle, rpID string, credentialID, salt []byte, transports []string) ([]byte, error) {
 	return nil, ErrUnsupported
 }
