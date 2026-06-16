@@ -3,7 +3,6 @@
 package webauthn
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -73,7 +72,9 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		&winhello.AuthenticatorMakeCredentialOptions{
 			AuthenticatorAttachment:     attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
-			RequireResidentKey:          false, // non-resident
+			// Windows Hello requires a resident/discoverable credential to support
+			// hmac-secret; a roaming security key stays non-resident (no slot used).
+			RequireResidentKey: platform,
 		},
 	)
 	if err != nil {
@@ -104,20 +105,9 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		slog.Bool("resident_key", resp.ResidentKey),
 	)
 
-	// Modern Windows returns the PRF/hmac-secret straight from credential creation
-	// (we passed the salt as the global eval), so enrollment is a single ceremony.
-	// hmac-secret is deterministic for a (credential, salt) pair, so this matches
-	// what unlock re-derives via an assertion. Older Windows leaves it nil → fall
-	// back to a second (assertion) ceremony to obtain the secret.
-	if hmacLen == SecretLen {
-		log.Info("using PRF secret from creation (single ceremony, no assertion)")
-		return &Credential{CredentialID: resp.CredentialID, Secret: resp.HMACSecret.First}, nil
-	}
-
-	// Windows Hello does not return the hmac-secret at creation, so we must do one
-	// assertion to obtain it. Constrain it to the same authenticator class so
-	// Windows routes straight to it instead of re-showing the device chooser.
-	log.Info("no hmac-secret at creation → deriving via assertion (second ceremony)")
+	// Always derive the wrapping secret via an assertion (get()), even though
+	// creation may also return it: unlock derives via the same get() path, so
+	// using one path for both guarantees the enroll and unlock secrets match.
 	secret, err := derive(hWnd, rpID, resp.CredentialID, salt, platform)
 	if err != nil {
 		return nil, err
@@ -164,11 +154,12 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform 
 		[]byte("{}"),
 		[]webauthntypes.PublicKeyCredentialDescriptor{descriptor},
 		&webauthntypes.GetAuthenticationExtensionsClientInputs{
-			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
-				EvalByCredential: map[string]webauthntypes.AuthenticationExtensionsPRFValues{
-					base64.URLEncoding.EncodeToString(credentialID): {First: salt},
-				},
-			}},
+			// Raw hmac-secret (not PRFInputs): on Windows Hello the assertion only
+			// evaluates the salt on this path, and the wrapper returns the output
+			// here. salt must be exactly SecretLen bytes for the raw extension.
+			GetHMACSecretInputs: &webauthntypes.GetHMACSecretInputs{
+				HMACGetSecret: webauthntypes.HMACGetSecretInput{Salt1: salt},
+			},
 		},
 		&winhello.AuthenticatorGetAssertionOptions{
 			AuthenticatorAttachment:     attachment,
@@ -178,12 +169,13 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform 
 	if err != nil {
 		return nil, fmt.Errorf("get assertion: %w", err)
 	}
-	if !assertion.ExtensionOutputs.PRFOutputs.PRF.Enabled {
-		return nil, fmt.Errorf("assertion returned no PRF result")
+	out := assertion.ExtensionOutputs
+	if out == nil || out.GetHMACSecretOutputs == nil {
+		return nil, fmt.Errorf("assertion returned no hmac-secret output")
 	}
-	secret := assertion.ExtensionOutputs.PRFOutputs.PRF.Results.First
+	secret := out.GetHMACSecretOutputs.HMACGetSecret.Output1
 	if len(secret) != SecretLen {
-		return nil, fmt.Errorf("unexpected PRF secret length %d", len(secret))
+		return nil, fmt.Errorf("unexpected hmac-secret length %d", len(secret))
 	}
 	return secret, nil
 }
