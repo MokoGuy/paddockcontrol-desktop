@@ -28,10 +28,29 @@ func (a *App) IsWebAuthnAvailable() bool {
 	return webauthn.Available()
 }
 
-// EnrollWebAuthn enrolls a passkey (Windows Hello or a FIDO2 security key) as an
-// unlock method. It creates a non-resident credential with PRF, derives a
-// wrapping key, and stores the wrapped master key. Requires the app unlocked.
-func (a *App) EnrollWebAuthn(label string) error {
+// Passkey enrollment labels. They also distinguish the two passkey rows in the
+// UI, so keep them in sync with the frontend.
+const (
+	labelWindowsHello = "Windows Hello"
+	labelSecurityKey  = "Security key"
+)
+
+// EnrollWindowsHello enrolls a platform passkey (Windows Hello / this device) as
+// an unlock method.
+func (a *App) EnrollWindowsHello() error {
+	return a.enrollPasskey(labelWindowsHello, true)
+}
+
+// EnrollSecurityKey enrolls a roaming passkey (a FIDO2 security key) as an unlock
+// method.
+func (a *App) EnrollSecurityKey() error {
+	return a.enrollPasskey(labelSecurityKey, false)
+}
+
+// enrollPasskey creates a non-resident credential with PRF, derives a wrapping
+// key, and stores the wrapped master key. platform selects the authenticator
+// class (Windows Hello vs security key). Requires the app unlocked.
+func (a *App) enrollPasskey(label string, platform bool) error {
 	if err := a.requireUnlocked(); err != nil {
 		return fmt.Errorf("app must be unlocked: %w", err)
 	}
@@ -61,7 +80,7 @@ func (a *App) EnrollWebAuthn(label string) error {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt)
+	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, platform)
 	if err != nil {
 		return fmt.Errorf("passkey enrollment failed: %w", err)
 	}

@@ -23,10 +23,11 @@ export function DeleteLocalBackup(arg1:string):Promise<void>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
 
-
 export function EnrollPasswordMethod(arg1:string,arg2:string):Promise<void>;
 
-export function EnrollWebAuthn(arg1:string):Promise<void>;
+export function EnrollSecurityKey():Promise<void>;
+
+export function EnrollWindowsHello():Promise<void>;
 
 export function ExportCertificateZip(arg1:string,arg2:models.ExportOptions):Promise<void>;
 
@@ -61,7 +62,6 @@ export function HasSecurityKeys():Promise<boolean>;
 export function ImportCertificate(arg1:models.ImportRequest):Promise<void>;
 
 export function ImportCertificatesFromBackup(arg1:string,arg2:string):Promise<models.CertImportResult>;
-
 
 export function IsSetupComplete():Promise<boolean>;
 
@@ -118,7 +118,6 @@ export function SelectBackupFile():Promise<string>;
 export function SetCertificateReadOnly(arg1:string,arg2:boolean):Promise<void>;
 
 export function SkipEncryptionKey():Promise<void>;
-
 
 export function UnlockWithWebAuthn():Promise<boolean>;
 
