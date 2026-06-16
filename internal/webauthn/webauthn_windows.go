@@ -25,16 +25,23 @@ func Available() bool {
 	return winhello.APIVersionNumber() > 0
 }
 
-// Enroll creates a NON-resident passkey (the user picks Windows Hello or a
-// security key) with the PRF extension enabled, and returns its credential id
-// plus the secret derived for salt. windowTitle is the app's top-level window
-// title, used to parent the Windows Hello / security-key dialog.
-func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credential, error) {
+// Enroll creates a NON-resident passkey with the PRF extension enabled and
+// returns its credential id plus the secret derived for salt. windowTitle is the
+// app's top-level window title, used to parent the dialog. platform selects the
+// authenticator class: true constrains to the built-in platform authenticator
+// (Windows Hello / this device), false to a roaming one (security key) — so each
+// enrollment path shows a single, unambiguous Windows prompt.
+func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bool) (*Credential, error) {
 	hWnd, cleanup, err := windowHandle(windowTitle, rpName)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
+
+	attachment := winhello.WinHelloAuthenticatorAttachmentCrossPlatform
+	if platform {
+		attachment = winhello.WinHelloAuthenticatorAttachmentPlatform
+	}
 
 	resp, err := winhello.MakeCredential(
 		hWnd,
@@ -51,8 +58,7 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credentia
 			}},
 		},
 		&winhello.AuthenticatorMakeCredentialOptions{
-			// AuthenticatorAttachment unset → the OS offers both platform (Hello)
-			// and roaming (security key) options.
+			AuthenticatorAttachment:     attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
 			RequireResidentKey:          false, // non-resident
 		},

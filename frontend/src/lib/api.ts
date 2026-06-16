@@ -42,7 +42,8 @@ export const api = {
     enrollPasswordMethod: (password: string, label: string) => App.EnrollPasswordMethod(password, label),
     removeSecurityKey: (id: number) => App.RemoveSecurityKey(id),
     isWebAuthnAvailable: () => App.IsWebAuthnAvailable() as Promise<boolean>,
-    enrollWebAuthn: (label: string) => App.EnrollWebAuthn(label),
+    enrollWindowsHello: () => App.EnrollWindowsHello(),
+    enrollSecurityKey: () => App.EnrollSecurityKey(),
     unlockWithWebAuthn: () => App.UnlockWithWebAuthn() as Promise<boolean>,
 
     // Setup

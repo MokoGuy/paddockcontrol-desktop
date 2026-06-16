@@ -51,8 +51,14 @@ export function UnlockMethodsCard({
     onChangePassword,
     className,
 }: UnlockMethodsCardProps) {
-    const { methods, webAuthnAvailable, refresh, enrollWebAuthn, remove } =
-        useSecurityKeys();
+    const {
+        methods,
+        webAuthnAvailable,
+        refresh,
+        enrollWindowsHello,
+        enrollSecurityKey,
+        remove,
+    } = useSecurityKeys();
 
     const [removeTarget, setRemoveTarget] = useState<SecurityKeyInfo | null>(
         null,
@@ -62,8 +68,6 @@ export function UnlockMethodsCard({
     useEffect(() => {
         void refresh();
     }, [refresh]);
-
-    const passkey = methods.find((m) => m.method === "fido2");
 
     const run = async (fn: () => Promise<void>, ok: string) => {
         setBusy(true);
@@ -75,6 +79,61 @@ export function UnlockMethodsCard({
         } finally {
             setBusy(false);
         }
+    };
+
+    // Each passkey kind is a separate enrollment path so Windows shows a single,
+    // unambiguous prompt. The label (set by the backend) identifies the row.
+    const passkeyRow = (
+        title: string,
+        description: string,
+        label: string,
+        enroll: () => Promise<void>,
+    ) => {
+        const key = methods.find(
+            (m) => m.method === "fido2" && m.label === label,
+        );
+        return (
+            <MethodRow
+                title={title}
+                description={description}
+                badge={
+                    key ? (
+                        <Badge
+                            variant="outline"
+                            className="border-success/40 bg-success/10 text-success"
+                        >
+                            Enabled
+                        </Badge>
+                    ) : undefined
+                }
+                action={
+                    key ? (
+                        <AdminGatedButton
+                            variant="outline"
+                            size="sm"
+                            requireAdminMode={false}
+                            requireUnlocked
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => setRemoveTarget(key)}
+                            disabled={busy}
+                        >
+                            Remove
+                        </AdminGatedButton>
+                    ) : (
+                        <AdminGatedButton
+                            variant="outline"
+                            size="sm"
+                            requireAdminMode={false}
+                            requireUnlocked
+                            onClick={() => run(enroll, `${title} enrolled`)}
+                            disabled={busy}
+                        >
+                            {busy ? "Waiting…" : "Enable"}
+                        </AdminGatedButton>
+                    )
+                }
+            />
+        );
     };
 
     return (
@@ -113,57 +172,22 @@ export function UnlockMethodsCard({
                         }
                     />
 
-                    {/* Passkey — Windows Hello / security key */}
-                    {(passkey || webAuthnAvailable) && (
-                        <MethodRow
-                            title="Passkey (Windows Hello / security key)"
-                            description={
-                                passkey
-                                    ? "Unlock with your fingerprint, PIN, or a security key"
-                                    : "Add a tap-to-unlock passkey backed by hardware"
-                            }
-                            badge={
-                                passkey ? (
-                                    <Badge
-                                        variant="outline"
-                                        className="border-success/40 bg-success/10 text-success"
-                                    >
-                                        Enabled
-                                    </Badge>
-                                ) : undefined
-                            }
-                            action={
-                                passkey ? (
-                                    <AdminGatedButton
-                                        variant="outline"
-                                        size="sm"
-                                        requireAdminMode={false}
-                                        requireUnlocked
-                                        className="text-destructive hover:bg-destructive/10"
-                                        onClick={() => setRemoveTarget(passkey)}
-                                        disabled={busy}
-                                    >
-                                        Remove
-                                    </AdminGatedButton>
-                                ) : (
-                                    <AdminGatedButton
-                                        variant="outline"
-                                        size="sm"
-                                        requireAdminMode={false}
-                                        requireUnlocked
-                                        onClick={() =>
-                                            run(
-                                                () => enrollWebAuthn("Passkey"),
-                                                "Passkey enrolled",
-                                            )
-                                        }
-                                        disabled={busy}
-                                    >
-                                        {busy ? "Waiting…" : "Enable"}
-                                    </AdminGatedButton>
-                                )
-                            }
-                        />
+                    {/* Passkeys — one constrained enrollment path each */}
+                    {webAuthnAvailable && (
+                        <>
+                            {passkeyRow(
+                                "Windows Hello",
+                                "Unlock with your fingerprint or PIN on this device",
+                                "Windows Hello",
+                                enrollWindowsHello,
+                            )}
+                            {passkeyRow(
+                                "Security key",
+                                "Unlock by tapping a FIDO2 security key",
+                                "Security key",
+                                enrollSecurityKey,
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>

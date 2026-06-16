@@ -23,13 +23,15 @@ export function useSecurityKeys() {
         }
     }, []);
 
-    const enrollWebAuthn = useCallback(
-        async (label: string) => {
-            await api.enrollWebAuthn(label);
-            await refresh();
-        },
-        [refresh],
-    );
+    const enrollWindowsHello = useCallback(async () => {
+        await api.enrollWindowsHello();
+        await refresh();
+    }, [refresh]);
+
+    const enrollSecurityKey = useCallback(async () => {
+        await api.enrollSecurityKey();
+        await refresh();
+    }, [refresh]);
 
     const remove = useCallback(
         async (id: number) => {
@@ -44,7 +46,8 @@ export function useSecurityKeys() {
         webAuthnAvailable,
         isLoading,
         refresh,
-        enrollWebAuthn,
+        enrollWindowsHello,
+        enrollSecurityKey,
         remove,
     };
 }

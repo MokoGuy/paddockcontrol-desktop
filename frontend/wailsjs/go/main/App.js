@@ -42,13 +42,16 @@ export function DownloadAndApplyUpdate() {
   return window['go']['main']['App']['DownloadAndApplyUpdate']();
 }
 
-
 export function EnrollPasswordMethod(arg1, arg2) {
   return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
-export function EnrollWebAuthn(arg1) {
-  return window['go']['main']['App']['EnrollWebAuthn'](arg1);
+export function EnrollSecurityKey() {
+  return window['go']['main']['App']['EnrollSecurityKey']();
+}
+
+export function EnrollWindowsHello() {
+  return window['go']['main']['App']['EnrollWindowsHello']();
 }
 
 export function ExportCertificateZip(arg1, arg2) {
@@ -118,7 +121,6 @@ export function ImportCertificate(arg1) {
 export function ImportCertificatesFromBackup(arg1, arg2) {
   return window['go']['main']['App']['ImportCertificatesFromBackup'](arg1, arg2);
 }
-
 
 export function IsSetupComplete() {
   return window['go']['main']['App']['IsSetupComplete']();
@@ -231,7 +233,6 @@ export function SetCertificateReadOnly(arg1, arg2) {
 export function SkipEncryptionKey() {
   return window['go']['main']['App']['SkipEncryptionKey']();
 }
-
 
 export function UnlockWithWebAuthn() {
   return window['go']['main']['App']['UnlockWithWebAuthn']();
