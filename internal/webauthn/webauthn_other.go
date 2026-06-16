@@ -10,6 +10,11 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, excludeCred
 	return nil, ErrUnsupported
 }
 
+// Assert is unsupported off Windows.
+func Assert(windowTitle, rpID string, allowed []AllowedCredential, salt []byte) (credentialID, secret []byte, err error) {
+	return nil, nil, ErrUnsupported
+}
+
 // Derive is unsupported off Windows.
 func Derive(windowTitle, rpID string, credentialID, salt []byte, transports []string) ([]byte, error) {
 	return nil, ErrUnsupported

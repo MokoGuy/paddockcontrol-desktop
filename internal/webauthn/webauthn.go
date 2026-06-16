@@ -37,6 +37,14 @@ type Credential struct {
 	Transports   []string
 }
 
+// AllowedCredential identifies an enrolled credential for a multi-credential
+// assertion: Assert offers all of them at once and the user picks which
+// authenticator to use at the OS dialog.
+type AllowedCredential struct {
+	CredentialID []byte
+	Transports   []string
+}
+
 // LabelForTransports names a passkey from the authenticator it was created on.
 func LabelForTransports(transports []string) string {
 	for _, t := range transports {
