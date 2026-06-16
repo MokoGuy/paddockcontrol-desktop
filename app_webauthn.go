@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"paddockcontrol-desktop/internal/crypto"
 	"paddockcontrol-desktop/internal/db/sqlc"
@@ -62,9 +63,11 @@ func (a *App) EnrollPasskey() error {
 	// Exclude already-enrolled passkeys so the same authenticator can't register a
 	// duplicate (which, for Windows Hello, would overwrite the existing one).
 	exclude := a.enrolledPasskeyCredentialIDs()
+	log.Debug("starting passkey enrollment", slog.Int("excluded_credentials", len(exclude)))
 
 	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, exclude)
 	if err != nil {
+		log.Debug("passkey enrollment failed", logger.Err(err))
 		if errors.Is(err, webauthn.ErrCredentialAlreadyEnrolled) {
 			return fmt.Errorf("this authenticator already has a passkey here; use a different device or security key")
 		}
@@ -101,7 +104,10 @@ func (a *App) EnrollPasskey() error {
 		return fmt.Errorf("failed to store security key: %w", err)
 	}
 
-	log.Info("passkey unlock method enrolled successfully")
+	logger.Audit("unlock_method.passkey_enrolled",
+		slog.String("label", webauthn.LabelForTransports(cred.Transports)),
+		slog.Any("transports", cred.Transports),
+	)
 	return nil
 }
 
@@ -169,25 +175,29 @@ func (a *App) UnlockWithWebAuthn() (bool, error) {
 			continue
 		}
 
+		log.Debug("attempting passkey unlock", slog.Int64("key_id", key.ID), slog.String("label", key.Label))
+
 		// The stored transports route the prompt straight to the authenticator
 		// that holds this credential (no device chooser).
 		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt, meta.Transports)
 		if err != nil {
 			// User cancelled, wrong authenticator, or this credential isn't present.
-			log.Debug("passkey derive failed", logger.Err(err))
+			log.Debug("passkey derive failed", slog.Int64("key_id", key.ID), logger.Err(err))
 			continue
 		}
 		masterKey, uerr := crypto.UnwrapMasterKey(key.WrappedMasterKey, secret)
 		crypto.Zero(secret)
 		if uerr != nil {
+			log.Debug("passkey master-key unwrap failed", slog.Int64("key_id", key.ID))
 			continue
 		}
 
 		_ = database.Queries().UpdateSecurityKeyLastUsed(a.ctx, key.ID)
 		a.finalizeUnlock(masterKey)
-		log.Info("unlock via passkey succeeded")
+		logger.Audit("unlock.passkey_succeeded", slog.Int64("key_id", key.ID), slog.String("label", key.Label))
 		return true, nil
 	}
 
+	logger.Audit("unlock.passkey_failed", slog.Int("candidate_keys", len(keys)))
 	return false, fmt.Errorf("passkey unlock failed")
 }
