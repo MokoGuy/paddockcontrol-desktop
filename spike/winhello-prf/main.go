@@ -13,9 +13,11 @@
 //	winhello-prf.exe key      # Security key (YubiKey): cross-platform, NON-resident
 //	winhello-prf.exe cleanup  # delete the spike's resident credential(s) + state
 //
-// PRF is enabled at create() but evaluated at get(): the secret is not returned
-// during registration, so it is derived in a separate assertion — the documented
-// two-step PRF pattern (Yubico/MDN; bEnablePrf vs pPRFGlobalEval on Windows).
+// PRF is EVALUATED at create() (pPRFGlobalEval). The generic CTAP guidance is to
+// enable-only and derive at get(), but Windows Hello / NGC rejects the
+// enable-only path with NTE_NOT_SUPPORTED (0x80090029) and falls back to the
+// device chooser — observed in the Microsoft-Windows-WebAuthN/Operational ETW log.
+// The credential id + salt still re-derive the same secret at get() afterwards.
 //
 // Build (from WSL/Linux, no CGO):
 //
@@ -93,7 +95,7 @@ func main() {
 	}
 
 	fmt.Printf("[INFO] path: %s | hint=%s\n", p.name, p.hint)
-	fmt.Println("[INFO] PRF strategy: enable at create (bEnablePrf), derive via get() — two-step")
+	fmt.Println("[INFO] PRF strategy: evaluate at create (pPRFGlobalEval) — required by Windows Hello/NGC")
 	fmt.Println("[INFO] >>> WATCH the Windows dialog: a 'phone / security key' chooser, or straight to the authenticator? <<<")
 
 	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), "PaddockControl PRF Spike")
@@ -172,10 +174,15 @@ func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
 			{Type: webauthntypes.PublicKeyCredentialTypePublicKey, Algorithm: iana.AlgorithmES256},
 		},
 		nil,
-		// bEnablePrf only — no pPRFGlobalEval. Enables PRF on the credential; the
-		// secret is derived later in derivePRF via get().
+		// Evaluate PRF at creation (pPRFGlobalEval). Windows Hello / NGC REQUIRES
+		// this: bEnablePrf-only (CreateHMACSecret) makes NGC MakeCredential return
+		// NTE_NOT_SUPPORTED (0x80090029) and fall back to the device chooser —
+		// confirmed in the Microsoft-Windows-WebAuthN/Operational ETW log. (winhello
+		// v0.1.0 also dereferences PRF.Eval unconditionally on this path.)
 		&webauthntypes.CreateAuthenticationExtensionsClientInputs{
-			CreateHMACSecretInputs: &webauthntypes.CreateHMACSecretInputs{HMACCreateSecret: true},
+			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
+				Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: prfSalt},
+			}},
 		},
 		&winhello.AuthenticatorMakeCredentialOptions{
 			AuthenticatorAttachment:     p.attachment,
