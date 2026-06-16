@@ -79,31 +79,48 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		return &Credential{CredentialID: resp.CredentialID, Secret: resp.HMACSecret.First}, nil
 	}
 
-	secret, err := derive(hWnd, rpID, resp.CredentialID, salt)
+	// Windows Hello does not return the hmac-secret at creation, so we must do one
+	// assertion to obtain it. Constrain it to the same authenticator class so
+	// Windows routes straight to it instead of re-showing the device chooser.
+	secret, err := derive(hWnd, rpID, resp.CredentialID, salt, platform)
 	if err != nil {
 		return nil, err
 	}
 	return &Credential{CredentialID: resp.CredentialID, Secret: secret}, nil
 }
 
-// Derive re-derives the PRF secret for an existing credential id + salt.
-func Derive(windowTitle, rpID string, credentialID, salt []byte) ([]byte, error) {
+// Derive re-derives the PRF secret for an existing credential id + salt. platform
+// selects the authenticator class (Windows Hello vs security key) so the prompt
+// goes straight to it without a device chooser.
+func Derive(windowTitle, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
 	hWnd, cleanup, err := windowHandle(windowTitle, rpID)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
-	return derive(hWnd, rpID, credentialID, salt)
+	return derive(hWnd, rpID, credentialID, salt, platform)
 }
 
-func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte) ([]byte, error) {
+func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
+	attachment := winhello.WinHelloAuthenticatorAttachmentCrossPlatform
+	descriptor := webauthntypes.PublicKeyCredentialDescriptor{
+		ID:   credentialID,
+		Type: webauthntypes.PublicKeyCredentialTypePublicKey,
+	}
+	if platform {
+		attachment = winhello.WinHelloAuthenticatorAttachmentPlatform
+		// Internal transport tells Windows the credential lives on this device, so
+		// it skips the "phone / security key" chooser.
+		descriptor.Transports = []webauthntypes.AuthenticatorTransport{
+			webauthntypes.AuthenticatorTransportInternal,
+		}
+	}
+
 	assertion, err := winhello.GetAssertion(
 		hWnd,
 		rpID,
 		[]byte("{}"),
-		[]webauthntypes.PublicKeyCredentialDescriptor{
-			{ID: credentialID, Type: webauthntypes.PublicKeyCredentialTypePublicKey},
-		},
+		[]webauthntypes.PublicKeyCredentialDescriptor{descriptor},
 		&webauthntypes.GetAuthenticationExtensionsClientInputs{
 			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
 				EvalByCredential: map[string]webauthntypes.AuthenticationExtensionsPRFValues{
@@ -112,6 +129,7 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte) ([]byte, 
 			}},
 		},
 		&winhello.AuthenticatorGetAssertionOptions{
+			AuthenticatorAttachment:     attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
 		},
 	)
