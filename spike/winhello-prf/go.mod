@@ -16,4 +16,4 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 )
 
-replace github.com/go-ctap/winhello => ./winhello-patched
+replace github.com/go-ctap/winhello => github.com/MokoGuy/winhello v0.1.1-0.20260616014323-e943688dadf7
