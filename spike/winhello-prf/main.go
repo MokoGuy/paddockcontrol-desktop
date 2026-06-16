@@ -36,6 +36,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-ctap/ctaphid/pkg/webauthntypes"
 	"github.com/go-ctap/winhello"
@@ -80,6 +81,11 @@ var (
 	}
 )
 
+// noPRF, when set via the "noprf" arg, creates a plain passkey with NO hmac-secret
+// extension — to confirm that a software Windows Hello key CAN create a normal
+// credential but NOT an hmac-secret one (the 0x80090029 NOT_SUPPORTED case).
+var noPRF = false
+
 func main() {
 	p := helloPath
 	cleanup := false
@@ -87,16 +93,22 @@ func main() {
 		switch a {
 		case "key":
 			p = keyPath
+		case "noprf":
+			noPRF = true
 		case "cleanup":
 			cleanup = true
 		default:
-			fail("unknown argument %q (use: [key] [cleanup])", a)
+			fail("unknown argument %q (use: [key] [noprf] [cleanup])", a)
 		}
 	}
 
-	fmt.Printf("[INFO] path: %s | hint=%s\n", p.name, p.hint)
-	fmt.Println("[INFO] PRF strategy: evaluate at create (pPRFGlobalEval) — required by Windows Hello/NGC")
-	fmt.Println("[INFO] >>> WATCH the Windows dialog: a 'phone / security key' chooser, or straight to the authenticator? <<<")
+	logf("path: %s | hint=%s", p.name, p.hint)
+	strategy := "evaluate at create (pPRFGlobalEval) — required by Windows Hello/NGC"
+	if noPRF {
+		strategy = "NONE — plain passkey, no hmac-secret (isolation test)"
+	}
+	logf("PRF strategy: %s", strategy)
+	logf(">>> WATCH the Windows dialog: a 'phone / security key' chooser, or straight to the authenticator? <<<")
 
 	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), "PaddockControl PRF Spike")
 	if err != nil {
@@ -120,6 +132,13 @@ func main() {
 		fmt.Println("[INFO] created a NEW credential — run again to prove cross-restart re-derivation")
 	} else {
 		fmt.Println("[PASS] reused an existing credential from a previous process (cross-restart path)")
+	}
+
+	if noPRF {
+		fmt.Printf("\n=== RESULT: a plain (no-hmac-secret) credential was created on %s. ===\n", p.name)
+		fmt.Println("If THIS works but the PRF run fails with NGC 0x80090029, the limitation is hmac-secret")
+		fmt.Println("on a software (non-TPM) Windows Hello key — not our code.")
+		return
 	}
 
 	// PRF must be deterministic for a fixed (credential, salt): a stable KEK. Two
@@ -165,6 +184,7 @@ func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
 		}
 	}
 
+	logf("calling MakeCredential (attachment=%d resident=%v prf=%v)...", p.attachment, p.resident, !noPRF)
 	resp, err := winhello.MakeCredential(
 		hWnd,
 		[]byte("{}"),
@@ -174,16 +194,7 @@ func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
 			{Type: webauthntypes.PublicKeyCredentialTypePublicKey, Algorithm: iana.AlgorithmES256},
 		},
 		nil,
-		// Evaluate PRF at creation (pPRFGlobalEval). Windows Hello / NGC REQUIRES
-		// this: bEnablePrf-only (CreateHMACSecret) makes NGC MakeCredential return
-		// NTE_NOT_SUPPORTED (0x80090029) and fall back to the device chooser —
-		// confirmed in the Microsoft-Windows-WebAuthN/Operational ETW log. (winhello
-		// v0.1.0 also dereferences PRF.Eval unconditionally on this path.)
-		&webauthntypes.CreateAuthenticationExtensionsClientInputs{
-			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
-				Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: prfSalt},
-			}},
-		},
+		createExt(),
 		&winhello.AuthenticatorMakeCredentialOptions{
 			AuthenticatorAttachment:     p.attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
@@ -191,6 +202,7 @@ func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
 			CredentialHints:             []webauthntypes.PublicKeyCredentialHint{p.hint},
 		},
 	)
+	logf("MakeCredential returned (err=%v)", err)
 	if err != nil {
 		fail("MakeCredential: %v", err)
 	}
@@ -218,6 +230,7 @@ func derivePRF(hWnd windows.HWND, p path, credID, salt []byte) []byte {
 		}
 	}
 
+	logf("calling GetAssertion (derive PRF, attachment=%d)...", p.attachment)
 	assertion, err := winhello.GetAssertion(
 		hWnd,
 		rpID,
@@ -311,7 +324,29 @@ func statePath(name string) string {
 	return filepath.Join(filepath.Dir(exe), name)
 }
 
+// createExt returns the create-time extension request: PRF evaluated at creation
+// (pPRFGlobalEval), or nil for the "noprf" isolation test. Windows Hello / NGC
+// REQUIRES eval-at-create: bEnablePrf-only (CreateHMACSecret) makes NGC return
+// NTE_NOT_SUPPORTED (0x80090029), confirmed in the WebAuthN ETW log. (winhello
+// v0.1.0 also dereferences PRF.Eval unconditionally on this path.)
+func createExt() *webauthntypes.CreateAuthenticationExtensionsClientInputs {
+	if noPRF {
+		return nil
+	}
+	return &webauthntypes.CreateAuthenticationExtensionsClientInputs{
+		PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
+			Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: prfSalt},
+		}},
+	}
+}
+
+// logf prints a timestamped [INFO] line so the console output can be correlated
+// with the Microsoft-Windows-WebAuthN/Operational ETW timestamps.
+func logf(format string, a ...any) {
+	fmt.Printf("[%s] [INFO] "+format+"\n", append([]any{time.Now().Format("15:04:05.000")}, a...)...)
+}
+
 func fail(format string, a ...any) {
-	fmt.Printf("[FAIL] "+format+"\n", a...)
+	fmt.Printf("[%s] [FAIL] "+format+"\n", append([]any{time.Now().Format("15:04:05.000")}, a...)...)
 	os.Exit(1)
 }
