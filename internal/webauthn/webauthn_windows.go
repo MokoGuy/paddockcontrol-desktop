@@ -32,28 +32,39 @@ func isErrno(err error, code uint32) bool {
 	return errors.As(err, &errno) && uint32(errno) == code
 }
 
+func transportsToStrings(ts []webauthntypes.AuthenticatorTransport) []string {
+	out := make([]string, len(ts))
+	for i, t := range ts {
+		out[i] = string(t)
+	}
+	return out
+}
+
+func stringsToTransports(ss []string) []webauthntypes.AuthenticatorTransport {
+	out := make([]webauthntypes.AuthenticatorTransport, len(ss))
+	for i, s := range ss {
+		out[i] = webauthntypes.AuthenticatorTransport(s)
+	}
+	return out
+}
+
 // Available reports whether the native Windows WebAuthn API is usable.
 func Available() bool {
 	return winhello.APIVersionNumber() > 0
 }
 
-// Enroll creates a NON-resident passkey with the PRF extension enabled and
-// returns its credential id plus the secret derived for salt. windowTitle is the
-// app's top-level window title, used to parent the dialog. platform selects the
-// authenticator class: true constrains to the built-in platform authenticator
-// (Windows Hello / this device), false to a roaming one (security key) — so each
-// enrollment path shows a single, unambiguous Windows prompt.
-func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bool) (*Credential, error) {
+// Enroll creates a passkey with the PRF extension enabled and returns its
+// credential id, the secret derived for salt, and the transports the chosen
+// authenticator used. The attachment is unconstrained: the user picks Windows
+// Hello, a security key, or a phone at the OS dialog. It is requested as
+// non-resident so a security key consumes no slot; Windows Hello stores a
+// discoverable credential regardless, which it needs for hmac-secret.
+func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credential, error) {
 	hWnd, cleanup, err := windowHandle(windowTitle, rpName)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
-
-	attachment := winhello.WinHelloAuthenticatorAttachmentCrossPlatform
-	if platform {
-		attachment = winhello.WinHelloAuthenticatorAttachmentPlatform
-	}
 
 	resp, err := winhello.MakeCredential(
 		hWnd,
@@ -70,18 +81,14 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 			}},
 		},
 		&winhello.AuthenticatorMakeCredentialOptions{
-			AuthenticatorAttachment:     attachment,
+			AuthenticatorAttachment:     winhello.WinHelloAuthenticatorAttachmentAny,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
-			// Windows Hello requires a resident/discoverable credential to support
-			// hmac-secret; a roaming security key stays non-resident (no slot used).
-			RequireResidentKey: platform,
+			RequireResidentKey:          false,
 		},
 	)
 	if err != nil {
-		// Windows Hello without a TPM-backed key returns NTE_NOT_SUPPORTED for the
-		// platform credential. (Often the OS masks it by falling back to the device
-		// chooser, so this only fires when the error surfaces directly.)
-		if platform && isErrno(err, nteNotSupported) {
+		// A platform authenticator with no TPM-backed key returns NTE_NOT_SUPPORTED.
+		if isErrno(err, nteNotSupported) {
 			return nil, ErrPlatformAuthenticatorUnsupported
 		}
 		return nil, fmt.Errorf("make credential: %w", err)
@@ -90,17 +97,9 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		return nil, fmt.Errorf("the chosen authenticator does not support PRF")
 	}
 
-	hmacLen := 0
-	if resp.HMACSecret != nil {
-		hmacLen = len(resp.HMACSecret.First)
-	}
-	log := logger.WithComponent("webauthn")
-	log.Info("passkey created",
-		slog.Bool("platform_requested", platform),
-		slog.Int("attachment_requested", int(attachment)),
+	transports := transportsToStrings(resp.UsedTransport)
+	logger.WithComponent("webauthn").Info("passkey created",
 		slog.Bool("prf_enabled", resp.PRFEnabled),
-		slog.Bool("hmac_secret_at_create", hmacLen == SecretLen),
-		slog.Int("hmac_secret_len", hmacLen),
 		slog.Any("used_transport", resp.UsedTransport),
 		slog.Bool("resident_key", resp.ResidentKey),
 	)
@@ -108,44 +107,34 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 	// Always derive the wrapping secret via an assertion (get()), even though
 	// creation may also return it: unlock derives via the same get() path, so
 	// using one path for both guarantees the enroll and unlock secrets match.
-	secret, err := derive(hWnd, rpID, resp.CredentialID, salt, platform)
+	secret, err := derive(hWnd, rpID, resp.CredentialID, salt, resp.UsedTransport)
 	if err != nil {
 		return nil, err
 	}
-	return &Credential{CredentialID: resp.CredentialID, Secret: secret}, nil
+	return &Credential{CredentialID: resp.CredentialID, Secret: secret, Transports: transports}, nil
 }
 
-// Derive re-derives the PRF secret for an existing credential id + salt. platform
-// selects the authenticator class (Windows Hello vs security key) so the prompt
-// goes straight to it without a device chooser.
-func Derive(windowTitle, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
+// Derive re-derives the PRF secret for an existing credential id + salt. The
+// stored transports route the prompt straight to the authenticator that holds
+// the credential, so Windows skips the device chooser.
+func Derive(windowTitle, rpID string, credentialID, salt []byte, transports []string) ([]byte, error) {
 	hWnd, cleanup, err := windowHandle(windowTitle, rpID)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
-	return derive(hWnd, rpID, credentialID, salt, platform)
+	return derive(hWnd, rpID, credentialID, salt, stringsToTransports(transports))
 }
 
-func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
-	attachment := winhello.WinHelloAuthenticatorAttachmentCrossPlatform
+func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, transports []webauthntypes.AuthenticatorTransport) ([]byte, error) {
 	descriptor := webauthntypes.PublicKeyCredentialDescriptor{
-		ID:   credentialID,
-		Type: webauthntypes.PublicKeyCredentialTypePublicKey,
-	}
-	if platform {
-		attachment = winhello.WinHelloAuthenticatorAttachmentPlatform
-		// Internal transport tells Windows the credential lives on this device, so
-		// it skips the "phone / security key" chooser.
-		descriptor.Transports = []webauthntypes.AuthenticatorTransport{
-			webauthntypes.AuthenticatorTransportInternal,
-		}
+		ID:         credentialID,
+		Type:       webauthntypes.PublicKeyCredentialTypePublicKey,
+		Transports: transports,
 	}
 
 	logger.WithComponent("webauthn").Info("deriving PRF via assertion",
-		slog.Bool("platform", platform),
-		slog.Int("attachment", int(attachment)),
-		slog.Int("transports", len(descriptor.Transports)),
+		slog.Int("transports", len(transports)),
 	)
 
 	assertion, err := winhello.GetAssertion(
@@ -162,7 +151,6 @@ func derive(hWnd windows.HWND, rpID string, credentialID, salt []byte, platform 
 			},
 		},
 		&winhello.AuthenticatorGetAssertionOptions{
-			AuthenticatorAttachment:     attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
 		},
 	)

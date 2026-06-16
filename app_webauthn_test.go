@@ -11,11 +11,8 @@ func TestEnrollWebAuthn_FailsWhenUnavailable(t *testing.T) {
 	if app.IsWebAuthnAvailable() {
 		t.Skip("platform WebAuthn available (Windows) — skip the unavailable-path test")
 	}
-	if err := app.EnrollWindowsHello(); err == nil {
-		t.Fatal("expected EnrollWindowsHello to fail when WebAuthn is unavailable")
-	}
-	if err := app.EnrollSecurityKey(); err == nil {
-		t.Fatal("expected EnrollSecurityKey to fail when WebAuthn is unavailable")
+	if err := app.EnrollPasskey(); err == nil {
+		t.Fatal("expected EnrollPasskey to fail when WebAuthn is unavailable")
 	}
 }
 

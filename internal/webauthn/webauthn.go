@@ -21,10 +21,27 @@ var ErrUnsupported = errors.New("platform WebAuthn is not supported on this OS")
 // NTE_NOT_SUPPORTED, 0x80090029). The roaming/security-key path still works.
 var ErrPlatformAuthenticatorUnsupported = errors.New("the platform authenticator (Windows Hello) cannot create a passkey on this device")
 
-// Credential is the result of a successful Enroll: the credential id (which we
-// store and pass back on every Derive — the credential is non-resident, so
-// nothing is stored on the authenticator) plus the derived secret.
+// Credential is the result of a successful Enroll: the credential id (stored and
+// passed back on every Derive), the derived secret, and the authenticator
+// transports actually used — which both label the method (Windows Hello vs a
+// security key) and route the unlock prompt straight to the right authenticator.
 type Credential struct {
 	CredentialID []byte
 	Secret       []byte // SecretLen bytes
+	Transports   []string
+}
+
+// LabelForTransports names a passkey from the authenticator it was created on.
+func LabelForTransports(transports []string) string {
+	for _, t := range transports {
+		switch t {
+		case "internal":
+			return "Windows Hello"
+		case "usb", "nfc", "ble", "smart-card":
+			return "Security key"
+		case "hybrid":
+			return "Phone or tablet"
+		}
+	}
+	return "Passkey"
 }

@@ -51,8 +51,10 @@ const (
 	rpName = "PaddockControl"
 )
 
-// prfSalt is the fixed PRF input the app would use to derive the wrapping key.
-var prfSalt = []byte("paddockcontrol/master-key-wrap/v1")
+// prfSalt is the fixed salt the app uses to derive the wrapping key. The raw
+// hmac-secret extension requires EXACTLY 32 bytes (the PRF path tolerated other
+// lengths; raw does not — 33 bytes returned ERROR_INVALID_DATA).
+var prfSalt = []byte("paddockcontrol/master-key/wrapv1") // 32 bytes
 
 // path is one authenticator configuration under test. The residency is the key
 // variable: Windows Hello needs resident/discoverable credentials for hmac-secret,
@@ -90,10 +92,13 @@ var noPRF = false
 func main() {
 	p := helloPath
 	cleanup := false
+	nonResident := false
 	for _, a := range os.Args[1:] {
 		switch a {
 		case "key":
 			p = keyPath
+		case "nonres": // force non-resident — to test if Hello works without a resident key
+			nonResident = true
 		case "noprf":
 			noPRF = true
 		case "tpm": // detection probe only — no UI, no credential
@@ -102,11 +107,15 @@ func main() {
 		case "cleanup":
 			cleanup = true
 		default:
-			fail("unknown argument %q (use: [key] [noprf] [tpm] [cleanup])", a)
+			fail("unknown argument %q (use: [key] [nonres] [noprf] [tpm] [cleanup])", a)
 		}
 	}
+	if nonResident {
+		p.resident = false
+		p.name += " [forced non-resident]"
+	}
 
-	logf("path: %s | hint=%s", p.name, p.hint)
+	logf("path: %s | hint=%s | resident=%v", p.name, p.hint, p.resident)
 	strategy := "evaluate at create (pPRFGlobalEval) — required by Windows Hello/NGC"
 	if noPRF {
 		strategy = "NONE — plain passkey, no hmac-secret (isolation test)"
@@ -210,8 +219,15 @@ func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
 	if err != nil {
 		fail("MakeCredential: %v", err)
 	}
-	fmt.Printf("[INFO] MakeCredential OK; PRFEnabled=%v usedTransport=%v residentKey=%v\n",
-		resp.PRFEnabled, resp.UsedTransport, resp.ResidentKey)
+	hmacLen := 0
+	if resp.HMACSecret != nil {
+		hmacLen = len(resp.HMACSecret.First)
+	}
+	fmt.Printf("[INFO] MakeCredential OK; PRFEnabled=%v usedTransport=%v residentKey=%v hmac_at_create=%dB\n",
+		resp.PRFEnabled, resp.UsedTransport, resp.ResidentKey, hmacLen)
+	if hmacLen == 32 {
+		logf("PRF secret returned AT CREATION → enrollment can be a single ceremony")
+	}
 	if !resp.PRFEnabled {
 		fmt.Println("[WARN] PRFEnabled=false on create — the get() below is the real test of PRF support")
 	}
@@ -241,11 +257,13 @@ func derivePRF(hWnd windows.HWND, p path, credID, salt []byte) []byte {
 		[]byte("{}"),
 		[]webauthntypes.PublicKeyCredentialDescriptor{descriptor},
 		&webauthntypes.GetAuthenticationExtensionsClientInputs{
-			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
-				EvalByCredential: map[string]webauthntypes.AuthenticationExtensionsPRFValues{
-					base64.URLEncoding.EncodeToString(credID): {First: salt},
-				},
-			}},
+			// Raw hmac-secret, NOT PRFInputs: winhello sets the required
+			// WEBAUTHN_AUTHENTICATOR_HMAC_SECRET_VALUES_FLAG only on this path, so
+			// Windows actually evaluates the salt at get(). winhello passes the salt
+			// straight through (no PRF pre-hash), so Output1 == the create-time secret.
+			GetHMACSecretInputs: &webauthntypes.GetHMACSecretInputs{
+				HMACGetSecret: webauthntypes.HMACGetSecretInput{Salt1: salt},
+			},
 		},
 		&winhello.AuthenticatorGetAssertionOptions{
 			AuthenticatorAttachment:     p.attachment,
@@ -255,10 +273,13 @@ func derivePRF(hWnd windows.HWND, p path, credID, salt []byte) []byte {
 	if err != nil {
 		fail("GetAssertion: %v", err)
 	}
-	if !assertion.ExtensionOutputs.PRFOutputs.PRF.Enabled {
-		fail("assertion did not return a PRF result (prf.enabled=false)")
+	out := assertion.ExtensionOutputs
+	if out == nil || out.GetHMACSecretOutputs == nil {
+		fail("assertion returned no hmac-secret output (ExtensionOutputs nil=%v) — salt not evaluated", out == nil)
 	}
-	return assertion.ExtensionOutputs.PRFOutputs.PRF.Results.First
+	secret := out.GetHMACSecretOutputs.HMACGetSecret.Output1
+	logf("GetAssertion OK; hmac-secret output len=%d", len(secret))
+	return secret
 }
 
 // doCleanup deletes the resident Windows Hello credentials this spike created

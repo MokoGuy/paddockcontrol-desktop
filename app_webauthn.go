@@ -29,37 +29,15 @@ func (a *App) IsWebAuthnAvailable() bool {
 	return webauthn.Available()
 }
 
-// Passkey enrollment labels. They also distinguish the two passkey rows in the
-// UI, so keep them in sync with the frontend.
-const (
-	labelWindowsHello = "Windows Hello"
-	labelSecurityKey  = "Security key"
-)
-
-// EnrollWindowsHello enrolls a platform passkey (Windows Hello / this device) as
-// an unlock method.
-func (a *App) EnrollWindowsHello() error {
-	return a.enrollPasskey(labelWindowsHello, true)
-}
-
-// EnrollSecurityKey enrolls a roaming passkey (a FIDO2 security key) as an unlock
-// method.
-func (a *App) EnrollSecurityKey() error {
-	return a.enrollPasskey(labelSecurityKey, false)
-}
-
-// enrollPasskey creates a non-resident credential with PRF, derives a wrapping
-// key, and stores the wrapped master key. platform selects the authenticator
-// class (Windows Hello vs security key). Requires the app unlocked.
-func (a *App) enrollPasskey(label string, platform bool) error {
+// EnrollPasskey enrolls a passkey as an unlock method. The OS dialog lets the
+// user pick Windows Hello, a security key, or a phone; the resulting method is
+// labelled from the authenticator that was used. Requires the app unlocked.
+func (a *App) EnrollPasskey() error {
 	if err := a.requireUnlocked(); err != nil {
 		return fmt.Errorf("app must be unlocked: %w", err)
 	}
 	if !webauthn.Available() {
 		return fmt.Errorf("passkey unlock is not available on this platform")
-	}
-	if label == "" {
-		label = "Passkey"
 	}
 
 	a.mu.RLock()
@@ -81,17 +59,10 @@ func (a *App) enrollPasskey(label string, platform bool) error {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, platform)
+	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt)
 	if err != nil {
-		if platform {
-			// Windows Hello couldn't create a passkey. On machines where Hello isn't
-			// TPM-backed, Windows masks this by offering a "phone / security key"
-			// chooser, so we can't always distinguish it from a plain cancel — give
-			// guidance that covers both.
-			if errors.Is(err, webauthn.ErrPlatformAuthenticatorUnsupported) {
-				return fmt.Errorf("Windows Hello can't store a passkey on this device (it isn't backed by a TPM here); use a security key instead")
-			}
-			return fmt.Errorf("Windows Hello enrollment didn't complete; if you saw a phone/security-key chooser, Windows Hello can't store passkeys on this device — use a security key instead: %w", err)
+		if errors.Is(err, webauthn.ErrPlatformAuthenticatorUnsupported) {
+			return fmt.Errorf("Windows Hello can't store a passkey on this device (it isn't backed by a TPM here); use a security key instead")
 		}
 		return fmt.Errorf("passkey enrollment failed: %w", err)
 	}
@@ -102,7 +73,11 @@ func (a *App) enrollPasskey(label string, platform bool) error {
 		return fmt.Errorf("failed to wrap master key: %w", err)
 	}
 
-	metaJSON, err := json.Marshal(models.WebAuthnMetadata{CredentialID: cred.CredentialID, Salt: salt})
+	metaJSON, err := json.Marshal(models.WebAuthnMetadata{
+		CredentialID: cred.CredentialID,
+		Salt:         salt,
+		Transports:   cred.Transports,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
@@ -110,7 +85,7 @@ func (a *App) enrollPasskey(label string, platform bool) error {
 	if err := database.WithTx(a.ctx, func(q *sqlc.Queries) error {
 		_, e := q.InsertSecurityKey(a.ctx, sqlc.InsertSecurityKeyParams{
 			Method:           models.SecurityKeyMethodFIDO2,
-			Label:            label,
+			Label:            webauthn.LabelForTransports(cred.Transports),
 			WrappedMasterKey: wrappedMasterKey,
 			Metadata:         sql.NullString{String: string(metaJSON), Valid: true},
 		})
@@ -161,9 +136,9 @@ func (a *App) UnlockWithWebAuthn() (bool, error) {
 			continue
 		}
 
-		// Route the prompt straight to the right authenticator class (no chooser).
-		platform := key.Label == labelWindowsHello
-		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt, platform)
+		// The stored transports route the prompt straight to the authenticator
+		// that holds this credential (no device chooser).
+		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt, meta.Transports)
 		if err != nil {
 			// User cancelled, wrong authenticator, or this credential isn't present.
 			log.Debug("passkey derive failed", logger.Err(err))
