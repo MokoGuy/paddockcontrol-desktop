@@ -1,15 +1,21 @@
 //go:build windows
 
-// Spike probe for issue #92: validate that the native Windows WebAuthn API
-// (via go-ctap/winhello, CGO-free) can derive a stable PRF/hmac-secret secret
-// from Windows Hello (platform authenticator) and use it to envelope-encrypt
-// the app's master key.
+// Spike probe for issue #92: validate that the native Windows WebAuthn API (via
+// go-ctap/winhello, CGO-free) can derive a stable PRF/hmac-secret secret from a
+// passkey and use it to envelope-encrypt the app's master key.
 //
-// Run on Windows (it shows the Windows Hello UI):
+// It tests the TWO authenticator paths the app offers, each with the residency
+// Windows actually requires:
 //
-//	winhello-prf.exe            # first run: create a Hello credential + test
-//	winhello-prf.exe            # run again: re-derive from a fresh process (cross-restart)
-//	winhello-prf.exe cleanup    # delete the spike credential + state file
+//	winhello-prf.exe          # Windows Hello: platform authenticator, RESIDENT
+//	                          #   webauthn.dll requires resident creds for
+//	                          #   hmac-secret on Hello (libfido2 #731)
+//	winhello-prf.exe key      # Security key (YubiKey): cross-platform, NON-resident
+//	winhello-prf.exe cleanup  # delete the spike's resident credential(s) + state
+//
+// PRF is enabled at create() but evaluated at get(): the secret is not returned
+// during registration, so it is derived in a separate assertion — the documented
+// two-step PRF pattern (Yubico/MDN; bEnablePrf vs pPRFGlobalEval on Windows).
 //
 // Build (from WSL/Linux, no CGO):
 //
@@ -37,41 +43,58 @@ import (
 )
 
 const (
-	rpID      = "paddockcontrol.local"
-	rpName    = "PaddockControl"
+	rpID   = "paddockcontrol.local"
+	rpName = "PaddockControl"
 )
 
 // prfSalt is the fixed PRF input the app would use to derive the wrapping key.
 var prfSalt = []byte("paddockcontrol/master-key-wrap/v1")
 
-// selected at startup from CLI args
+// path is one authenticator configuration under test. The residency is the key
+// variable: Windows Hello needs resident/discoverable credentials for hmac-secret,
+// while a roaming security key uses non-resident so it consumes no on-key slot.
+type path struct {
+	name       string
+	attachment winhello.WinHelloAuthenticatorAttachment
+	resident   bool
+	hint       webauthntypes.PublicKeyCredentialHint
+	stateFile  string
+}
+
 var (
-	attachment      = winhello.WinHelloAuthenticatorAttachmentPlatform
-	stateFileName   = "winhello-prf.credid.platform"
-	requireResident = true // platform (Hello) creds are discoverable; security keys use non-resident
+	helloPath = path{
+		name:       "Windows Hello (platform, resident)",
+		attachment: winhello.WinHelloAuthenticatorAttachmentPlatform,
+		resident:   true,
+		hint:       webauthntypes.PublicKeyCredentialHintClientDevice,
+		stateFile:  "winhello-prf.credid.platform",
+	}
+	keyPath = path{
+		name:       "security key (cross-platform, non-resident)",
+		attachment: winhello.WinHelloAuthenticatorAttachmentCrossPlatform,
+		resident:   false,
+		hint:       webauthntypes.PublicKeyCredentialHintSecurityKey,
+		stateFile:  "winhello-prf.credid.key",
+	}
 )
 
 func main() {
+	p := helloPath
 	cleanup := false
 	for _, a := range os.Args[1:] {
 		switch a {
-		case "key": // target a roaming FIDO2 security key (e.g. YubiKey)
-			attachment = winhello.WinHelloAuthenticatorAttachmentCrossPlatform
-			stateFileName = "winhello-prf.credid.key"
-			requireResident = false // non-resident: nothing stored on the key, no slot used
+		case "key":
+			p = keyPath
 		case "cleanup":
 			cleanup = true
+		default:
+			fail("unknown argument %q (use: [key] [cleanup])", a)
 		}
 	}
-	mode := "Windows Hello (platform)"
-	if attachment == winhello.WinHelloAuthenticatorAttachmentCrossPlatform {
-		mode = "security key (cross-platform / YubiKey)"
-	}
-	residency := "non-resident (credential id held by us, nothing stored on the authenticator)"
-	if requireResident {
-		residency = "resident/discoverable (stored on the authenticator)"
-	}
-	fmt.Printf("[INFO] mode: %s | %s\n", mode, residency)
+
+	fmt.Printf("[INFO] path: %s | hint=%s\n", p.name, p.hint)
+	fmt.Println("[INFO] PRF strategy: enable at create (bEnablePrf), derive via get() — two-step")
+	fmt.Println("[INFO] >>> WATCH the Windows dialog: a 'phone / security key' chooser, or straight to the authenticator? <<<")
 
 	wnd, err := hiddenwindow.New(slog.New(slog.DiscardHandler), "PaddockControl PRF Spike")
 	if err != nil {
@@ -83,45 +106,41 @@ func main() {
 	fmt.Printf("[INFO] Windows WebAuthn API version: %d\n", winhello.APIVersionNumber())
 	avail, err := winhello.IsUserVerifyingPlatformAuthenticatorAvailable()
 	fmt.Printf("[INFO] Windows Hello platform authenticator available: %v (err=%v)\n", avail, err)
-	if !avail {
-		fail("Windows Hello (platform authenticator) is not available/set up on this machine")
-	}
 
 	if cleanup {
 		doCleanup()
 		return
 	}
 
-	credID, fresh := ensureCredential(hWnd)
+	credID, fresh := ensureCredential(hWnd, p)
 	fmt.Printf("[INFO] credential id (%d bytes): %s\n", len(credID), base64.URLEncoding.EncodeToString(credID))
 	if fresh {
-		fmt.Println("[INFO] created a NEW Hello credential — run the probe again to prove cross-restart re-derivation")
+		fmt.Println("[INFO] created a NEW credential — run again to prove cross-restart re-derivation")
 	} else {
 		fmt.Println("[PASS] reused an existing credential from a previous process (cross-restart path)")
 	}
 
-	// Derive the PRF secret twice with the SAME salt -> must be identical (a stable KEK).
-	secretA := derivePRF(hWnd, credID, prfSalt)
-	secretB := derivePRF(hWnd, credID, prfSalt)
+	// PRF must be deterministic for a fixed (credential, salt): a stable KEK. Two
+	// independent assertions must yield the same 32 bytes.
+	secretA := derivePRF(hWnd, p, credID, prfSalt)
+	secretB := derivePRF(hWnd, p, credID, prfSalt)
 	fmt.Printf("[INFO] PRF secret (32B expected, got %d): %s\n", len(secretA), hex.EncodeToString(secretA))
 	if len(secretA) != 32 {
 		fail("PRF output is %d bytes, expected 32", len(secretA))
 	}
 	if !bytes.Equal(secretA, secretB) {
-		fail("PRF secret is NOT deterministic across two evaluations — cannot be used as a stable wrapping key")
+		fail("PRF secret is NOT deterministic — cannot be a stable wrapping key")
 	}
 	fmt.Println("[PASS] PRF secret is deterministic for a fixed (credential, salt)")
 
-	// Full envelope demo: wrap a dummy 32-byte master key with the PRF-derived KEK,
-	// then re-derive and unwrap.
+	// Envelope round-trip: wrap a dummy master key with the PRF KEK, then unwrap
+	// with the independently re-derived secret.
 	masterKey := make([]byte, 32)
 	_, _ = rand.Read(masterKey)
 	wrapped, err := aesGCMSeal(secretA, masterKey)
 	if err != nil {
 		fail("wrap master key: %v", err)
 	}
-	// secretB was independently re-derived above (separate assertion) — use it to
-	// unwrap, proving a re-derived secret recovers the key without another prompt.
 	unwrapped, err := aesGCMOpen(secretB, wrapped)
 	if err != nil {
 		fail("unwrap master key: %v", err)
@@ -131,12 +150,14 @@ func main() {
 	}
 	fmt.Println("[PASS] envelope round-trip: master key wrapped with the PRF KEK and recovered")
 
-	fmt.Println("\n=== RESULT: Windows Hello PRF envelope works on this machine. ===")
-	fmt.Println("Run `winhello-prf.exe cleanup` to remove the spike credential.")
+	fmt.Printf("\n=== RESULT: %s PRF envelope works on this machine. ===\n", p.name)
+	fmt.Println("Run `winhello-prf.exe cleanup` to remove the spike credential(s).")
 }
 
-func ensureCredential(hWnd windows.HWND) (credID []byte, fresh bool) {
-	if data, err := os.ReadFile(statePath()); err == nil {
+// ensureCredential returns a persisted credential id, or creates a fresh one. The
+// credential enables hmac-secret/PRF at creation but does not evaluate it.
+func ensureCredential(hWnd windows.HWND, p path) (credID []byte, fresh bool) {
+	if data, err := os.ReadFile(statePath(p.stateFile)); err == nil {
 		if id, derr := base64.URLEncoding.DecodeString(string(bytes.TrimSpace(data))); derr == nil && len(id) > 0 {
 			return id, false
 		}
@@ -146,62 +167,69 @@ func ensureCredential(hWnd windows.HWND) (credID []byte, fresh bool) {
 		hWnd,
 		[]byte("{}"),
 		webauthntypes.PublicKeyCredentialRpEntity{ID: rpID, Name: rpName},
-		webauthntypes.PublicKeyCredentialUserEntity{ID: []byte("paddock-user"), Name: "paddock", DisplayName: "PaddockControl"},
+		webauthntypes.PublicKeyCredentialUserEntity{ID: []byte("paddock-user"), Name: "paddock", DisplayName: rpName},
 		[]webauthntypes.PublicKeyCredentialParameters{
 			{Type: webauthntypes.PublicKeyCredentialTypePublicKey, Algorithm: iana.AlgorithmES256},
 		},
 		nil,
-		// Enable the PRF extension on this credential.
+		// bEnablePrf only — no pPRFGlobalEval. Enables PRF on the credential; the
+		// secret is derived later in derivePRF via get().
 		&webauthntypes.CreateAuthenticationExtensionsClientInputs{
-			// winhello v0.1.0 dereferences PRF.Eval unconditionally on create,
-			// so provide a non-nil Eval (also enables + pre-evaluates PRF).
-			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
-				Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: prfSalt},
-			}},
+			CreateHMACSecretInputs: &webauthntypes.CreateHMACSecretInputs{HMACCreateSecret: true},
 		},
 		&winhello.AuthenticatorMakeCredentialOptions{
-			AuthenticatorAttachment:     attachment,
+			AuthenticatorAttachment:     p.attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
-			RequireResidentKey:          requireResident,
+			RequireResidentKey:          p.resident,
+			CredentialHints:             []webauthntypes.PublicKeyCredentialHint{p.hint},
 		},
 	)
 	if err != nil {
-		fail("MakeCredential (Windows Hello): %v", err)
+		fail("MakeCredential: %v", err)
 	}
-	fmt.Printf("[INFO] MakeCredential succeeded; PRFEnabled=%v\n", resp.PRFEnabled)
+	fmt.Printf("[INFO] MakeCredential OK; PRFEnabled=%v usedTransport=%v residentKey=%v\n",
+		resp.PRFEnabled, resp.UsedTransport, resp.ResidentKey)
 	if !resp.PRFEnabled {
-		fail("the credential reports PRFEnabled=false — this Windows build/Hello does not support platform PRF")
+		fmt.Println("[WARN] PRFEnabled=false on create — the get() below is the real test of PRF support")
 	}
-	if err := os.WriteFile(statePath(), []byte(base64.URLEncoding.EncodeToString(resp.CredentialID)), 0o600); err != nil {
+	if err := os.WriteFile(statePath(p.stateFile), []byte(base64.URLEncoding.EncodeToString(resp.CredentialID)), 0o600); err != nil {
 		fmt.Printf("[WARN] could not persist credential id: %v\n", err)
 	}
 	return resp.CredentialID, true
 }
 
-func derivePRF(hWnd windows.HWND, credID, salt []byte) []byte {
+// derivePRF evaluates the PRF for (credID, salt) via a get() assertion, routed to
+// the credential's authenticator class so Windows skips the device chooser.
+func derivePRF(hWnd windows.HWND, p path, credID, salt []byte) []byte {
+	descriptor := webauthntypes.PublicKeyCredentialDescriptor{
+		ID:   credID,
+		Type: webauthntypes.PublicKeyCredentialTypePublicKey,
+	}
+	if p.attachment == winhello.WinHelloAuthenticatorAttachmentPlatform {
+		descriptor.Transports = []webauthntypes.AuthenticatorTransport{
+			webauthntypes.AuthenticatorTransportInternal,
+		}
+	}
+
 	assertion, err := winhello.GetAssertion(
 		hWnd,
 		rpID,
 		[]byte("{}"),
-		[]webauthntypes.PublicKeyCredentialDescriptor{
-			{ID: credID, Type: webauthntypes.PublicKeyCredentialTypePublicKey},
-		},
+		[]webauthntypes.PublicKeyCredentialDescriptor{descriptor},
 		&webauthntypes.GetAuthenticationExtensionsClientInputs{
-			PRFInputs: &webauthntypes.PRFInputs{
-				PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
-					EvalByCredential: map[string]webauthntypes.AuthenticationExtensionsPRFValues{
-						base64.URLEncoding.EncodeToString(credID): {First: salt},
-					},
+			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
+				EvalByCredential: map[string]webauthntypes.AuthenticationExtensionsPRFValues{
+					base64.URLEncoding.EncodeToString(credID): {First: salt},
 				},
-			},
+			}},
 		},
 		&winhello.AuthenticatorGetAssertionOptions{
-			AuthenticatorAttachment:     attachment,
+			AuthenticatorAttachment:     p.attachment,
 			UserVerificationRequirement: winhello.WinHelloUserVerificationRequirementRequired,
 		},
 	)
 	if err != nil {
-		fail("GetAssertion (Windows Hello): %v", err)
+		fail("GetAssertion: %v", err)
 	}
 	if !assertion.ExtensionOutputs.PRFOutputs.PRF.Enabled {
 		fail("assertion did not return a PRF result (prf.enabled=false)")
@@ -209,9 +237,9 @@ func derivePRF(hWnd windows.HWND, credID, salt []byte) []byte {
 	return assertion.ExtensionOutputs.PRFOutputs.PRF.Results.First
 }
 
+// doCleanup deletes the resident Windows Hello credentials this spike created
+// (found by rpID, robust even if the state files are gone) and the state files.
 func doCleanup() {
-	// Delete every Windows Hello (platform) credential this spike created,
-	// found by rpID — robust even if the local state file is gone.
 	creds, err := winhello.PlatformCredentialList(rpID, false)
 	if err != nil {
 		fmt.Printf("[WARN] PlatformCredentialList: %v\n", err)
@@ -229,12 +257,10 @@ func doCleanup() {
 	}
 	fmt.Printf("[INFO] removed %d Windows Hello credential(s) for %q\n", removed, rpID)
 
-	if dir, derr := os.Executable(); derr == nil {
-		_ = os.Remove(filepath.Join(filepath.Dir(dir), "winhello-prf.credid.platform"))
-		_ = os.Remove(filepath.Join(filepath.Dir(dir), "winhello-prf.credid.key"))
-	}
+	_ = os.Remove(statePath(helloPath.stateFile))
+	_ = os.Remove(statePath(keyPath.stateFile))
 	fmt.Println("[NOTE] a credential created on a SECURITY KEY (YubiKey) lives on the key itself and")
-	fmt.Println("       cannot be removed from here — use Yubico Authenticator or: ykman fido credentials list/delete")
+	fmt.Println("       cannot be removed from here — use Yubico Authenticator or: ykman fido credentials delete")
 	fmt.Println("[INFO] cleanup done")
 }
 
@@ -270,12 +296,12 @@ func aesGCMOpen(key, ct []byte) ([]byte, error) {
 	return gcm.Open(nil, ct[:ns], ct[ns:], nil)
 }
 
-func statePath() string {
+func statePath(name string) string {
 	exe, err := os.Executable()
 	if err != nil {
-		return stateFileName
+		return name
 	}
-	return filepath.Join(filepath.Dir(exe), stateFileName)
+	return filepath.Join(filepath.Dir(exe), name)
 }
 
 func fail(format string, a ...any) {
