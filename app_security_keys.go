@@ -140,6 +140,7 @@ func (a *App) EnrollPasswordMethod(password, label string) error {
 	}
 
 	log.Info("password method enrolled successfully")
+	logger.Audit("unlock_method.password_enrolled", slog.String("label", label))
 	return nil
 }
 
@@ -180,6 +181,11 @@ func (a *App) RemoveSecurityKey(id int64) error {
 	}
 
 	log.Info("security key removed", slog.Int64("id", id), slog.String("method", key.Method))
+	logger.Audit("unlock_method.removed",
+		slog.Int64("id", id),
+		slog.String("method", key.Method),
+		slog.String("label", key.Label),
+	)
 	return nil
 }
 

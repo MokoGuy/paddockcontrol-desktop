@@ -243,6 +243,7 @@ func (a *App) ChangeEncryptionKey(newPassword string) error {
 	}
 
 	log.Info("password changed successfully (master key re-wrapped)")
+	logger.Audit("unlock_method.password_changed")
 	return nil
 }
 
