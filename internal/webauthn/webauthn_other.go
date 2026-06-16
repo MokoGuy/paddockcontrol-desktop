@@ -11,6 +11,6 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 }
 
 // Derive is unsupported off Windows.
-func Derive(windowTitle, rpID string, credentialID, salt []byte) ([]byte, error) {
+func Derive(windowTitle, rpID string, credentialID, salt []byte, platform bool) ([]byte, error) {
 	return nil, ErrUnsupported
 }

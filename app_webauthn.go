@@ -150,7 +150,9 @@ func (a *App) UnlockWithWebAuthn() (bool, error) {
 			continue
 		}
 
-		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt)
+		// Route the prompt straight to the right authenticator class (no chooser).
+		platform := key.Label == labelWindowsHello
+		secret, err := webauthn.Derive(appWindowTitle, webAuthnRPID, meta.CredentialID, meta.Salt, platform)
 		if err != nil {
 			// User cancelled, wrong authenticator, or this credential isn't present.
 			log.Debug("passkey derive failed", logger.Err(err))
