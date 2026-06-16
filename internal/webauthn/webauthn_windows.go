@@ -4,6 +4,7 @@ package webauthn
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log/slog"
 	"unsafe"
@@ -21,6 +22,16 @@ var (
 	user32          = windows.NewLazySystemDLL("user32.dll")
 	procFindWindowW = user32.NewProc("FindWindowW")
 )
+
+// nteNotSupported (NTE_NOT_SUPPORTED) is returned by Windows Hello / NGC when it
+// can't create the platform credential — typically a software (non-TPM) Hello key.
+const nteNotSupported = 0x80090029
+
+// isErrno reports whether err is (or wraps) a windows.Errno with the given value.
+func isErrno(err error, code uint32) bool {
+	var errno windows.Errno
+	return errors.As(err, &errno) && uint32(errno) == code
+}
 
 // Available reports whether the native Windows WebAuthn API is usable.
 func Available() bool {
@@ -66,6 +77,12 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, platform bo
 		},
 	)
 	if err != nil {
+		// Windows Hello without a TPM-backed key returns NTE_NOT_SUPPORTED for the
+		// platform credential. (Often the OS masks it by falling back to the device
+		// chooser, so this only fires when the error surfaces directly.)
+		if platform && isErrno(err, nteNotSupported) {
+			return nil, ErrPlatformAuthenticatorUnsupported
+		}
 		return nil, fmt.Errorf("make credential: %w", err)
 	}
 	if !resp.PRFEnabled {

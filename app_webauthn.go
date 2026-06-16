@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -82,6 +83,16 @@ func (a *App) enrollPasskey(label string, platform bool) error {
 
 	cred, err := webauthn.Enroll(appWindowTitle, webAuthnRPID, "PaddockControl", "paddock", salt, platform)
 	if err != nil {
+		if platform {
+			// Windows Hello couldn't create a passkey. On machines where Hello isn't
+			// TPM-backed, Windows masks this by offering a "phone / security key"
+			// chooser, so we can't always distinguish it from a plain cancel — give
+			// guidance that covers both.
+			if errors.Is(err, webauthn.ErrPlatformAuthenticatorUnsupported) {
+				return fmt.Errorf("Windows Hello can't store a passkey on this device (it isn't backed by a TPM here); use a security key instead")
+			}
+			return fmt.Errorf("Windows Hello enrollment didn't complete; if you saw a phone/security-key chooser, Windows Hello can't store passkeys on this device — use a security key instead: %w", err)
+		}
 		return fmt.Errorf("passkey enrollment failed: %w", err)
 	}
 	defer crypto.Zero(cred.Secret)

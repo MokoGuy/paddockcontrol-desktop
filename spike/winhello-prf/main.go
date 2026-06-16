@@ -37,6 +37,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unsafe"
 
 	"github.com/go-ctap/ctaphid/pkg/webauthntypes"
 	"github.com/go-ctap/winhello"
@@ -95,10 +96,13 @@ func main() {
 			p = keyPath
 		case "noprf":
 			noPRF = true
+		case "tpm": // detection probe only — no UI, no credential
+			probePlatformCrypto()
+			return
 		case "cleanup":
 			cleanup = true
 		default:
-			fail("unknown argument %q (use: [key] [noprf] [cleanup])", a)
+			fail("unknown argument %q (use: [key] [noprf] [tpm] [cleanup])", a)
 		}
 	}
 
@@ -338,6 +342,30 @@ func createExt() *webauthntypes.CreateAuthenticationExtensionsClientInputs {
 			Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: prfSalt},
 		}},
 	}
+}
+
+// probePlatformCrypto tests whether the Microsoft Platform Crypto Provider (the
+// TPM-backed CNG key storage provider) can be opened. Windows Hello passkeys need
+// a TPM-backed key; if this KSP is unavailable, Hello falls back to software keys
+// that cannot store passkeys (NGC MakeCredential → NTE_NOT_SUPPORTED). This is a
+// candidate CGO-free pre-flight signal for "Windows Hello passkey is usable here".
+func probePlatformCrypto() {
+	ncrypt := windows.NewLazySystemDLL("ncrypt.dll")
+	open := ncrypt.NewProc("NCryptOpenStorageProvider")
+	free := ncrypt.NewProc("NCryptFreeObject")
+
+	name, _ := windows.UTF16PtrFromString("Microsoft Platform Crypto Provider")
+	var hProv uintptr
+	r, _, _ := open.Call(uintptr(unsafe.Pointer(&hProv)), uintptr(unsafe.Pointer(name)), 0)
+	status := uint32(r)
+	if status == 0 {
+		logf("Platform Crypto Provider (TPM KSP): AVAILABLE (0x0) → TPM-backed keys usable")
+		logf(">>> if this says AVAILABLE but Hello passkeys still fail, the KSP is NOT a reliable signal <<<")
+		free.Call(hProv)
+		return
+	}
+	logf("Platform Crypto Provider (TPM KSP): UNAVAILABLE (0x%08X) → Windows Hello will use SOFTWARE keys", status)
+	logf(">>> if this matches the failing Hello passkey, it IS a usable pre-flight detection signal <<<")
 }
 
 // logf prints a timestamped [INFO] line so the console output can be correlated
