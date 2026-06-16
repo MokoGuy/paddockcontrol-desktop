@@ -26,6 +26,10 @@ var (
 // can't create the platform credential — typically a software (non-TPM) Hello key.
 const nteNotSupported = 0x80090029
 
+// nteExists (NTE_EXISTS) is returned by MakeCredential when an excludeCredentials
+// entry is already present on the chosen authenticator.
+const nteExists = 0x8009000F
+
 // isErrno reports whether err is (or wraps) a windows.Errno with the given value.
 func isErrno(err error, code uint32) bool {
 	var errno windows.Errno
@@ -59,12 +63,23 @@ func Available() bool {
 // Hello, a security key, or a phone at the OS dialog. It is requested as
 // non-resident so a security key consumes no slot; Windows Hello stores a
 // discoverable credential regardless, which it needs for hmac-secret.
-func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credential, error) {
+func Enroll(windowTitle, rpID, rpName, userName string, salt []byte, excludeCredentialIDs [][]byte) (*Credential, error) {
 	hWnd, cleanup, err := windowHandle(windowTitle, rpName)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
+
+	// Exclude already-enrolled credentials so the chosen authenticator refuses to
+	// register a duplicate (e.g. a second Windows Hello on the same machine, which
+	// would overwrite the first on the TPM).
+	excludeList := make([]webauthntypes.PublicKeyCredentialDescriptor, len(excludeCredentialIDs))
+	for i, id := range excludeCredentialIDs {
+		excludeList[i] = webauthntypes.PublicKeyCredentialDescriptor{
+			ID:   id,
+			Type: webauthntypes.PublicKeyCredentialTypePublicKey,
+		}
+	}
 
 	resp, err := winhello.MakeCredential(
 		hWnd,
@@ -74,7 +89,7 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credentia
 		[]webauthntypes.PublicKeyCredentialParameters{
 			{Type: webauthntypes.PublicKeyCredentialTypePublicKey, Algorithm: iana.AlgorithmES256},
 		},
-		nil,
+		excludeList,
 		&webauthntypes.CreateAuthenticationExtensionsClientInputs{
 			PRFInputs: &webauthntypes.PRFInputs{PRF: webauthntypes.AuthenticationExtensionsPRFInputs{
 				Eval: &webauthntypes.AuthenticationExtensionsPRFValues{First: salt},
@@ -87,6 +102,10 @@ func Enroll(windowTitle, rpID, rpName, userName string, salt []byte) (*Credentia
 		},
 	)
 	if err != nil {
+		// The chosen authenticator already holds one of our passkeys.
+		if isErrno(err, nteExists) {
+			return nil, ErrCredentialAlreadyEnrolled
+		}
 		// A platform authenticator with no TPM-backed key returns NTE_NOT_SUPPORTED.
 		if isErrno(err, nteNotSupported) {
 			return nil, ErrPlatformAuthenticatorUnsupported

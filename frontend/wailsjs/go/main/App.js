@@ -42,12 +42,12 @@ export function DownloadAndApplyUpdate() {
   return window['go']['main']['App']['DownloadAndApplyUpdate']();
 }
 
-export function EnrollPasswordMethod(arg1, arg2) {
-  return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
-}
-
 export function EnrollPasskey() {
   return window['go']['main']['App']['EnrollPasskey']();
+}
+
+export function EnrollPasswordMethod(arg1, arg2) {
+  return window['go']['main']['App']['EnrollPasswordMethod'](arg1, arg2);
 }
 
 export function ExportCertificateZip(arg1, arg2) {
