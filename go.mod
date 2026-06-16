@@ -69,3 +69,5 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
+
+replace github.com/go-ctap/winhello => github.com/MokoGuy/winhello v0.1.1-0.20260616014323-e943688dadf7
